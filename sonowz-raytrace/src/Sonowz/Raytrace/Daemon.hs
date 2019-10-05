@@ -1,20 +1,20 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Raytrace.Daemon (main, onQuit) where
+module Sonowz.Raytrace.Daemon (main, onQuit) where
 
+import Relude hiding (newEmptyMVar, takeMVar, putMVar)
 import System.Process
 import System.Exit
 import Control.Exception
-import Control.Concurrent
-import Control.Concurrent.MVar
 import Control.Monad
 import Data.Time
-import Data.IORef
 import Data.Map.Strict ((!))
+import UnliftIO.Chan
+import UnliftIO.Concurrent
 import qualified Data.Map.Strict as Map
 
-import qualified Raytrace.MessageQueue as MessageQueue
-import qualified Raytrace.Websocket as RTWebsocket
+import qualified Sonowz.Raytrace.MessageQueue as MessageQueue
+import qualified Sonowz.Raytrace.Websocket as RTWebsocket
 
 
 type WSMVar = MVar RTWebsocket.WSMessage

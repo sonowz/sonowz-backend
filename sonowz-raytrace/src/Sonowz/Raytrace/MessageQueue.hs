@@ -1,12 +1,30 @@
-{-# LANGUAGE OverloadedStrings #-}
-{-# LANGUAGE ScopedTypeVariables #-}
+module Sonowz.Raytrace.MessageQueue where
 
-module Raytrace.MessageQueue (DBConnection, _init, popFrontMessage, enqueue, dequeue, getStatus) where
+import Relude
 
-import Data.Int
-import Control.Monad
-import Control.Exception
-import Database.PostgreSQL.Simple
+type DBConnection = ()
+_init = undefined
+enqueue = undefined
+dequeue = undefined
+popFrontMessage = undefined
+getStatus :: DBConnection -> IO [(Int, Int)]
+getStatus = undefined
+{--
+module Sonowz.Raytrace.MessageQueue
+  ( DBConnection
+  , _init
+  , popFrontMessage
+  , enqueue
+  , dequeue
+  , getStatus
+  )
+where
+
+import           Relude
+import           Control.Monad
+import           Control.Exception
+-- import Database.PostgreSQL.Simple
+
 
 type DBConnection = Connection
 
@@ -21,7 +39,7 @@ popFrontMessage :: Connection -> IO (Maybe (Int, String))
 popFrontMessage conn = do
   result <- (query_ conn getFront :: IO [(Int, String)])
   case result of
-    [] -> return Nothing
+    []             -> return Nothing
     [(id, config)] -> do
       execute_ conn popFront
       return $ Just (id, config)
@@ -29,30 +47,34 @@ popFrontMessage conn = do
 -- TODO return remainingQueue
 enqueue :: Connection -> Int -> String -> IO (Maybe Int64)
 enqueue conn id config = do
-  result <- catch (liftM Just $ execute conn enqueueMessage (id, config)) errorHandler
+  result <- catch (liftM Just $ execute conn enqueueMessage (id, config))
+                  errorHandler
   return result
 
 dequeue :: Connection -> Int -> IO (Maybe Bool)
 dequeue conn id = do
-  result <- catch (liftM Just $ query conn dequeueMessage [id]) errorHandler :: IO (Maybe [Only Int])
+  result <-
+    catch (liftM Just $ query conn dequeueMessage [id]) errorHandler :: IO
+      (Maybe [Only Int])
   case result of
-    Nothing -> return Nothing
-    Just [] -> return $ Just False
+    Nothing       -> return Nothing
+    Just []       -> return $ Just False
     Just [Only _] -> return $ Just True
-    
+
 getStatus :: Connection -> IO [(Int, Int)]
 getStatus conn = do
   result <- (query_ conn getOrderedIDs :: IO [(Only Int)])
   case result of
     [] -> return []
     -- Only id -> (id, order)
-    _  -> return $ zip (map (\(Only id) -> id) result) [1..]
+    _  -> return $ zip (map (\(Only id) -> id) result) [1 ..]
 
 
 -- TODO make config file
 -- The port is secured, and 'raytrace_mq' user has limited access
 connectDB :: IO Connection
-connectDB = connectPostgreSQL "host=localhost port=5432 user=raytrace_mq password=bestrt"
+connectDB =
+  connectPostgreSQL "host=localhost port=5432 user=raytrace_mq password=bestrt"
 
 errorHandler :: SqlError -> IO (Maybe a)
 errorHandler e = do
@@ -61,7 +83,8 @@ errorHandler e = do
 
 ---- Queries ----
 
-createTable = " \
+createTable =
+  " \
   \CREATE TABLE IF NOT EXISTS raytrace_mq (\
     \id int not null, \
     \config text not null, \
@@ -70,11 +93,13 @@ createTable = " \
 
 clearTable = "DELETE FROM raytrace_mq"
 
-getFront = " \
+getFront =
+  " \
   \SELECT id, config FROM raytrace_mq \
   \WHERE createdTime = (SELECT min(createdTime) FROM raytrace_mq);"
 
-popFront = " \
+popFront =
+  " \
   \DELETE FROM raytrace_mq \
   \WHERE createdTime = (SELECT min(createdTime) FROM raytrace_mq);"
 
@@ -82,11 +107,14 @@ enqueueMessage = " \
   \INSERT INTO raytrace_mq \
   \VALUES (?, ?);"
 
-dequeueMessage = " \
+dequeueMessage =
+  " \
   \DELETE FROM raytrace_mq \
   \WHERE id = ? \
   \RETURNING id;"
 
-getOrderedIDs = " \
+getOrderedIDs =
+  " \
   \SELECT id FROM raytrace_mq \
   \ORDER BY createdTime ASC;"
+--}

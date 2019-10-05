@@ -12,6 +12,7 @@ extra-source-files:
   - README.md
 
 dependencies:
+  - aeson
   - async
   - base
   - bytestring
@@ -20,14 +21,21 @@ dependencies:
   - directory
   - exceptions
   - filepath
+  - process
   - relude
   - servant
+  - servant-server
+  - servant-websockets
   - stm
   - text
   - time
   - transformers
+  - unliftio
+  - unliftio-core
   - unordered-containers
   - vector
+  - warp
+  - websockets
 
 default-extensions:
   - ApplicativeDo
@@ -73,6 +81,7 @@ default-extensions:
   - TypeApplications
   - TypeFamilies
   - TypeSynonymInstances
+  - TypeOperators
   - ViewPatterns
 
 executables:

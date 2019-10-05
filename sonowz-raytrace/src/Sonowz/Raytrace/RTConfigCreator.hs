@@ -1,10 +1,8 @@
-{-# LANGUAGE DeriveGeneric #-}
+module Sonowz.Raytrace.RTConfigCreator (Config(..), jsonToConfig) where
 
-module Raytrace.RTConfigCreator (Config(..), jsonToConfig) where
-
+import Relude
 import GHC.Generics
 import Data.Aeson
-import Data.ByteString.Lazy
 
 -- Internal JSON decode format
 data RTConfig = RTConfig
@@ -42,7 +40,7 @@ data Config =
   | DecodeFail
   | IntegrityFail String
 
-jsonToConfig :: ByteString -> Config
+jsonToConfig :: LByteString -> Config
 jsonToConfig _json =
   case decode _json of
     Nothing -> DecodeFail

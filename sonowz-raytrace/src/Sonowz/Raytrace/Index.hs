@@ -1,15 +1,11 @@
-{-# LANGUAGE OverloadedStrings #-}
-module Raytrace.Index where
+module Sonowz.Raytrace.Index where
 
 import           Control.Applicative
-import           Snap.Core
-import qualified Network.WebSockets.Snap as WS
+import           Servant.Server
 
-import qualified Raytrace.Websocket as RTWebsocket
+import qualified Sonowz.Raytrace.Types.API     as API
+import qualified Sonowz.Raytrace.Websocket     as RTWebsocket
 
 -- Snap entry point for URL 'raytrace/'
-site :: RTWebsocket.WSData -> Snap ()
-site wsdata =
-  -- Image will be served by NGINX
-  --ifTop (method GET rtServe) <|>
-  dir "wait" $ WS.runWebSocketsSnap $ RTWebsocket.websocketApp wsdata
+site :: RTWebsocket.WSData -> Server API.RaytraceWsAPI
+site = RTWebsocket.wsServer
