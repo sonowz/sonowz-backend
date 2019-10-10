@@ -21,6 +21,7 @@ dependencies:
   - directory
   - exceptions
   - filepath
+  - optparse-applicative
   - process
   - relude
   - servant
