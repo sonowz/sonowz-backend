@@ -38,8 +38,8 @@ main = do
   IO.hSetBuffering stdout IO.LineBuffering -- For debugging
   IO.hSetBuffering stderr IO.LineBuffering
 
+  port <- execParser opts
+
   wsdata <- RTWebsocket.initWSData
   _ <- forkFinally (RTDaemon.main wsdata) RTDaemon.onQuit
-
-  port <- execParser opts
   run port (app wsdata)

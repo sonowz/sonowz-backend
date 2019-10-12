@@ -1,120 +1,65 @@
+{-# LANGUAGE GeneralizedNewtypeDeriving #-}
+{-# LANGUAGE QuasiQuotes                #-}
+{-# LANGUAGE TemplateHaskell            #-}
 module Sonowz.Raytrace.MessageQueue where
 
-import Relude
-
-type DBConnection = ()
-_init = undefined
-enqueue = undefined
-dequeue = undefined
-popFrontMessage = undefined
-getStatus :: DBConnection -> IO [(Int, Int)]
-getStatus = undefined
-{--
-module Sonowz.Raytrace.MessageQueue
-  ( DBConnection
-  , _init
-  , popFrontMessage
-  , enqueue
-  , dequeue
-  , getStatus
-  )
-where
-
 import           Relude
-import           Control.Monad
-import           Control.Exception
--- import Database.PostgreSQL.Simple
+import           Control.Monad.Logger           ( runNoLoggingT )
+import           Control.Monad.IO.Unlift
+import           Database.Persist
+import           Database.Persist.Sqlite
+import           Database.Persist.TH
+import           Data.Aeson.TH
+import           Data.Pool
+import           Data.Time
+import           UnliftIO.Exception
 
+share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
+MQueue
+    qid Int
+    config Text
+    createdTime UTCTime default=CURRENT_TIME
+    UniqueQid qid
+    deriving Show
+|]
 
-type DBConnection = Connection
+type DBConnection = Pool SqlBackend
 
-_init :: IO Connection
+catchMaybe :: MonadUnliftIO io => io (Maybe a) -> io (Maybe a)
+catchMaybe = flip catchAny $ \_ -> return Nothing
+
+-- TODO: change DB locationa
+_init :: MonadUnliftIO io => io DBConnection
 _init = do
-  conn <- connectDB
-  execute_ conn createTable
-  execute_ conn clearTable
-  return conn
+    pool <- runNoLoggingT $ createSqlitePool "db.sqlite3" 3
+    runSqlPool (runMigration migrateAll) pool
+    return pool
 
-popFrontMessage :: Connection -> IO (Maybe (Int, String))
-popFrontMessage conn = do
-  result <- (query_ conn getFront :: IO [(Int, String)])
-  case result of
-    []             -> return Nothing
-    [(id, config)] -> do
-      execute_ conn popFront
-      return $ Just (id, config)
+popFrontMessage :: MonadUnliftIO io => DBConnection -> io (Maybe (Int, String))
+popFrontMessage = runSqlPool $ catchMaybe executeSql  where
+    -- fmap over ReaderT, then over Maybe
+    executeSql = getData <<$>> selectFirst [] [Desc MQueueCreatedTime]
+    getData (Entity _ row) =
+        (mQueueQid row, show . mQueueConfig $ row) :: (Int, String)
 
 -- TODO return remainingQueue
-enqueue :: Connection -> Int -> String -> IO (Maybe Int64)
-enqueue conn id config = do
-  result <- catch (liftM Just $ execute conn enqueueMessage (id, config))
-                  errorHandler
-  return result
+enqueue :: MonadUnliftIO io => Int -> String -> DBConnection -> io (Maybe Int)
+enqueue qid config = runSqlPool $ catchMaybe $ do
+    curtime <- liftIO getCurrentTime
+    -- fmap over ReaderT, then over Maybe
+    (fromIntegral . fromSqlKey)
+        <<$>> insertUnique (MQueue qid (toText config) curtime)
 
-dequeue :: Connection -> Int -> IO (Maybe Bool)
-dequeue conn id = do
-  result <-
-    catch (liftM Just $ query conn dequeueMessage [id]) errorHandler :: IO
-      (Maybe [Only Int])
-  case result of
-    Nothing       -> return Nothing
-    Just []       -> return $ Just False
-    Just [Only _] -> return $ Just True
+dequeue :: MonadUnliftIO io => Int -> DBConnection -> io (Maybe Bool)
+dequeue qid = runSqlPool $ catchMaybe $ do
+    -- fmap over ReaderT, then over Maybe
+    exists <- const True <<$>> getBy (UniqueQid qid)
+    deleteBy (UniqueQid qid)
+    return exists
 
-getStatus :: Connection -> IO [(Int, Int)]
-getStatus conn = do
-  result <- (query_ conn getOrderedIDs :: IO [(Only Int)])
-  case result of
-    [] -> return []
-    -- Only id -> (id, order)
-    _  -> return $ zip (map (\(Only id) -> id) result) [1 ..]
-
-
--- TODO make config file
--- The port is secured, and 'raytrace_mq' user has limited access
-connectDB :: IO Connection
-connectDB =
-  connectPostgreSQL "host=localhost port=5432 user=raytrace_mq password=bestrt"
-
-errorHandler :: SqlError -> IO (Maybe a)
-errorHandler e = do
-  putStrLn ("DBError: " ++ show (sqlErrorMsg e))
-  return Nothing
-
----- Queries ----
-
-createTable =
-  " \
-  \CREATE TABLE IF NOT EXISTS raytrace_mq (\
-    \id int not null, \
-    \config text not null, \
-    \createdTime timestamp default current_timestamp PRIMARY KEY \
-  \);"
-
-clearTable = "DELETE FROM raytrace_mq"
-
-getFront =
-  " \
-  \SELECT id, config FROM raytrace_mq \
-  \WHERE createdTime = (SELECT min(createdTime) FROM raytrace_mq);"
-
-popFront =
-  " \
-  \DELETE FROM raytrace_mq \
-  \WHERE createdTime = (SELECT min(createdTime) FROM raytrace_mq);"
-
-enqueueMessage = " \
-  \INSERT INTO raytrace_mq \
-  \VALUES (?, ?);"
-
-dequeueMessage =
-  " \
-  \DELETE FROM raytrace_mq \
-  \WHERE id = ? \
-  \RETURNING id;"
-
-getOrderedIDs =
-  " \
-  \SELECT id FROM raytrace_mq \
-  \ORDER BY createdTime ASC;"
---}
+-- [(qid, remaining count)]
+getStatus :: MonadUnliftIO io => DBConnection -> io [(Int, Int)]
+getStatus = runSqlPool $ do
+    -- fmap over ReaderT, then over []
+    qids <- mQueueQid . entityVal <<$>> selectList [] [Asc MQueueCreatedTime]
+    return $ zip qids [1 ..]

@@ -9,7 +9,7 @@ Assignment code not included.
 http://61.74.24.50:5555
 
 #### Used:
-- PostgreSQL for nonvolatile message queue
+- Sqlite for simple message queue
 - Websocket for receiving queue status
 
 ## TODO

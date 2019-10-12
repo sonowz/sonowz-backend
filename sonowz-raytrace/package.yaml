@@ -21,9 +21,14 @@ dependencies:
   - directory
   - exceptions
   - filepath
+  - monad-logger
   - optparse-applicative
+  - persistent
+  - persistent-sqlite
+  - persistent-template
   - process
   - relude
+  - resource-pool
   - servant
   - servant-server
   - servant-websockets
@@ -45,7 +50,7 @@ default-extensions:
   - ConstraintKinds
   - DataKinds
   - DefaultSignatures
-  - DeriveAnyClass
+# - DeriveAnyClass
   - DeriveDataTypeable
   - DeriveFoldable
   - DeriveFunctor
