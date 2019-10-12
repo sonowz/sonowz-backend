@@ -9,7 +9,6 @@ where
 import           Relude                  hiding ( newEmptyMVar
                                                 , takeMVar
                                                 )
-import           Control.Monad
 import           Control.Monad.IO.Unlift
 import           Servant
 import           UnliftIO.Chan
@@ -64,10 +63,9 @@ wsServer wsdata = runWebsocket where
 
 -- Receive ping from client
 ping :: MonadIO io => WS.Connection -> io ()
-ping conn = do
-  liftIO $ forever $ do
-    WS.receive conn
-    threadDelay (10 * 10 ^ 6)
+ping conn = liftIO $ forever $ do
+  WS.receive conn
+  threadDelay (10 * 10 ^ 6)
 
 ---- Minor functions ----
 
@@ -127,10 +125,10 @@ doProxy conn messageMVar = do
   case message of
     RemainingQueue n ->
       send conn ("Job queued: " ++ show n ++ " jobs remaining") >> loop
-    ProcessStarted     -> send conn ("Processing image...") >> loop
+    ProcessStarted     -> send conn "Processing image..." >> loop
     ProcessFinished id -> send conn ("Finished: " ++ show id)
       >> liftIO (WS.sendClose conn (LBC.pack "end"))
-    ProcessFailed -> send conn ("Finished: -1")
+    ProcessFailed -> send conn "Finished: -1"
       >> liftIO (WS.sendClose conn (LBC.pack "endfail"))
 
 -- Send close request to client

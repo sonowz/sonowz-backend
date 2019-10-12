@@ -29,7 +29,7 @@ checkConfigIntegrity conf =
   bound sceneNo 1 3 "Scene number" $ Nothing where
     bound :: (Show a, Ord a) => (RTConfig -> a) -> a -> a -> String -> Maybe String -> Maybe String
     bound field _min _max text (Just message) = Just message
-    bound field _min _max text (Nothing) =
+    bound field _min _max text Nothing =
       if (_min <= field conf) && (field conf <= _max)
         then Nothing
         else Just $ text ++ " must be in range [" ++ show _min ++ ", " ++ show _max ++ "]."

@@ -6,7 +6,6 @@ import Relude hiding (newEmptyMVar, takeMVar, putMVar)
 import System.Process
 import System.Exit
 import Control.Exception
-import Control.Monad
 import Data.Time
 import Data.Map.Strict ((!))
 import UnliftIO.Chan
@@ -24,7 +23,7 @@ type WSDict = Map.Map Int WSMVar
 onQuit :: Either SomeException () -> IO ()
 onQuit (Left err) = do
   putStrLn "Daemon terminated with error."
-  putStrLn $ show err
+  print err
 onQuit (Right _) = putStrLn "Daemon terminated successfully."
 
 -- Daemon entry point
@@ -52,10 +51,9 @@ main (RTWebsocket.WSData (conn, registerChan)) = do
 
 -- Subprocess which handles new request
 dictSetter :: IORef WSDict -> IORef Int -> Chan WSMVar -> IO ()
-dictSetter dictRef idRef chan = do
-  forever $ do
-    wsMVar <- readChan chan
-    setDict dictRef idRef wsMVar >>= sendID wsMVar
+dictSetter dictRef idRef chan = forever $ do
+  wsMVar <- readChan chan
+  setDict dictRef idRef wsMVar >>= sendID wsMVar
 
 -- Returns new ID
 setDict :: IORef WSDict -> IORef Int -> WSMVar -> IO Int

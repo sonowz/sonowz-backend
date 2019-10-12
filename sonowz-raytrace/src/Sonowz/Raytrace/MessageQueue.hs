@@ -28,11 +28,12 @@ type DBConnection = Pool SqlBackend
 catchMaybe :: MonadUnliftIO io => io (Maybe a) -> io (Maybe a)
 catchMaybe = flip catchAny $ \_ -> return Nothing
 
--- TODO: change DB locationa
+-- TODO: change DB location
 _init :: MonadUnliftIO io => io DBConnection
 _init = do
     pool <- runNoLoggingT $ createSqlitePool "db.sqlite3" 3
-    runSqlPool (runMigration migrateAll) pool
+    let truncate = deleteWhere ([] :: [Filter MQueue])
+    runSqlPool (runMigration migrateAll >> truncate) pool
     return pool
 
 popFrontMessage :: MonadUnliftIO io => DBConnection -> io (Maybe (Int, String))

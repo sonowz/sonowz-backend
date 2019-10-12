@@ -1,7 +1,6 @@
 module Main where
 
 import           Relude
-import           Control.Applicative
 import           Control.Concurrent
 import           Network.Wai.Handler.Warp
 import           Options.Applicative
