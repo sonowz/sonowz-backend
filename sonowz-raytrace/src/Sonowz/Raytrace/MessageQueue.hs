@@ -1,3 +1,5 @@
+{-# LANGUAGE NoDeriveAnyClass #-}
+{-# LANGUAGE NoStrictData #-}
 {-# LANGUAGE GeneralizedNewtypeDeriving #-}
 {-# LANGUAGE QuasiQuotes                #-}
 {-# LANGUAGE TemplateHaskell            #-}

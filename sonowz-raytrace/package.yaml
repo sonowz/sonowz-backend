@@ -44,13 +44,13 @@ dependencies:
   - websockets
 
 default-extensions:
-  - ApplicativeDo
-  - BangPatterns
+  - ApplicativeDo          # New syntax #
+  - BangPatterns           # New syntax #
   - BinaryLiterals
   - ConstraintKinds
   - DataKinds
-  - DefaultSignatures
-# - DeriveAnyClass
+  - DefaultSignatures      # New syntax #
+  - DeriveAnyClass
   - DeriveDataTypeable
   - DeriveFoldable
   - DeriveFunctor
@@ -63,33 +63,30 @@ default-extensions:
   - ExplicitForAll
   - FlexibleContexts
   - FlexibleInstances
-  - FunctionalDependencies
-  - GADTs
+  - FunctionalDependencies  # New syntax #
+  - GADTs                   # New syntax #
   - InstanceSigs
-  - KindSignatures
-  - LambdaCase
-  - MonadComprehensions
-  - MultiParamTypeClasses
-  - MultiWayIf
-  - NamedFieldPuns
+  - KindSignatures          # New syntax #
+  - LambdaCase              # New syntax #
+  - MonadComprehensions     # New syntax #
+  - NamedFieldPuns          # New syntax #
   - NoImplicitPrelude
   - OverloadedLists
   - OverloadedStrings
-  - ParallelListComp
-  - PartialTypeSignatures
-  - PatternGuards
+  - ParallelListComp        # New syntax #
+  - PartialTypeSignatures   # New syntax #
   - PolyKinds
   - RankNTypes
-  - RecordWildCards
+  - RecordWildCards         # New syntax #
   - ScopedTypeVariables
   - StandaloneDeriving
-# - StrictData
-  - TupleSections
-  - TypeApplications
+  - StrictData
+  - TupleSections           # New syntax #
+  - TypeApplications        # New syntax #
   - TypeFamilies
   - TypeSynonymInstances
   - TypeOperators
-  - ViewPatterns
+  - ViewPatterns            # New syntax #
 
 executables:
   sonowz-raytrace:
