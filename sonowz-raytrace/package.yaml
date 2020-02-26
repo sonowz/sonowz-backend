@@ -13,6 +13,7 @@ extra-source-files:
 
 ghc-options:
   - -W
+#  - -fforce-recomp
 
 dependencies:
   - aeson

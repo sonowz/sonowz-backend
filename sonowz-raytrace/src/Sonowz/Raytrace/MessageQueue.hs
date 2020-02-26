@@ -5,16 +5,16 @@
 {-# LANGUAGE TemplateHaskell            #-}
 module Sonowz.Raytrace.MessageQueue where
 
-import           Relude
-import           Control.Monad.Logger           ( runNoLoggingT )
-import           Control.Monad.IO.Unlift
-import           Database.Persist
-import           Database.Persist.Sqlite
-import           Database.Persist.TH
-import           Data.Aeson.TH
-import           Data.Pool
-import           Data.Time
-import           UnliftIO.Exception
+import Relude
+import Control.Monad.Logger (runNoLoggingT)
+import Control.Monad.IO.Unlift
+import Database.Persist
+import Database.Persist.Sqlite
+import Database.Persist.TH
+import Data.Aeson.TH ()
+import Data.Pool
+import Data.Time
+import UnliftIO.Exception
 
 share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
 MQueue
@@ -42,16 +42,14 @@ popFrontMessage :: MonadUnliftIO io => DBConnection -> io (Maybe (Int, String))
 popFrontMessage = runSqlPool $ catchMaybe executeSql  where
     -- fmap over ReaderT, then over Maybe
     executeSql = getData <<$>> selectFirst [] [Desc MQueueCreatedTime]
-    getData (Entity _ row) =
-        (mQueueQid row, toString . mQueueConfig $ row) :: (Int, String)
+    getData (Entity _ row) = (mQueueQid row, toString . mQueueConfig $ row) :: (Int, String)
 
--- TODO return remainingQueue
+-- TODO: return remainingQueue
 enqueue :: MonadUnliftIO io => Int -> String -> DBConnection -> io (Maybe Int)
 enqueue qid config = runSqlPool $ catchMaybe $ do
     curtime <- liftIO getCurrentTime
     -- fmap over ReaderT, then over Maybe
-    (fromIntegral . fromSqlKey)
-        <<$>> insertUnique (MQueue qid (toText config) curtime)
+    (fromIntegral . fromSqlKey) <<$>> insertUnique (MQueue qid (toText config) curtime)
 
 dequeue :: MonadUnliftIO io => Int -> DBConnection -> io (Maybe Bool)
 dequeue qid = runSqlPool $ catchMaybe $ do

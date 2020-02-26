@@ -6,27 +6,24 @@ module Sonowz.Raytrace.Web.Websocket
   )
 where
 
-import           Relude                  hiding ( newEmptyMVar
-                                                , takeMVar
-                                                )
-import           Control.Monad.IO.Unlift
-import           Servant
-import           UnliftIO.Chan
-import           UnliftIO.Concurrent
-import           UnliftIO.Exception
-import           UnliftIO.Timeout
+import Relude hiding (newEmptyMVar, takeMVar)
+import Control.Monad.IO.Unlift
+import Servant
+import UnliftIO.Chan
+import UnliftIO.Concurrent
+import UnliftIO.Exception
+import UnliftIO.Timeout
 
-import qualified Network.WebSockets            as WS
-import qualified Data.ByteString.Lazy          as LB
-import qualified Data.ByteString.Lazy.Char8    as LBC
+import qualified Network.WebSockets as WS
+import qualified Data.ByteString.Lazy as LB
+import qualified Data.ByteString.Lazy.Char8 as LBC
 
-import qualified Sonowz.Raytrace.Types.API     as API
-import qualified Sonowz.Raytrace.MessageQueue  as MessageQueue
-import qualified Sonowz.Raytrace.RTConfigCreator
-                                               as RTConfigCreator
+import qualified Sonowz.Raytrace.Types.API as API
+import qualified Sonowz.Raytrace.MessageQueue as MessageQueue
+import qualified Sonowz.Raytrace.RTConfigCreator as RTConfigCreator
 
 -- IPC object between daemon and websocket process
-data WSData = WSData (MessageQueue.DBConnection, Chan (MVar WSMessage))
+newtype WSData = WSData (MessageQueue.DBConnection, Chan (MVar WSMessage))
 
 data WSMessage =
     MessageId Int       -- message created (with id)
@@ -34,14 +31,14 @@ data WSMessage =
   | ProcessStarted      -- raytrace process has started
   | ProcessFinished Int -- raytrace process sucessfully created image (with id)
   | ProcessFailed       -- raytrace process failed during execution
+  deriving Show
 
-data WSException = WSException String deriving Show
+newtype WSException = WSException String deriving Show
 instance Exception WSException
 
 instance MonadUnliftIO Servant.Handler where
-  withRunInIO
-    :: ((forall a . Servant.Handler a -> IO a) -> IO b) -> Servant.Handler b
-  withRunInIO f = liftIO $ f (\h -> runHandler h >>= either throwIO return)
+  withRunInIO :: ((forall a . Servant.Handler a -> IO a) -> IO b) -> Servant.Handler b
+  withRunInIO f = liftIO $ f (runHandler >=> either throwIO return)
 
 initWSData :: IO WSData
 initWSData = do
@@ -57,9 +54,9 @@ wsServer wsdata = runWebsocket where
     params            <- timeoutWrapper 3 (getParameters conn)
     config            <- makeConfig params
     (messageMVar, id) <- registerEvent wsdata config
-    _ <- forkIO (catchConnError wsdata id $ doProxy conn messageMVar)
+    _                 <- forkIO (catchConnError wsdata id $ doProxy conn messageMVar)
     catchConnError wsdata id $ ping conn
-    return ()--) (\(WSException err) -> send conn (show err))
+    pass -- ) (\(WSException err) -> send conn (show err))
 
 -- Receive ping from client
 ping :: MonadIO io => WS.Connection -> io ()
@@ -73,8 +70,7 @@ ping conn = liftIO $ forever $ do
 catchConnError :: (MonadUnliftIO io) => WSData -> Int -> io a -> io a
 catchConnError wsdata id work = catch work (handler wsdata id) where
   handler :: (MonadUnliftIO io) => WSData -> Int -> WS.ConnectionException -> io a
-  handler wsdata id e =
-    unregisterEvent wsdata id >> throwIO (WSException "client closed")
+  handler wsdata id _ = unregisterEvent wsdata id >> throwIO (WSException "client closed")
 
 -- Timeout setter wrapper
 timeoutWrapper :: MonadUnliftIO io => Int -> io a -> io a
@@ -113,8 +109,8 @@ unregisterEvent (WSData (dbconn, _)) id = do
   result <- MessageQueue.dequeue id dbconn
   case result of
     Nothing    -> throwIO $ WSException "DB excption occurred: unregister"
-    Just True  -> putStrLn ("Job #" ++ show id ++ " dequeued.") >> return ()
-    Just False -> return () -- TODO terminate running process
+    Just True  -> void $ putStrLn ("Job #" ++ show id ++ " dequeued.")
+    Just False -> pass -- TODO terminate running process
 
 -- Receive daemon message, and send it to client
 doProxy :: MonadUnliftIO io => WS.Connection -> MVar WSMessage -> io ()
@@ -123,20 +119,19 @@ doProxy conn messageMVar = do
   let loop = doProxy conn messageMVar
   message <- takeMVar messageMVar
   case message of
-    RemainingQueue n ->
-      send conn ("Job queued: " ++ show n ++ " jobs remaining") >> loop
-    ProcessStarted     -> send conn "Processing image..." >> loop
-    ProcessFinished id -> send conn ("Finished: " ++ show id)
-      >> liftIO (WS.sendClose conn (LBC.pack "end"))
-    ProcessFailed -> send conn "Finished: -1"
-      >> liftIO (WS.sendClose conn (LBC.pack "endfail"))
+    RemainingQueue n -> send conn ("Job queued: " ++ show n ++ " jobs remaining") >> loop
+    ProcessStarted   -> send conn "Processing image..." >> loop
+    ProcessFinished id ->
+      send conn ("Finished: " ++ show id) >> liftIO (WS.sendClose conn (LBC.pack "end"))
+    ProcessFailed -> send conn "Finished: -1" >> liftIO (WS.sendClose conn (LBC.pack "endfail"))
+    MessageId _   -> throwIO $ WSException ("Unexpected message: " <> show message)
 
 -- Send close request to client
-closeRequest :: MonadUnliftIO io => WS.Connection -> io ()
-closeRequest conn = do
+_closeRequest :: MonadUnliftIO io => WS.Connection -> io ()
+_closeRequest conn = do
   liftIO $ WS.sendClose conn (LBC.pack "end")
   _ <- liftIO $ timeoutWrapper 1 $ WS.receiveDataMessage conn
-  return ()
+  pass
 
 -- Send string to client
 send :: MonadUnliftIO io => WS.Connection -> String -> io ()

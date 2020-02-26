@@ -1,6 +1,10 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 
-module Sonowz.Raytrace.Daemon (main, onQuit) where
+module Sonowz.Raytrace.Daemon
+  ( main
+  , onQuit
+  )
+where
 
 import Relude hiding (newEmptyMVar, takeMVar, putMVar)
 import System.Exit
@@ -29,23 +33,21 @@ onQuit (Right _) = putStrLn "Daemon terminated successfully."
 main :: RTWebsocket.WSData -> IO ()
 main (RTWebsocket.WSData (conn, registerChan)) = do
   -- Make mutable instances
-  dictRef <- (newIORef Map.empty :: IO (IORef WSDict))
-  idRef <- newIORef 1
-  _ <- forkIO $ dictSetter dictRef idRef registerChan
+  dictRef <- newIORef Map.empty :: IO (IORef WSDict)
+  idRef   <- newIORef 1
+  _       <- forkIO $ dictSetter dictRef idRef registerChan
 
   -- Get job from MessageQueue and execute
   forever $ do
     message <- MessageQueue.popFrontMessage conn
     case message of
-      Nothing -> threadDelay 1000000
+      Nothing            -> threadDelay 1000000
       Just (pid, config) -> do
         status <- MessageQueue.getStatus conn
         sendStatus dictRef `mapM` status
         sendProcessStart dictRef pid
         success <- doRaytraceProcess pid config
-        if success
-          then sendProcessFinish dictRef pid
-          else sendProcessFail dictRef pid
+        if success then sendProcessFinish dictRef pid else sendProcessFail dictRef pid
 
 
 -- Subprocess which handles new request
@@ -57,10 +59,10 @@ dictSetter dictRef idRef chan = forever $ do
 -- Returns new ID
 setDict :: IORef WSDict -> IORef Int -> WSMVar -> IO Int
 setDict dictRef idRef wsMVar = do
-  pid <- readIORef idRef
-  pid' <- return (pid + 1)
+  pid  <- readIORef idRef
+  let pid' = pid + 1
   writeIORef idRef pid'
-  modifyIORef' dictRef (\dict -> Map.insert pid' wsMVar dict)
+  modifyIORef' dictRef (Map.insert pid' wsMVar)
   return pid'
 
 getMVarFromDict :: IORef WSDict -> Int -> IO WSMVar
@@ -75,11 +77,10 @@ sendID :: WSMVar -> Int -> IO ()
 sendID wsMVar pid = putMVar wsMVar (RTWebsocket.MessageId pid)
 
 sendSignal :: RTWebsocket.WSMessage -> IORef WSDict -> Int -> IO ()
-sendSignal signal dictRef pid =
-  getMVarFromDict dictRef pid >>= (flip putMVar) signal
+sendSignal signal dictRef pid = getMVarFromDict dictRef pid >>= flip putMVar signal
 
 sendStatus :: IORef WSDict -> (Int, Int) -> IO ()
-sendStatus dictRef (pid, n) = sendSignal (RTWebsocket.RemainingQueue n) dictRef pid 
+sendStatus dictRef (pid, n) = sendSignal (RTWebsocket.RemainingQueue n) dictRef pid
 
 sendProcessFinish :: IORef WSDict -> Int -> IO ()
 sendProcessFinish dictRef pid = sendSignal (RTWebsocket.ProcessFinished pid) dictRef pid
@@ -95,11 +96,12 @@ doRaytraceProcess :: Int -> String -> IO Bool
 doRaytraceProcess pid config = do
   -- TODO make config file
   let raytracePath = "/home/sonowz/packages/raytrace"
-  let outputPath = "/home/sonowz/data/www/graphics-demo/image/raytrace"
+  let outputPath   = "/home/sonowz/data/www/graphics-demo/image/raytrace"
   shellResult <- Script.raytraceScript pid (toText config) raytracePath outputPath
-  time <- fmap show getZonedTime
+  time        <- fmap show getZonedTime
   case shellResult of
-    Script.ShellResult ExitSuccess _ _ -> putTextLn (time <> ": Job #" <> show pid <> " finished.") >> return True
+    Script.ShellResult ExitSuccess _ _ ->
+      putTextLn (time <> ": Job #" <> show pid <> " finished.") >> return True
     Script.ShellResult (ExitFailure _) out err -> do
       putTextLn (time <> ": Job #" <> show pid <> " failed.")
       putTextLn out
