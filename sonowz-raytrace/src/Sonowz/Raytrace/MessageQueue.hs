@@ -43,7 +43,7 @@ popFrontMessage = runSqlPool $ catchMaybe executeSql  where
     -- fmap over ReaderT, then over Maybe
     executeSql = getData <<$>> selectFirst [] [Desc MQueueCreatedTime]
     getData (Entity _ row) =
-        (mQueueQid row, show . mQueueConfig $ row) :: (Int, String)
+        (mQueueQid row, toString . mQueueConfig $ row) :: (Int, String)
 
 -- TODO return remainingQueue
 enqueue :: MonadUnliftIO io => Int -> String -> DBConnection -> io (Maybe Int)

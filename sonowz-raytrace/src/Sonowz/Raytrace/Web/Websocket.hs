@@ -1,4 +1,4 @@
-module Sonowz.Raytrace.Websocket
+module Sonowz.Raytrace.Web.Websocket
   ( wsServer
   , initWSData
   , WSData(WSData)

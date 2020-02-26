@@ -9,8 +9,8 @@ import qualified System.IO as IO
 
 import qualified Sonowz.Raytrace.Types.API     as API
 import qualified Sonowz.Raytrace.Daemon as RTDaemon
-import qualified Sonowz.Raytrace.Index as Raytrace
-import qualified Sonowz.Raytrace.Websocket as RTWebsocket
+import qualified Sonowz.Raytrace.Web.Index as Raytrace
+import qualified Sonowz.Raytrace.Web.Websocket as RTWebsocket
 
 api :: Proxy API.API
 api = Proxy

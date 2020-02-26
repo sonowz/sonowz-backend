@@ -11,6 +11,9 @@ category:            learn
 extra-source-files:
   - README.md
 
+ghc-options:
+  - -W
+
 dependencies:
   - aeson
   - async
@@ -36,11 +39,13 @@ dependencies:
   - text
   - time
   - transformers
+  - turtle
   - unliftio
   - unliftio-core
   - unordered-containers
   - vector
   - warp
+  - wai
   - websockets
 
 default-extensions:
@@ -87,6 +92,12 @@ default-extensions:
   - TypeSynonymInstances
   - TypeOperators
   - ViewPatterns            # New syntax #
+
+
+# library:
+#   ghc-options:
+#     - -W
+#     - -Werror
 
 executables:
   sonowz-raytrace:
