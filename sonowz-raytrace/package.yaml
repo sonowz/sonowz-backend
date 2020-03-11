@@ -25,14 +25,13 @@ dependencies:
   - directory
   - exceptions
   - filepath
-  - monad-logger
+  - opaleye
   - optparse-applicative
-  - persistent
-  - persistent-sqlite
-  - persistent-template
+  - postgresql-simple
   - process
+  - product-profunctors
+  - profunctors
   - relude
-  - resource-pool
   - servant
   - servant-server
   - servant-websockets

@@ -18,7 +18,7 @@ data RTConfig = RTConfig
   , dofAperture  :: Float
   , dofFocus     :: Int
   , sceneNo      :: Int
-  } deriving (Generic, Show)
+  } deriving (Generic, Eq, Show, Read)
 
 instance FromJSON RTConfig
 
@@ -42,6 +42,7 @@ data Config =
     Config String
   | DecodeFail
   | IntegrityFail String
+  deriving (Eq, Show, Read)
 
 jsonToConfig :: LByteString -> Config
 jsonToConfig _json = case decode _json of

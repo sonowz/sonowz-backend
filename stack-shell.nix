@@ -9,6 +9,7 @@ haskell.lib.buildStackProject {
   NIX_PATH = "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos";
   buildInputs = [
     nix
+    postgresql
     zlib
   ];
 }

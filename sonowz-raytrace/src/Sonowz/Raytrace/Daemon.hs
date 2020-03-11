@@ -9,11 +9,10 @@ where
 import Relude hiding (newEmptyMVar, takeMVar, putMVar)
 import System.Exit
 import Data.Time
-import Data.Map.Strict ((!))
 import UnliftIO.Chan
 import UnliftIO.Concurrent
-import qualified Data.Map.Strict as Map
 
+import Sonowz.Raytrace.Types.Message
 import qualified Sonowz.Raytrace.MessageQueue as MessageQueue
 import qualified Sonowz.Raytrace.DaemonScript as Script
 import qualified Sonowz.Raytrace.Web.Websocket as RTWebsocket
@@ -21,6 +20,9 @@ import qualified Sonowz.Raytrace.Web.Websocket as RTWebsocket
 
 type WSMVar = MVar RTWebsocket.WSMessage
 type WSDict = Map.Map Int WSMVar
+
+type HandlerState = StateT 
+data Servants = Servants (IntMap)
 
 -- Daemon terminate handler
 onQuit :: Either SomeException () -> IO ()
@@ -30,8 +32,8 @@ onQuit (Left err) = do
 onQuit (Right _) = putStrLn "Daemon terminated successfully."
 
 -- Daemon entry point
-main :: RTWebsocket.WSData -> IO ()
-main (RTWebsocket.WSData (conn, registerChan)) = do
+main :: GlobalInitData -> IO ()
+main (GlobalInitData (conn, rxQueue)) = do
   -- Make mutable instances
   dictRef <- newIORef Map.empty :: IO (IORef WSDict)
   idRef   <- newIORef 1
@@ -47,8 +49,7 @@ main (RTWebsocket.WSData (conn, registerChan)) = do
         sendStatus dictRef `mapM` status
         sendProcessStart dictRef pid
         success <- doRaytraceProcess pid config
-        if success then sendProcessFinish dictRef pid else sendProcessFail dictRef pid
-
+        (if success then sendProcessFinish else sendProcessFail) dictRef pid
 
 -- Subprocess which handles new request
 dictSetter :: IORef WSDict -> IORef Int -> Chan WSMVar -> IO ()
