@@ -64,26 +64,20 @@ warpPortP = option (auto >>= checkPort) (long "port" <> short 'p' <> value 80)
 connectInfoP :: Parser PGS.ConnectInfo
 connectInfoP = do
   let def = PGS.defaultConnectInfo
-  host <- strOption (long "pghost" <> short 'h' <> value (connectHost def))
-  port <- option auto (long "pgport" <> short 'P' <> value (connectPort def))
-  user <- strOption (long "pguser" <> short 'u' <> value (connectUser def))
-  password <- strOption (long "pgpasswd" <> short 'w' <> value (connectPassword def))
-  database <- strOption (long "pgdatabase" <> short 'd' <> value (connectDatabase def))
-  return PGS.ConnectInfo
-    { connectHost = host
-    , connectPort = port
-    , connectUser = user
-    , connectPassword = password
-    , connectDatabase = database
-    }
+  connectHost     <- strOption (long "pghost" <> short 'h' <> value (PGS.connectHost def))
+  connectPort     <- option auto (long "pgport" <> short 'P' <> value (PGS.connectPort def))
+  connectUser     <- strOption (long "pguser" <> short 'u' <> value (PGS.connectUser def))
+  connectPassword <- strOption (long "pgpasswd" <> short 'w' <> value (PGS.connectPassword def))
+  connectDatabase <- strOption (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def))
+  return PGS.ConnectInfo { .. }
 
 configP :: Parser ProgramConfig
 configP = do
-  warpPort' <- warpPortP
-  pgConnectInfo' <- connectInfoP
-  return ProgramConfig { warpPort = warpPort, pgConnectInfo = pgConnectInfo' }
+  warpPort      <- warpPortP
+  pgConnectInfo <- connectInfoP
+  return ProgramConfig { .. }
 
-opts :: ParserInfo Port
+opts :: ParserInfo ProgramConfig
 opts = info (helper <*> configP) (fullDesc <> progDesc "Raytrace backend server")
 
 -- 'Raytrace.Websocket.WSData' is mutable IPC object. (between Daemon and Server)
@@ -93,8 +87,8 @@ main = do
   IO.hSetBuffering stdout IO.LineBuffering -- For debugging
   IO.hSetBuffering stderr IO.LineBuffering
 
-  port   <- execParser opts
+  config <- execParser opts
 
-  wsInitData <- RTDaemon.makeInitData
+  wsdata <- undefined -- RTDaemon.makeInitData
   _      <- forkFinally (RTDaemon.main wsdata) RTDaemon.onQuit
-  run port (app wsdata)
+  run (warpPort config) (app wsdata)

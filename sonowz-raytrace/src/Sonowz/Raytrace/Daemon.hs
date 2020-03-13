@@ -7,22 +7,21 @@ module Sonowz.Raytrace.Daemon
 where
 
 import Relude hiding (newEmptyMVar, takeMVar, putMVar)
+import Relude.Extra.Map
 import System.Exit
 import Data.Time
 import UnliftIO.Chan
 import UnliftIO.Concurrent
 
-import Sonowz.Raytrace.Types.Message
 import qualified Sonowz.Raytrace.MessageQueue as MessageQueue
 import qualified Sonowz.Raytrace.DaemonScript as Script
 import qualified Sonowz.Raytrace.Web.Websocket as RTWebsocket
 
 
 type WSMVar = MVar RTWebsocket.WSMessage
-type WSDict = Map.Map Int WSMVar
+type WSDict = Map Int WSMVar
 
-type HandlerState = StateT 
-data Servants = Servants (IntMap)
+type HandlerState = StateT
 
 -- Daemon terminate handler
 onQuit :: Either SomeException () -> IO ()
@@ -32,21 +31,21 @@ onQuit (Left err) = do
 onQuit (Right _) = putStrLn "Daemon terminated successfully."
 
 -- Daemon entry point
-main :: GlobalInitData -> IO ()
-main (GlobalInitData (conn, rxQueue)) = do
+main :: RTWebsocket.WSData -> IO ()
+main wsdata = do
   -- Make mutable instances
-  dictRef <- newIORef Map.empty :: IO (IORef WSDict)
+  dictRef <- newIORef mempty :: IO (IORef WSDict)
   idRef   <- newIORef 1
-  _       <- forkIO $ dictSetter dictRef idRef registerChan
+  _       <- forkIO $ dictSetter dictRef idRef undefined -- registerChan
 
   -- Get job from MessageQueue and execute
   forever $ do
-    message <- MessageQueue.popFrontMessage conn
+    message <- undefined -- MessageQueue.popFrontMessage conn
     case message of
       Nothing            -> threadDelay 1000000
       Just (pid, config) -> do
-        status <- MessageQueue.getStatus conn
-        sendStatus dictRef `mapM` status
+        -- status <- MessageQueue.getStatus conn
+        -- sendStatus dictRef `mapM` status
         sendProcessStart dictRef pid
         success <- doRaytraceProcess pid config
         (if success then sendProcessFinish else sendProcessFail) dictRef pid
@@ -63,13 +62,13 @@ setDict dictRef idRef wsMVar = do
   pid  <- readIORef idRef
   let pid' = pid + 1
   writeIORef idRef pid'
-  modifyIORef' dictRef (Map.insert pid' wsMVar)
+  modifyIORef' dictRef (insert pid' wsMVar)
   return pid'
 
 getMVarFromDict :: IORef WSDict -> Int -> IO WSMVar
 getMVarFromDict dictRef pid = do
   dict <- readIORef dictRef
-  return $ dict ! pid
+  return $ dict !? pid ?: undefined
 
 
 -- Send functions which communicate with RTWebsocket thread

@@ -42,7 +42,7 @@ instance MonadUnliftIO Servant.Handler where
 
 initWSData :: IO WSData
 initWSData = do
-  conn <- MessageQueue._init
+  conn <- undefined -- MessageQueue._init
   chan <- newChan
   return $ WSData (conn, chan)
 
@@ -99,14 +99,14 @@ registerEvent (WSData (dbconn, chan)) config = do
   mvar <- newEmptyMVar
   writeChan chan mvar
   ~(MessageId id) <- takeMVar mvar
-  result          <- MessageQueue.enqueue id config dbconn
+  result          <- undefined -- MessageQueue.enqueue id config dbconn
   case result of
     Nothing -> throwIO $ WSException "DB excption occurred: register"
     Just _  -> putStrLn ("Job #" ++ show id ++ " queued.") >> return (mvar, id)
 
 unregisterEvent :: MonadUnliftIO io => WSData -> Int -> io ()
 unregisterEvent (WSData (dbconn, _)) id = do
-  result <- MessageQueue.dequeue id dbconn
+  result <- undefined -- MessageQueue.dequeue id dbconn
   case result of
     Nothing    -> throwIO $ WSException "DB excption occurred: unregister"
     Just True  -> void $ putStrLn ("Job #" ++ show id ++ " dequeued.")
