@@ -5,7 +5,7 @@ module Sonowz.Raytrace.Monad.MQueue
   ) where
 
 import Relude
-import Control.Exception.Safe (Exception, MonadThrow)
+import UnliftIO.Exception (Exception)
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..))
@@ -17,4 +17,4 @@ class Monad m => MonadMQueue m msg where
 
 data MQueueException = MQueueException Text deriving (Show, Exception)
 
-type WithDb r m = (MonadReader r m, Has PGS.Connection r, MonadIO m, MonadThrow m)
+type WithDb r m = (MonadReader r m, Has PGS.Connection r, MonadIO m)

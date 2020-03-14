@@ -17,31 +17,30 @@ ghc-options:
 
 dependencies:
   - aeson
-  - async
+# - async
   - base
   - bytestring
   - containers
   - deepseq
-  - directory
+# - directory
   - exceptions
-  - filepath
+# - filepath
   - opaleye
   - optparse-applicative
   - postgresql-simple
-  - process
+# - process
   - product-profunctors
   - profunctors
   - relude
   - servant
   - servant-server
   - servant-websockets
-  - stm
+# - stm
   - text
   - time
   - transformers
   - turtle
   - unliftio
-  - unliftio-core
   - unordered-containers
   - vector
   - warp
