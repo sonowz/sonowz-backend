@@ -13,11 +13,14 @@ extra-source-files:
 
 ghc-options:
   - -W
+#  - -ddump-to-file
+#  - -ddump-tc-trace
+  - -fprint-potential-instances
 #  - -fforce-recomp
 
 dependencies:
   - aeson
-# - async
+  - async
   - base
   - bytestring
   - containers

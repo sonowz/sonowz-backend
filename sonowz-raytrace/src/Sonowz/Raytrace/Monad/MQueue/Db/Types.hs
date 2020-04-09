@@ -9,7 +9,7 @@ import Data.Profunctor.Product.Default (Default(..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import qualified Database.PostgreSQL.Simple.FromField as FF
 
-import Sonowz.Raytrace.RTConfigCreator (Config)
+import Sonowz.Raytrace.RaytraceConfig (Config(..))
 
 newtype Qid = Qid Int
   deriving (Eq, Show, Read) deriving (Num) via Int
@@ -22,7 +22,7 @@ data DaemonOp =
   deriving (Eq, Show, Read)
 
 data ServantOp =
-    Enqueued ServantId
+    Enqueued
   | Dequeued
   | RemainingQueue Int
   | ProcessStarted
@@ -48,10 +48,18 @@ type MessageFieldR op = MessageQueue -- Read fields
   (Field SqlText)
   (Field SqlTimestamptz)
 type MessageTable op = Table (MessageFieldW op) (MessageFieldR op)
-type DaemonMessage = Message DaemonOp
 type DaemonMessageTable = MessageTable DaemonOp
-type ServantMessage = Message ServantOp
+type DaemonMessage = Message DaemonOp
 type ServantMessageTable = MessageTable ServantOp
+type ServantMessage = Message ServantOp
+
+emptyMessage :: MessageQueue c1 c2 c3 c4
+emptyMessage = MessageQueue
+  { qid = error "Unexpected 'qid' access"
+  , servantId = error "Unexpected 'servantId' access"
+  , operation = error "Unexpected 'operation' access"
+  , createdTime = error "Unexpected 'createdTime' access"
+  }
 
 -- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pMessageQueue" ''MessageQueue)

@@ -5,7 +5,6 @@ import Relude hiding (null)
 import Relude.Extra.Newtype
 import Opaleye
 import Control.Arrow
-import Control.Monad.IO.Unlift
 import Data.Time
 import Data.Profunctor.Product.Default (Default)
 import Database.PostgreSQL.Simple (Connection)
@@ -14,7 +13,7 @@ import Data.Profunctor (dimap)
 import UnliftIO.Exception
 import qualified Opaleye.Aggregate as Agg
 
-import Sonowz.Raytrace.Types.MessageQueue
+import Sonowz.Raytrace.Monad.MQueue.Db.Types
 
 -- Message queue is implemented with PostgreSQL, for studying.
 -- Queries are written in a way that they just look like plain code (not SQL),
