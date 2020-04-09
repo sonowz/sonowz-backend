@@ -1,5 +1,6 @@
-module Sonowz.Raytrace.RunnerConfig
+module Sonowz.Raytrace.RaytraceConfig
   ( Config(..)
+  , ConfigResult(..)
   , jsonToConfig
   )
 where
@@ -25,15 +26,17 @@ data RTConfig = RTConfig
 instance FromJSON RTConfig where
   parseJSON = withObject "RTConfig" parseRTConfig
 
-data Config =
-    Config Text
+newtype Config = Config Text deriving (Eq, Show, Read) via Text
+
+data ConfigResult =
+    ConfigSuccess Config
   | DecodeFail Text
   deriving (Eq, Show, Read)
 
-jsonToConfig :: LByteString -> Config
+jsonToConfig :: LByteString -> ConfigResult
 jsonToConfig _json = case eitherDecode' _json of
   Left errormsg  -> DecodeFail (toText errormsg)
-  Right rtConfig -> Config $ createConfig rtConfig
+  Right rtConfig -> ConfigSuccess $ createConfig rtConfig
 
 parseRTConfig :: Aeson.Object -> Aeson.Parser RTConfig
 parseRTConfig obj = do
@@ -64,7 +67,7 @@ range name minValue maxValue value =
   then Right value
   else Left $ name <> " must be in range [" <> show minValue <> ", " <> show maxValue <> "]."
 
-createConfig :: RTConfig -> Text
+createConfig :: RTConfig -> Config
 createConfig conf =
   let
     def opt param enable = mconcat
@@ -74,7 +77,7 @@ createConfig conf =
       , if show param == "()" then "" else show param
       ]
   in
-    mconcat
+    Config $ mconcat
     [ "#pragma once\n"
     , def "PIXEL_WIDTH"  (pixelWidth conf)  True
     , def "PIXEL_HEIGHT" (pixelHeight conf) True
