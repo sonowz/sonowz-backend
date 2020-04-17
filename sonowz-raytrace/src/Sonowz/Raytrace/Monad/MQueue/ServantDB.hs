@@ -8,7 +8,7 @@ import Relude
 import UnliftIO (MonadUnliftIO(..))
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
-import Sonowz.Raytrace.Monad.MQueue (MonadMQueue (..), MQueueException (..), WithDb)
+import Sonowz.Raytrace.Monad.MQueue (MonadMQueue (..), WithDb)
 import Sonowz.Raytrace.Monad.MQueue.Db.Types (ServantMessage, ServantOp(..), ServantId(..))
 
 instance WithDb m => MonadMQueue ServantMessage (ServantQT env m) where

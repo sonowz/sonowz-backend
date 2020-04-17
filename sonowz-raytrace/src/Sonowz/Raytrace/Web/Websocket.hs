@@ -6,8 +6,8 @@ where
 import Relude hiding (newEmptyMVar, takeMVar)
 import Relude.Extra.Newtype (un)
 import UnliftIO (MonadUnliftIO(..))
-import UnliftIO.Async
-import UnliftIO.Concurrent
+import UnliftIO.Async (async, waitAnyCancel)
+import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (finally)
 
 import qualified Network.WebSockets as WS
@@ -27,15 +27,15 @@ import Sonowz.Raytrace.RaytraceConfig (jsonToConfig, Config(..), ConfigResult(..
 
 websocketHandler :: (MonadHas WS.Connection m, WithDb m, MonadWebsocket m, MonadUnliftIO m) => m ()
 websocketHandler =
-  finally (getRunnerConfig >>= enqueueRaytrace >>= forkProgressThreads) sendCloseSignal
+  finally (getRunnerConfig >>= enqueueRaytrace >>= forkWaitProgressThreads) sendCloseSignal
 
 -- Watch raytrace progress & receive ping from client
-forkProgressThreads
+forkWaitProgressThreads
   :: (MonadHas WS.Connection m, WithDb m, MonadUnliftIO m, Monad m) => ServantId -> m ()
-forkProgressThreads servantId' = do
+forkWaitProgressThreads servantId' = do
   env               <- makeRaytraceProgressEnv
-  tRaytraceProgress <- async (withServantQueue servantId' env raytraceProgressHandler)
-  tPing             <- async pingHandler
+  tRaytraceProgress <- async (withServantQueue servantId' env raytraceProgressThread)
+  tPing             <- async pingThread
   waitAnyCancel [tRaytraceProgress, tPing] -- If any of two exits, close websocket
   pass
 
@@ -73,12 +73,12 @@ makeRaytraceProgressEnv = do
   pgConn <- grab @PGS.Connection
   return RaytraceProgressEnv { .. }
 
-raytraceProgressHandler :: (WithMQueues m ServantMessage WSMessage, MonadHas ServantId m) => m ()
-raytraceProgressHandler = do
+raytraceProgressThread :: (WithMQueues m ServantMessage WSMessage, MonadHas ServantId m) => m ()
+raytraceProgressThread = do
   servantId' <- grab @ServantId
-  runMQueueThread (raytraceProgressHandler' servantId') where
-  raytraceProgressHandler' :: Monad m => ServantId -> ThreadHandler m ServantMessage WSMessage
-  raytraceProgressHandler' servantId' MessageQueue {..} = return (handle servantId' operation)
+  runMQueueThread (raytraceProgressThread' servantId') where
+  raytraceProgressThread' :: Monad m => ServantId -> ThreadHandler m ServantMessage WSMessage
+  raytraceProgressThread' servantId' MessageQueue {..} = return (handle servantId' operation)
   handle :: ServantId -> ServantOp -> HandlerResult WSMessage
   handle _   Enqueued           = HContinue
   handle _   Dequeued           = HTerminate
@@ -89,8 +89,8 @@ raytraceProgressHandler = do
   hSend          = HSend . WSMessage
   hSendTerminate = HSendTerminate . WSMessage
 
-pingHandler :: (MonadHas WS.Connection m, MonadIO m) => m ()
-pingHandler = do
+pingThread :: (MonadHas WS.Connection m, MonadIO m) => m ()
+pingThread = do
   conn <- grab @WS.Connection
   forever $ do
     liftIO $ WS.receive conn

@@ -1,61 +1,24 @@
 module Main where
 
 import Relude
-import Control.Concurrent
-import Network.Wai.Handler.Warp
+import Network.Wai.Handler.Warp (Port, run)
 import Options.Applicative
-import Servant
-import qualified System.IO as IO
+import Servant.Server (serve)
+import UnliftIO.IO (hSetBuffering, BufferMode(LineBuffering))
 import qualified Database.PostgreSQL.Simple as PGS
 
-import Sonowz.Raytrace.Types.Config (ProgramConfig(..))
-import qualified Sonowz.Raytrace.Types.API as API
+import Sonowz.Raytrace.Env (Env(..))
 import qualified Sonowz.Raytrace.Daemon as RTDaemon
-import qualified Sonowz.Raytrace.Web.Index as Raytrace
-import qualified Sonowz.Raytrace.Web.Websocket as RTWebsocket
+import qualified Sonowz.Raytrace.Web as RTServant
 
 {-
-new file structure
-Main.hs
-Sonowz.Raytrace
-  Env.hs
-  Monad
-    MessageQueue
-      Query.hs
-    MessageQueue.hs --https://github.com/Holmusk/three-layer/blob/master/src/Lib/Effects/Session.hs
-    Thread
-      Blocking.hs
-      Stoppable.hs -- can be gracefully killed (or just use `onExit`?)
-    Thread.hs
-    RunnerConfig.hs
-  Web
-    Types.hs
-    MonadWebsocket.hs -- abstract Websocket interface to clean code `Websocket.hs`
-    Thread
-      Blocking.hs
-      Stoppable.hs
-    Thread.hs
-    Websocket.hs
-  Web.hs
-  Daemon
-    Thread
-      Blocking.hs
-    Thread.hs
-    RunnerScript.hs
-  Daemon.hs
-    
+  TODO:
+    Make MonadXXX instances specific to monad type
+    (e.g. instance MonadMQueue DaemonMessage DaemonApp)
+    And replace current constraint-based instances with constraint-based functions
 -}
 
-api :: Proxy API.API
-api = Proxy
-
-server :: RTWebsocket.WSData -> Server API.API
-server = Raytrace.site
-
-app :: RTWebsocket.WSData -> Application
-app wsdata = serve api (server wsdata)
-
--- TODO: refactor using https://docs.servant.dev/en/stable/cookbook/using-custom-monad/UsingCustomMonad.html
+data Config = Config Port PGS.ConnectInfo
 
 warpPortP :: Parser Port
 warpPortP = option (auto >>= checkPort) (long "port" <> short 'p' <> value 80)
@@ -71,24 +34,24 @@ connectInfoP = do
   connectDatabase <- strOption (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def))
   return PGS.ConnectInfo { .. }
 
-configP :: Parser ProgramConfig
-configP = do
-  warpPort      <- warpPortP
-  pgConnectInfo <- connectInfoP
-  return ProgramConfig { .. }
+configP :: Parser Config
+configP = Config <$> warpPortP <*> connectInfoP
 
-opts :: ParserInfo ProgramConfig
+opts :: ParserInfo Config
 opts = info (helper <*> configP) (fullDesc <> progDesc "Raytrace backend server")
 
--- 'Raytrace.Websocket.WSData' is mutable IPC object. (between Daemon and Server)
--- 'Raytrace.Daemon' receives input, runs raytrace assignment program, and send image file ID.
+
 main :: IO ()
 main = do
-  IO.hSetBuffering stdout IO.LineBuffering -- For debugging
-  IO.hSetBuffering stderr IO.LineBuffering
+  hSetBuffering stdout LineBuffering -- For debugging
+  hSetBuffering stderr LineBuffering
 
-  config <- execParser opts
+  (Config warpPort pgConnectInfo) <- execParser opts
 
-  wsdata <- undefined -- RTDaemon.makeInitData
-  _      <- forkFinally (RTDaemon.main wsdata) RTDaemon.onQuit
-  run (warpPort config) (app wsdata)
+  pgConnection                    <- PGS.connect pgConnectInfo
+  let env = Env warpPort pgConnection
+
+  RTDaemon.forkDaemon env
+
+  let waiApp = serve RTServant.api (RTServant.server env)
+  run warpPort waiApp
