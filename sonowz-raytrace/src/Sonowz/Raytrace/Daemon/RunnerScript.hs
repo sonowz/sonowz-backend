@@ -2,7 +2,8 @@ module Sonowz.Raytrace.Daemon.RunnerScript
   ( ShellResult(..)
   , raytraceScript
   , example
-  ) where
+  )
+where
 
 import Relude hiding (stdin, FilePath)
 import Turtle

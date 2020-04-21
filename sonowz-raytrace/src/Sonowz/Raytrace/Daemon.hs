@@ -16,8 +16,8 @@ forkDaemon :: Env -> IO ()
 forkDaemon env = runDaemonAppAsIO env forkRaytraceDaemon
 
 runDaemonAppAsIO :: Env -> DaemonApp a -> IO a
-runDaemonAppAsIO Env{..} (DaemonApp app) = do
+runDaemonAppAsIO Env {..} (DaemonApp app) = do
   let ePgConn = envPgConnection
-  eRunInfoQueue <- initRunInfoQueue
+  eRunInfoQueue   <- initRunInfoQueue
   eCurrentRunInfo <- emptyCurrentRunInfo
-  runReaderT app DaemonAppEnv{..} where
+  runReaderT app DaemonAppEnv { .. } where

@@ -1,7 +1,8 @@
 module Sonowz.Raytrace.Core.Has
-  ( Has (..)
-  , MonadHas (..)
-  ) where
+    ( Has(..)
+    , MonadHas(..)
+    )
+where
 
 import Relude
 
@@ -13,7 +14,7 @@ class Has field env where
 instance a ~ a' => Has a a' where
   obtain = id
  -}
- 
+
 class MonadHas field m where
   grab :: m field
 

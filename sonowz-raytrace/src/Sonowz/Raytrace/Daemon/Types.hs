@@ -47,4 +47,5 @@ instance Has CurrentRunInfo DaemonAppEnv where
 initRunInfoQueue :: MonadIO m => m (IORefQueue RunInfo)
 initRunInfoQueue = newIORef ([] :: [RunInfo])
 emptyCurrentRunInfo :: MonadIO m => m CurrentRunInfo
-emptyCurrentRunInfo = CurrentRunInfo <$> newIORef (error "Attempt to access uninitialized CurrentRunInfo")
+emptyCurrentRunInfo =
+  CurrentRunInfo <$> newIORef (error "Attempt to access uninitialized CurrentRunInfo")

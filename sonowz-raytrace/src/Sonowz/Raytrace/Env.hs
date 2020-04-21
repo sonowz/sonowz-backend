@@ -10,6 +10,8 @@ data Env = Env
   , envPgConnection :: PGS.Connection
   }
 
-instance Has Warp.Port Env where obtain = envWarpPort
-instance Has PGS.Connection Env where obtain = envPgConnection
+instance Has Warp.Port Env where
+  obtain = envWarpPort
+instance Has PGS.Connection Env where
+  obtain = envPgConnection
 

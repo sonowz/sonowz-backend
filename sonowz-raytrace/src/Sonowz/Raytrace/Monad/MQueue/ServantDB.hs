@@ -4,7 +4,8 @@ module Sonowz.Raytrace.Monad.MQueue.ServantDB
   , withServantQueue
   , ServantQT(..)
   , ServantEnv(..)
-  ) where
+  )
+where
 
 import Relude
 import UnliftIO (MonadUnliftIO(..))
@@ -44,10 +45,7 @@ instance MonadIO m => MonadIO (ServantQT env m) where
   liftIO = lift . liftIO
 
 instance MonadUnliftIO m => MonadUnliftIO (ServantQT env m) where
-  withRunInIO inner =
-    ServantQT $ \r ->
-    withRunInIO $ \run ->
-    inner (run . flip runServantQT r)
+  withRunInIO inner = ServantQT $ \r -> withRunInIO $ \run -> inner (run . flip runServantQT r)
 
 instance {-# OVERLAPPING #-} Monad m => MonadHas ServantId (ServantQT env m) where
   grab = (\(ServantEnv sid _) -> sid) <$> ask

@@ -1,7 +1,8 @@
 module Sonowz.Raytrace.Monad.MQueue.DaemonDB
   ( enqueueDaemonDB
   , dequeueDaemonDB
-  ) where
+  )
+where
 
 import Relude
 

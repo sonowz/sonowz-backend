@@ -1,8 +1,9 @@
 {-# LANGUAGE UndecidableInstances #-}
 module Sonowz.Raytrace.Monad.Websocket
-  ( MonadWebsocket (..)
-  , WSMessage (..)
-  ) where
+  ( MonadWebsocket(..)
+  , WSMessage(..)
+  )
+where
 
 import Relude
 import qualified Network.WebSockets as WS

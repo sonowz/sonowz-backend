@@ -1,8 +1,9 @@
 module Sonowz.Raytrace.Monad.MQueue
-  ( MonadMQueue (..)
-  , MQueueException (..)
+  ( MonadMQueue(..)
+  , MQueueException(..)
   , WithDb
-  ) where
+  )
+where
 
 import Relude
 import UnliftIO.Exception (throwString)
