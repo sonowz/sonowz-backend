@@ -11,12 +11,6 @@ import Sonowz.Raytrace.Env (Env(..))
 import qualified Sonowz.Raytrace.Daemon as RTDaemon
 import qualified Sonowz.Raytrace.Web as RTServant
 
-{-
-  TODO:
-    Make MonadXXX instances specific to monad type
-    (e.g. instance MonadMQueue DaemonMessage DaemonApp)
-    And replace current constraint-based instances with constraint-based functions
--}
 
 data Config = Config Port PGS.ConnectInfo
 

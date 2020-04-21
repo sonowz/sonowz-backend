@@ -25,7 +25,7 @@ import Sonowz.Raytrace.Monad.Websocket (MonadWebsocket(..), WSMessage(..))
 import Sonowz.Raytrace.RaytraceConfig (jsonToConfig, Config(..), ConfigResult(..))
 
 
-websocketHandler :: (MonadHas WS.Connection m, WithDb m, MonadWebsocket m, MonadUnliftIO m) => m ()
+websocketHandler :: (MonadHas WS.Connection m, MonadHas PGS.Connection m, MonadMQueue DaemonMessage m, MonadWebsocket m, MonadUnliftIO m) => m ()
 websocketHandler =
   finally (getRunnerConfig >>= enqueueRaytrace >>= forkWaitProgressThreads) sendCloseSignal
 

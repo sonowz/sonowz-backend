@@ -1,5 +1,7 @@
 module Sonowz.Raytrace.Monad.MQueue.ServantDB
-  ( withServantQueue
+  ( enqueueServantDB
+  , dequeueServantDB
+  , withServantQueue
   , ServantQT(..)
   , ServantEnv(..)
   ) where
@@ -8,12 +10,16 @@ import Relude
 import UnliftIO (MonadUnliftIO(..))
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
-import Sonowz.Raytrace.Monad.MQueue (MonadMQueue (..), WithDb)
+import Sonowz.Raytrace.Monad.MQueue (WithDb, MonadMQueue(..))
 import Sonowz.Raytrace.Monad.MQueue.Db.Types (ServantMessage, ServantOp(..), ServantId(..))
 
-instance WithDb m => MonadMQueue ServantMessage (ServantQT env m) where
-  enqueue = undefined -- enqueueServantDB
-  dequeue = undefined -- dequeueServantDB
+
+enqueueServantDB :: (WithDb m, MonadHas ServantId m) => ServantMessage -> m ()
+enqueueServantDB = undefined
+
+dequeueServantDB :: (WithDb m, MonadHas ServantId m) => m (Maybe ServantMessage)
+dequeueServantDB = undefined
+
 
 newtype ServantQT env (m :: * -> *) a = ServantQT { runServantQT :: ServantEnv env -> m a }
   deriving (Generic, Functor, Applicative, Monad)
@@ -22,6 +28,10 @@ data ServantEnv env = ServantEnv ServantId env
 
 withServantQueue :: ServantId -> env -> ServantQT env m a -> m a
 withServantQueue sid env = flip runServantQT (ServantEnv sid env)
+
+instance (WithDb (ServantQT env m), Monad m) => MonadMQueue ServantMessage (ServantQT env m) where
+  enqueue = enqueueServantDB
+  dequeue = dequeueServantDB
 
 instance Monad m => MonadReader (ServantEnv env) (ServantQT env m) where
   ask = ServantQT return

@@ -6,15 +6,16 @@ where
 import Relude
 import Data.Time.LocalTime (getZonedTime)
 import UnliftIO (MonadUnliftIO)
-import UnliftIO.Async (Async, async, cancel, waitAnyCancel, waitCatch)
+import UnliftIO.Async (async, cancel, waitAnyCancel, waitCatch)
 import Turtle (ExitCode(ExitSuccess, ExitFailure))
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
+import Sonowz.Raytrace.Daemon.Types
 import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..))
 import Sonowz.Raytrace.Monad.MQueue.Db.Types
   (ServantId(..), ServantMessage, ServantOp(..), DaemonMessage, DaemonOp(..), MessageQueue(..), emptyMessage)
-import Sonowz.Raytrace.Monad.MQueue.RunInfoIORef (RunInfo(..), RunInfoQueue(..), remove)
+import Sonowz.Raytrace.Monad.MQueue.IORef (IORefQueue, removeIORef)
 import Sonowz.Raytrace.Monad.MQueue.ServantDB (withServantQueue)
 import Sonowz.Raytrace.Monad.MQueueThread
   (ThreadHandler, HandlerResult(..), WithMQueues, runMQueueThread)
@@ -22,16 +23,20 @@ import Sonowz.Raytrace.RaytraceConfig (Config(..))
 import qualified Sonowz.Raytrace.Daemon.RunnerScript as Script
 
 
-
-type RunnerProcess = Async Script.ShellResult
-newtype CurrentRunInfo = CurrentRunInfo (IORef (RunInfo, RunnerProcess))
-type RunT m = StateT [RunInfo] m
-
-forkRaytraceDaemon :: (MonadMQueue DaemonMessage m, MonadHas PGS.Connection m, MonadUnliftIO m, MonadIO m) => m ()
-forkRaytraceDaemon = void $ flip runStateT [] $ do -- Stack with RunInfo queue
-  tRunnerControl <- async runnerControlThread
-  tRunner <- async runnerThread
-  waitAnyCancel [tRunner, tRunnerControl]
+forkRaytraceDaemon
+  :: (MonadMQueue DaemonMessage m
+  , MonadMQueue RunInfo m
+  , MonadHas (IORefQueue RunInfo) m
+  , MonadHas CurrentRunInfo m
+  , MonadHas PGS.Connection m
+  , MonadUnliftIO m
+  , MonadIO m)
+  => m ()
+forkRaytraceDaemon = do
+    tRunnerControl <- async runnerControlThread
+    tRunner <- async runnerThread
+    waitAnyCancel [tRunner, tRunnerControl]
+    pass
 
 
 runnerThread :: (WithMQueues m RunInfo Void, MonadHas CurrentRunInfo m, MonadHas PGS.Connection m, MonadUnliftIO m) => m ()
@@ -79,13 +84,13 @@ runnerThread = runMQueueThread handle where
   writeQueueStatus = pass -- TODO: send 'RemainingQueue' to servant
       
 
-runnerControlThread :: (WithMQueues (RunT m) DaemonMessage RunInfo, MonadHas CurrentRunInfo (RunT m), MonadHas PGS.Connection (RunT m), MonadIO m) => RunT m ()
+runnerControlThread :: (WithMQueues m DaemonMessage RunInfo, MonadHas CurrentRunInfo m, MonadHas (IORefQueue RunInfo) m, MonadHas PGS.Connection m, MonadIO m) => m ()
 runnerControlThread = runMQueueThread runnerControlThread' where
 
-  runnerControlThread' :: (MonadHas CurrentRunInfo (RunT m), MonadHas PGS.Connection (RunT m), MonadIO m) => ThreadHandler (RunT m) DaemonMessage RunInfo
+  runnerControlThread' :: (MonadHas CurrentRunInfo m, MonadHas (IORefQueue RunInfo) m, MonadHas PGS.Connection m, MonadIO m) => ThreadHandler m DaemonMessage RunInfo
   runnerControlThread' MessageQueue {..} = handle servantId operation
 
-  handle :: (MonadHas CurrentRunInfo (RunT m), MonadHas PGS.Connection (RunT m), MonadIO m, Monad m) => ServantId -> DaemonOp -> RunT m (HandlerResult RunInfo)
+  handle :: (MonadHas CurrentRunInfo m, MonadHas (IORefQueue RunInfo) m, MonadHas PGS.Connection m, MonadIO m, Monad m) => ServantId -> DaemonOp -> m (HandlerResult RunInfo)
   handle servantId' (Enqueue config) = do
     sendToServant servantId' Enqueued
     return $ HSend (RunInfo servantId' config)
@@ -94,7 +99,7 @@ runnerControlThread = runMQueueThread runnerControlThread' where
     stopRunnerIfDequeued servantId'
     return HContinue
 
-  removeFromQueue servantId' = remove (\(RunInfo sid _) -> sid == servantId')
+  removeFromQueue servantId' = removeIORef (\(RunInfo sid _) -> sid == servantId')
 
   stopRunnerIfDequeued :: (MonadHas CurrentRunInfo m, MonadIO m) => ServantId -> m ()
   stopRunnerIfDequeued servantId' = do
