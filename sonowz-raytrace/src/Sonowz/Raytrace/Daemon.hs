@@ -20,4 +20,4 @@ runDaemonAppAsIO Env {..} (DaemonApp app) = do
   let ePgConn = envPgConnection
   eRunInfoQueue   <- initRunInfoQueue
   eCurrentRunInfo <- emptyCurrentRunInfo
-  runReaderT app DaemonAppEnv { .. } where
+  runReaderT app DaemonAppEnv { .. }

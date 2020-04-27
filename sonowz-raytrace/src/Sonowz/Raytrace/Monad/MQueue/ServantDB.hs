@@ -12,18 +12,27 @@ import UnliftIO (MonadUnliftIO(..))
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
 import Sonowz.Raytrace.Monad.MQueue (WithDb, MonadMQueue(..))
-import Sonowz.Raytrace.Monad.MQueue.Db.Types (ServantMessage, ServantOp(..), ServantId(..))
+import Sonowz.Raytrace.Monad.MQueue.Db.Types (MessageQueue(..), ServantMessage, ServantId(..))
+import Sonowz.Raytrace.Monad.MQueue.Db.Queries (enqueueServant, dequeueServant)
+import Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil (grabConn, boolToException)
 
 
 enqueueServantDB :: (WithDb m, MonadHas ServantId m) => ServantMessage -> m ()
-enqueueServantDB = undefined
+enqueueServantDB msg =
+  boolToException "enqueueDaemonDB"
+    $   grabConn
+    >>= (\conn -> liftIO $ enqueueServant conn (servantId msg) (operation msg))
 
 dequeueServantDB :: (WithDb m, MonadHas ServantId m) => m (Maybe ServantMessage)
-dequeueServantDB = undefined
+dequeueServantDB = do
+  conn       <- grabConn
+  servantId' <- grab @ServantId
+  liftIO $ dequeueServant conn servantId'
 
 
 newtype ServantQT env (m :: * -> *) a = ServantQT { runServantQT :: ServantEnv env -> m a }
-  deriving (Generic, Functor, Applicative, Monad)
+  deriving (Generic, Functor)
+  deriving (Applicative, Monad) via ReaderT (ServantEnv env) m
 
 data ServantEnv env = ServantEnv ServantId env
 

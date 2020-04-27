@@ -8,7 +8,7 @@ import Relude
 import Servant
 import qualified Network.WebSockets as WS
 
-import Sonowz.Raytrace.Env (Env)
+import Sonowz.Raytrace.Env (Env(..))
 import Sonowz.Raytrace.Web.Types
 import Sonowz.Raytrace.Web.Websocket (websocketHandler)
 
@@ -22,7 +22,9 @@ runServantAppAsHandler :: Env -> ServantApp a -> Handler a
 runServantAppAsHandler env = liftIO . runServantAppAsIO env
 
 runServantAppAsIO :: Env -> ServantApp a -> IO a
-runServantAppAsIO env app = undefined
+runServantAppAsIO Env {..} (ServantApp app) = runReaderT app ServantAppEnv { .. } where
+  eWsConn = error "Websocket connection is not established"
+  ePgConn = envPgConnection
 
 hoistConnToServantApp :: ServantApp a -> WS.Connection -> ServantApp a
 hoistConnToServantApp (ServantApp app) conn =

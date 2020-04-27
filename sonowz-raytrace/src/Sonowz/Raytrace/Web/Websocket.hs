@@ -8,17 +8,24 @@ import Relude.Extra.Newtype (un)
 import UnliftIO (MonadUnliftIO(..))
 import UnliftIO.Async (async, waitAnyCancel)
 import UnliftIO.Concurrent (threadDelay)
-import UnliftIO.Exception (finally)
+import UnliftIO.Exception (finally, bracket)
 
 import qualified Network.WebSockets as WS
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
 import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..), WithDb)
-import Sonowz.Raytrace.Monad.MQueue.DaemonDB ()
+import Sonowz.Raytrace.Monad.MQueue.DaemonDB (enqueueDaemonDBNew)
 import Sonowz.Raytrace.Monad.MQueue.ServantDB (withServantQueue)
 import Sonowz.Raytrace.Monad.MQueue.Db.Types
-  (ServantId, ServantMessage, DaemonMessage, ServantOp(..), MessageQueue(..))
+  ( ServantId
+  , ServantMessage
+  , DaemonMessage
+  , ServantOp(..)
+  , DaemonOp(..)
+  , MessageQueue(..)
+  , emptyMessage
+  )
 import Sonowz.Raytrace.Monad.MQueueThread
   (ThreadHandler, HandlerResult(..), WithMQueues, runMQueueThread)
 import Sonowz.Raytrace.Monad.Websocket (MonadWebsocket(..), WSMessage(..))
@@ -33,8 +40,9 @@ websocketHandler
      , MonadUnliftIO m
      )
   => m ()
-websocketHandler =
-  finally (getRunnerConfig >>= enqueueRaytrace >>= forkWaitProgressThreads) sendCloseSignal
+websocketHandler = flip finally sendCloseSignal $ do
+  config <- getRunnerConfig
+  bracket (enqueueRaytrace config) dequeueRaytrace forkWaitProgressThreads
 
 -- Watch raytrace progress & receive ping from client
 forkWaitProgressThreads
@@ -57,8 +65,12 @@ getRunnerConfig = encodeUtf8 <$> receiveText >>= makeRunnerConfig where
     DecodeFail    errormsg -> exitFailure -- TODO: logging
     ConfigSuccess config   -> return config
 
-enqueueRaytrace :: MonadMQueue DaemonMessage m => Config -> m ServantId
-enqueueRaytrace = undefined
+enqueueRaytrace :: WithDb m => Config -> m ServantId
+enqueueRaytrace config = enqueueDaemonDBNew (Enqueue config)
+
+dequeueRaytrace :: MonadMQueue DaemonMessage m => ServantId -> m ()
+dequeueRaytrace servantId' = enqueue dequeueMessage where
+  dequeueMessage = emptyMessage { servantId = servantId', operation = Dequeue } :: DaemonMessage
 
 instance MonadWebsocket m => MonadMQueue WSMessage m where
   enqueue = putWSMessage

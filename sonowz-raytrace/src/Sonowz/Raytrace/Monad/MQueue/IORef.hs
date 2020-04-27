@@ -10,9 +10,6 @@ import Relude
 import Data.List (partition)
 
 import Sonowz.Raytrace.Core.Has (MonadHas(..))
-import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..), WithDb)
-import Sonowz.Raytrace.Monad.MQueue.Db.Types (ServantId, DaemonMessage)
-import Sonowz.Raytrace.RaytraceConfig (Config(..))
 
 type IORefQueue a = IORef [a]
 

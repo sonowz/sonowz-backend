@@ -2,15 +2,12 @@
 module Sonowz.Raytrace.Monad.MQueue.Db.Queries where
 
 import Relude hiding (null)
-import Relude.Extra.Newtype
 import Opaleye
 import Control.Arrow
-import Data.Time
 import Data.Profunctor.Product.Default (Default)
 import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Data.Profunctor (dimap)
-import UnliftIO.Exception
 import qualified Opaleye.Aggregate as Agg
 
 import Sonowz.Raytrace.Monad.MQueue.Db.Types
@@ -56,7 +53,7 @@ enqueueDaemon conn servantId' message =
 enqueueDaemonNew :: DBConnection -> DaemonOp -> IO (Maybe ServantId)
 enqueueDaemonNew conn message = withTransaction conn $ do
   prevQid <- qidOrZero <$> selectResult
-  let newServantId = ServantId (un prevQid + 1)
+  let newServantId = ServantId (coerce prevQid + 1)
   insertResult newServantId message >>= \success -> if success
     then return (Just newServantId)
     else return Nothing
@@ -64,7 +61,7 @@ enqueueDaemonNew conn message = withTransaction conn $ do
     selectResult = Qid <<$>> runSelect conn (selectMaxQid daemonMessageQueue) :: IO [Qid]
     insertResult sid msg = insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
-enqueueServant :: DBConnection -> ServantId -> DaemonOp -> IO Bool
+enqueueServant :: DBConnection -> ServantId -> ServantOp -> IO Bool
 enqueueServant conn servantId' message =
   insertIsSuccess <$> runInsert_ conn (insertMessage servantMessageQueue servantId' message) :: IO Bool
 
@@ -82,8 +79,6 @@ dequeueServant conn sid = withTransaction conn $ runMaybeT $ do
   where
     selectResult = Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
     deleteResult qid = runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
-
-getStatus = undefined
 
 -- Queries --
 
@@ -126,58 +121,6 @@ insertMessage table servantId' operation' = Insert
       , operation   = toFields operation'
       , createdTime = Nothing
       }
-
-{--
-
-share [mkPersist sqlSettings, mkMigrate "migrateAll"] [persistLowerCase|
-MQueue
-    qid Int
-    config Text
-    createdTime UTCTime default=CURRENT_TIME
-    UniqueQid qid
-    deriving Show
-|]
-
-type DBConnection = Pool SqlBackend
-
-catchMaybe :: MonadUnliftIO io => io (Maybe a) -> io (Maybe a)
-catchMaybe = flip catchAny $ \_ -> return Nothing
-
--- TODO: change DB location
-_init :: MonadUnliftIO io => io DBConnection
-_init = do
-    pool <- runNoLoggingT $ createSqlitePool "db.sqlite3" 3
-    let truncate = deleteWhere ([] :: [Filter MQueue])
-    runSqlPool (runMigration migrateAll >> truncate) pool
-    return pool
-
-popFrontMessage :: MonadUnliftIO io => DBConnection -> io (Maybe (Int, String))
-popFrontMessage = runSqlPool $ catchMaybe executeSql  where
-    -- fmap over ReaderT, then over Maybe
-    executeSql = getData <<$>> selectFirst [] [Desc MQueueCreatedTime]
-    getData (Entity _ row) = (mQueueQid row, toString . mQueueConfig $ row) :: (Int, String)
-
--- TODO: return remainingQueue
-enqueue :: MonadUnliftIO io => Int -> String -> DBConnection -> io (Maybe Int)
-enqueue qid config = runSqlPool $ catchMaybe $ do
-    curtime <- liftIO getCurrentTime
-    -- fmap over ReaderT, then over Maybe
-    (fromIntegral . fromSqlKey) <<$>> insertUnique (MQueue qid (toText config) curtime)
-
-dequeue :: MonadUnliftIO io => Int -> DBConnection -> io (Maybe Bool)
-dequeue qid = runSqlPool $ catchMaybe $ do
-    -- fmap over ReaderT, then over Maybe
-    exists <- const True <<$>> getBy (UniqueQid qid)
-    deleteBy (UniqueQid qid)
-    return exists
-
--- [(qid, remaining count)]
-getStatus :: MonadUnliftIO io => DBConnection -> io [(Int, Int)]
-getStatus = runSqlPool $ do
-    -- fmap over ReaderT, then over []
-    qids <- mQueueQid . entityVal <<$>> selectList [] [Asc MQueueCreatedTime]
-    return $ zip qids [1 ..]
---}
 
 -- Opaleye helper functions --
 
