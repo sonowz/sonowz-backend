@@ -60,7 +60,7 @@ enqueueDaemonNew pool message = withDBConn pool $ \conn -> withTransaction conn 
     insertResult conn sid msg = insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
 enqueueServant :: DBConnPool -> ServantId -> ServantOp -> IO Bool
-enqueueServant pool servantId' message = withDBConn pool $ \conn -> do
+enqueueServant pool servantId' message = withDBConn pool $ \conn ->
   insertIsSuccess <$> runInsert_ conn (insertMessage servantMessageQueue servantId' message) :: IO Bool
 
 dequeueDaemon :: DBConnPool -> IO (Maybe DaemonMessage)

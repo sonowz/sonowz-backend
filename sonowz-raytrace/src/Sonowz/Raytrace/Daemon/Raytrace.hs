@@ -56,9 +56,9 @@ runnerThread = runMQueueThread handle where
     :: (MonadHas CurrentRunInfo m, MonadHas DBConnPool m, MonadUnliftIO m)
     => ThreadHandler m RunInfo Void
   handle runInfo@(RunInfo servantId' _) = do
+    writeRaytraceStart servantId'
     runnerProcess <- async $ runRaytraceScript runInfo
     setCurrentRunInfo runInfo runnerProcess
-    writeRaytraceStart servantId'
     writeQueueStatus
     processResult <- waitCatch runnerProcess
     writeRaytraceResult servantId' processResult
@@ -70,7 +70,7 @@ runnerThread = runMQueueThread handle where
     modifyIORef' ref (const currentRunInfo)
 
   logRaytrace :: MonadIO m => ServantId -> Text -> m ()
-  logRaytrace servantId' msg = do
+  logRaytrace (ServantId servantId') msg = do
     time <- liftIO $ fmap show getZonedTime
     let header = time <> ": Job #" <> show servantId' :: Text
     putTextLn (header <> " " <> msg)

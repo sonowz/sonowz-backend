@@ -30,10 +30,10 @@ data ServantOp =
   deriving (Eq, Show, Read)
 
 data MessageQueue c1 c2 c3 c4 = MessageQueue {
-  qid :: c1,
-  servantId :: c2,
-  operation :: c3,
-  createdTime :: c4
+  qid :: ~c1,
+  servantId :: ~c2,
+  operation :: ~c3,
+  createdTime :: ~c4
 } deriving (Show, Read)
 type Message op = MessageQueue Qid ServantId op UTCTime
 type MessageFieldW op = MessageQueue -- Write fields

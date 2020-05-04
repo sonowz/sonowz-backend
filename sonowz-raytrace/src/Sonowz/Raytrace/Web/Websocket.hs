@@ -18,7 +18,7 @@ import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..), WithDb)
 import Sonowz.Raytrace.Monad.MQueue.DaemonDB (enqueueDaemonDBNew)
 import Sonowz.Raytrace.Monad.MQueue.ServantDB (withServantQueue)
 import Sonowz.Raytrace.Monad.MQueue.Db.Types
-  ( ServantId
+  ( ServantId(..)
   , ServantMessage
   , DaemonMessage
   , ServantOp(..)
@@ -103,7 +103,7 @@ raytraceProgressThread = do
   handle _   Dequeued           = HTerminate
   handle _   (RemainingQueue n) = hSend ("Job queued: " <> show n <> " jobs remaining")
   handle _   ProcessStarted     = hSend "Processing image..."
-  handle id' ProcessFinished    = hSendTerminate ("Finished: " <> show id')
+  handle id' ProcessFinished    = hSendTerminate ("Finished: " <> show (coerce id' :: Int))
   handle _   ProcessFailed      = hSendTerminate "Finished: -1"
   hSend          = HSend . WSMessage
   hSendTerminate = HSendTerminate . WSMessage

@@ -13,7 +13,7 @@ import UnliftIO (MonadUnliftIO(..), bracket)
 newtype DBConnPool = DBConnPool (Pool Connection)
 
 createConnPool :: MonadIO m => ConnectInfo -> m DBConnPool
-createConnPool connInfo = liftIO $ DBConnPool <$> createPool (connect connInfo) close 1 10 5
+createConnPool connInfo = liftIO $ DBConnPool <$> createPool (connect connInfo) close 1 10 10
 
 withDBConn :: MonadUnliftIO m => DBConnPool -> (Connection -> m a) -> m a
 withDBConn (DBConnPool pool) action = bracket takeAction putAction doAction where
