@@ -69,11 +69,6 @@ runnerThread = runMQueueThread handle where
     CurrentRunInfo ref <- grab @CurrentRunInfo
     modifyIORef' ref (const currentRunInfo)
 
-  logRaytrace :: MonadIO m => ServantId -> Text -> m ()
-  logRaytrace (ServantId servantId') msg = do
-    time <- liftIO $ fmap show getZonedTime
-    let header = time <> ": Job #" <> show servantId' :: Text
-    putTextLn (header <> " " <> msg)
   writeRaytraceStart :: (MonadHas DBConnPool m, MonadUnliftIO m) => ServantId -> m ()
   writeRaytraceStart servantId' = do
     sendToServant servantId' ProcessStarted
@@ -129,6 +124,7 @@ runnerControlThread = runMQueueThread runnerControlThread' where
     -> DaemonOp
     -> m (HandlerResult RunInfo)
   handle servantId' (Enqueue config) = do
+    logRaytrace servantId' "queued."
     sendToServant servantId' Enqueued
     return $ HSend (RunInfo servantId' config)
   handle servantId' Dequeue = do
@@ -144,6 +140,12 @@ runnerControlThread = runMQueueThread runnerControlThread' where
     (RunInfo runSid _, runnerProcess) <- readIORef ref
     if runSid == servantId' then liftIO (cancel runnerProcess) else pass
 
+
+logRaytrace :: MonadIO m => ServantId -> Text -> m ()
+logRaytrace (ServantId servantId') msg = do
+  time <- liftIO $ fmap show getZonedTime
+  let header = time <> ": Job #" <> show servantId' :: Text
+  putTextLn (header <> " " <> msg)
 
 runRaytraceScript :: MonadIO m => RunInfo -> m Script.ShellResult
 runRaytraceScript (RunInfo (ServantId servantId') (Config config)) = do
