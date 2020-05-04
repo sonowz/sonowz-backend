@@ -5,10 +5,11 @@ import UnliftIO.Exception (throwIO)
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (grab)
+import Sonowz.Raytrace.Core.DB (DBConnPool)
 import Sonowz.Raytrace.Monad.MQueue (WithDb, MQueueException(..))
 
-grabConn :: WithDb m => m PGS.Connection
-grabConn = grab
+grabPool :: WithDb m => m DBConnPool
+grabPool = grab
 
 throwException text = throwIO (MQueueException $ "Error occurred while " <> text)
 

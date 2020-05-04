@@ -6,10 +6,11 @@ module Sonowz.Raytrace.Monad.MQueue
 where
 
 import Relude
+import UnliftIO (MonadUnliftIO(..))
 import UnliftIO.Exception (throwString)
-import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (MonadHas(..))
+import Sonowz.Raytrace.Core.DB (DBConnPool)
 
 -- Monad interface for message queue
 class Monad m => MonadMQueue msg m where
@@ -18,7 +19,7 @@ class Monad m => MonadMQueue msg m where
 
 data MQueueException = MQueueException Text deriving (Show, Exception)
 
-type WithDb m = (MonadHas PGS.Connection m, MonadIO m)
+type WithDb m = (MonadHas DBConnPool m, MonadUnliftIO m)
 
 instance MonadIO m => MonadMQueue Void m where
   enqueue _ = pass

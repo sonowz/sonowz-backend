@@ -3,9 +3,9 @@ module Sonowz.Raytrace.Daemon.Types where
 import Relude
 import UnliftIO (MonadUnliftIO(..))
 import UnliftIO.Async (Async)
-import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
+import Sonowz.Raytrace.Core.DB (DBConnPool)
 import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..))
 import Sonowz.Raytrace.Monad.MQueue.DaemonDB (enqueueDaemonDB, dequeueDaemonDB)
 import Sonowz.Raytrace.Monad.MQueue.Db.Types (ServantId, DaemonMessage)
@@ -34,11 +34,11 @@ instance Has field DaemonAppEnv => MonadHas field DaemonApp where
   grab = DaemonApp $ obtain <$> ask
 
 data DaemonAppEnv = DaemonAppEnv
-  { ePgConn :: PGS.Connection
+  { ePgConn :: DBConnPool
   , eRunInfoQueue :: IORefQueue RunInfo
   , eCurrentRunInfo :: CurrentRunInfo
   }
-instance Has PGS.Connection DaemonAppEnv where
+instance Has DBConnPool DaemonAppEnv where
   obtain = ePgConn
 instance Has (IORefQueue RunInfo) DaemonAppEnv where
   obtain = eRunInfoQueue

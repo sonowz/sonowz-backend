@@ -14,20 +14,20 @@ import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
 import Sonowz.Raytrace.Monad.MQueue (WithDb, MonadMQueue(..))
 import Sonowz.Raytrace.Monad.MQueue.Db.Types (MessageQueue(..), ServantMessage, ServantId(..))
 import Sonowz.Raytrace.Monad.MQueue.Db.Queries (enqueueServant, dequeueServant)
-import Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil (grabConn, boolToException)
+import Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil (grabPool, boolToException)
 
 
 enqueueServantDB :: (WithDb m, MonadHas ServantId m) => ServantMessage -> m ()
 enqueueServantDB msg = boolToException "enqueueServantDB" $ do
-  conn <- grabConn
-  liftIO $ enqueueServant conn (servantId msg) (operation msg)
+  pool <- grabPool
+  liftIO $ enqueueServant pool (servantId msg) (operation msg)
 
 
 dequeueServantDB :: (WithDb m, MonadHas ServantId m) => m (Maybe ServantMessage)
 dequeueServantDB = do
-  conn       <- grabConn
+  pool       <- grabPool
   servantId' <- grab @ServantId
-  liftIO $ dequeueServant conn servantId'
+  liftIO $ dequeueServant pool servantId'
 
 
 newtype ServantQT env (m :: * -> *) a = ServantQT { runServantQT :: ServantEnv env -> m a }

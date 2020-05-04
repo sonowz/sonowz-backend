@@ -11,9 +11,9 @@ import UnliftIO.Concurrent (threadDelay)
 import UnliftIO.Exception (finally, bracket)
 
 import qualified Network.WebSockets as WS
-import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
+import Sonowz.Raytrace.Core.DB (DBConnPool)
 import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..), WithDb)
 import Sonowz.Raytrace.Monad.MQueue.DaemonDB (enqueueDaemonDBNew)
 import Sonowz.Raytrace.Monad.MQueue.ServantDB (withServantQueue)
@@ -34,7 +34,7 @@ import Sonowz.Raytrace.RaytraceConfig (jsonToConfig, Config(..), ConfigResult(..
 
 websocketHandler
   :: ( MonadHas WS.Connection m
-     , MonadHas PGS.Connection m
+     , MonadHas DBConnPool m
      , MonadMQueue DaemonMessage m
      , MonadWebsocket m
      , MonadUnliftIO m
@@ -78,18 +78,18 @@ instance MonadWebsocket m => MonadMQueue WSMessage m where
 
 data RaytraceProgressEnv = RaytraceProgressEnv
   { wsConn :: WS.Connection
-  , pgConn :: PGS.Connection
+  , pgConn :: DBConnPool
   }
 instance Has WS.Connection RaytraceProgressEnv where
   obtain = wsConn
-instance Has PGS.Connection RaytraceProgressEnv where
+instance Has DBConnPool RaytraceProgressEnv where
   obtain = pgConn
 
 makeRaytraceProgressEnv
-  :: (MonadHas WS.Connection m, MonadHas PGS.Connection m, Monad m) => m RaytraceProgressEnv
+  :: (MonadHas WS.Connection m, MonadHas DBConnPool m, Monad m) => m RaytraceProgressEnv
 makeRaytraceProgressEnv = do
   wsConn <- grab @WS.Connection
-  pgConn <- grab @PGS.Connection
+  pgConn <- grab @DBConnPool
   return RaytraceProgressEnv { .. }
 
 raytraceProgressThread :: (WithMQueues m ServantMessage WSMessage, MonadHas ServantId m) => m ()

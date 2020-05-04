@@ -10,17 +10,17 @@ import Relude
 import Sonowz.Raytrace.Monad.MQueue (WithDb)
 import Sonowz.Raytrace.Monad.MQueue.Db.Types (MessageQueue(..), DaemonMessage, DaemonOp, ServantId)
 import Sonowz.Raytrace.Monad.MQueue.Db.Queries (enqueueDaemon, enqueueDaemonNew, dequeueDaemon)
-import Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil (grabConn, boolToException, maybeToException)
+import Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil (grabPool, boolToException, maybeToException)
 
 enqueueDaemonDB :: WithDb m => DaemonMessage -> m ()
 enqueueDaemonDB msg =
   boolToException "enqueueDaemonDB"
-    $   grabConn
-    >>= (\conn -> liftIO $ enqueueDaemon conn (servantId msg) (operation msg))
+    $   grabPool
+    >>= (\pool -> liftIO $ enqueueDaemon pool (servantId msg) (operation msg))
 
 dequeueDaemonDB :: WithDb m => m (Maybe DaemonMessage)
-dequeueDaemonDB = grabConn >>= liftIO . dequeueDaemon
+dequeueDaemonDB = grabPool >>= liftIO . dequeueDaemon
 
 enqueueDaemonDBNew :: WithDb m => DaemonOp -> m ServantId
 enqueueDaemonDBNew op =
-  maybeToException "enqueueDaemonDBNew" $ grabConn >>= liftIO . flip enqueueDaemonNew op
+  maybeToException "enqueueDaemonDBNew" $ grabPool >>= liftIO . flip enqueueDaemonNew op

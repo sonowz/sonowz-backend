@@ -8,6 +8,7 @@ import UnliftIO.IO (hSetBuffering, BufferMode(LineBuffering))
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Env (Env(..))
+import Sonowz.Raytrace.Core.DB (createConnPool)
 import qualified Sonowz.Raytrace.Daemon as RTDaemon
 import qualified Sonowz.Raytrace.Web as RTServant
 
@@ -42,7 +43,7 @@ main = do
 
   (Config warpPort pgConnectInfo) <- execParser opts
 
-  pgConnection                    <- PGS.connect pgConnectInfo
+  pgConnection                    <- createConnPool pgConnectInfo
   let env = Env warpPort pgConnection
 
   putTextLn "Forking daemon thread..."

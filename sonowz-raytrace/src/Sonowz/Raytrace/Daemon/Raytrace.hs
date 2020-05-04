@@ -8,9 +8,9 @@ import Data.Time.LocalTime (getZonedTime)
 import UnliftIO (MonadUnliftIO)
 import UnliftIO.Async (async, cancel, waitAnyCancel, waitCatch)
 import Turtle (ExitCode(ExitSuccess, ExitFailure))
-import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..), MonadHas(..))
+import Sonowz.Raytrace.Core.DB (DBConnPool)
 import Sonowz.Raytrace.Daemon.Types
 import Sonowz.Raytrace.Monad.MQueue (MonadMQueue(..))
 import Sonowz.Raytrace.Monad.MQueue.Db.Types
@@ -35,7 +35,7 @@ forkRaytraceDaemon
      , MonadMQueue RunInfo m
      , MonadHas (IORefQueue RunInfo) m
      , MonadHas CurrentRunInfo m
-     , MonadHas PGS.Connection m
+     , MonadHas DBConnPool m
      , MonadUnliftIO m
      , MonadIO m
      )
@@ -48,16 +48,12 @@ forkRaytraceDaemon = do
 
 
 runnerThread
-  :: ( WithMQueues m RunInfo Void
-     , MonadHas CurrentRunInfo m
-     , MonadHas PGS.Connection m
-     , MonadUnliftIO m
-     )
+  :: (WithMQueues m RunInfo Void, MonadHas CurrentRunInfo m, MonadHas DBConnPool m, MonadUnliftIO m)
   => m ()
 runnerThread = runMQueueThread handle where
 
   handle
-    :: (MonadHas CurrentRunInfo m, MonadHas PGS.Connection m, MonadUnliftIO m)
+    :: (MonadHas CurrentRunInfo m, MonadHas DBConnPool m, MonadUnliftIO m)
     => ThreadHandler m RunInfo Void
   handle runInfo@(RunInfo servantId' _) = do
     runnerProcess <- async $ runRaytraceScript runInfo
@@ -78,12 +74,12 @@ runnerThread = runMQueueThread handle where
     time <- liftIO $ fmap show getZonedTime
     let header = time <> ": Job #" <> show servantId' :: Text
     putTextLn (header <> " " <> msg)
-  writeRaytraceStart :: (MonadHas PGS.Connection m, MonadIO m) => ServantId -> m ()
+  writeRaytraceStart :: (MonadHas DBConnPool m, MonadUnliftIO m) => ServantId -> m ()
   writeRaytraceStart servantId' = do
     sendToServant servantId' ProcessStarted
     logRaytrace servantId' "started."
   writeRaytraceResult
-    :: (MonadHas PGS.Connection m, MonadIO m)
+    :: (MonadHas DBConnPool m, MonadUnliftIO m)
     => ServantId
     -> Either SomeException Script.ShellResult
     -> m ()
@@ -107,8 +103,8 @@ runnerControlThread
   :: ( WithMQueues m DaemonMessage RunInfo
      , MonadHas CurrentRunInfo m
      , MonadHas (IORefQueue RunInfo) m
-     , MonadHas PGS.Connection m
-     , MonadIO m
+     , MonadHas DBConnPool m
+     , MonadUnliftIO m
      )
   => m ()
 runnerControlThread = runMQueueThread runnerControlThread' where
@@ -116,8 +112,8 @@ runnerControlThread = runMQueueThread runnerControlThread' where
   runnerControlThread'
     :: ( MonadHas CurrentRunInfo m
        , MonadHas (IORefQueue RunInfo) m
-       , MonadHas PGS.Connection m
-       , MonadIO m
+       , MonadHas DBConnPool m
+       , MonadUnliftIO m
        )
     => ThreadHandler m DaemonMessage RunInfo
   runnerControlThread' MessageQueue {..} = handle servantId operation
@@ -125,8 +121,8 @@ runnerControlThread = runMQueueThread runnerControlThread' where
   handle
     :: ( MonadHas CurrentRunInfo m
        , MonadHas (IORefQueue RunInfo) m
-       , MonadHas PGS.Connection m
-       , MonadIO m
+       , MonadHas DBConnPool m
+       , MonadUnliftIO m
        , Monad m
        )
     => ServantId
@@ -157,12 +153,12 @@ runRaytraceScript (RunInfo (ServantId servantId') (Config config)) = do
   let imageId      = servantId' :: Int
   liftIO $ Script.raytraceScript imageId config raytracePath outputPath
 
-instance Has PGS.Connection PGS.Connection where
+instance Has DBConnPool DBConnPool where
   obtain = id
 
-sendToServant :: (MonadHas PGS.Connection m, MonadIO m) => ServantId -> ServantOp -> m ()
+sendToServant :: (MonadHas DBConnPool m, MonadUnliftIO m) => ServantId -> ServantOp -> m ()
 sendToServant servantId operation = do
-  pgConn <- grab @PGS.Connection
-  withServantQueue servantId pgConn (enqueue message) where
+  pgConnPool <- grab @DBConnPool
+  withServantQueue servantId pgConnPool (enqueue message) where
   message :: ServantMessage
   message = emptyMessage { servantId = servantId, operation = operation }

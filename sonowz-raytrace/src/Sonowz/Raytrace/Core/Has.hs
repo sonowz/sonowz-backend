@@ -1,7 +1,7 @@
 module Sonowz.Raytrace.Core.Has
-    ( Has(..)
-    , MonadHas(..)
-    )
+  ( Has(..)
+  , MonadHas(..)
+  )
 where
 
 

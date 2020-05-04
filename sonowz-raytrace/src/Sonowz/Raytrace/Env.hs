@@ -1,17 +1,17 @@
 module Sonowz.Raytrace.Env where
 
 import qualified Network.Wai.Handler.Warp as Warp
-import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (Has(..))
+import Sonowz.Raytrace.Core.DB (DBConnPool)
 
 data Env = Env
   { envWarpPort :: Warp.Port
-  , envPgConnection :: PGS.Connection
+  , envPgConnection :: DBConnPool
   }
 
 instance Has Warp.Port Env where
   obtain = envWarpPort
-instance Has PGS.Connection Env where
+instance Has DBConnPool Env where
   obtain = envPgConnection
 

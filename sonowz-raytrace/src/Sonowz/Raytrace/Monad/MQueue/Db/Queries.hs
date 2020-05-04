@@ -5,11 +5,11 @@ import Relude hiding (null)
 import Opaleye
 import Control.Arrow
 import Data.Profunctor.Product.Default (Default)
-import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Data.Profunctor (dimap)
 import qualified Opaleye.Aggregate as Agg
 
+import Sonowz.Raytrace.Core.DB (DBConnPool, withDBConn)
 import Sonowz.Raytrace.Monad.MQueue.Db.Types
 
 -- Message queue is implemented with PostgreSQL, for studying.
@@ -43,42 +43,42 @@ emptyAggMessageQueue = MessageQueue
 
 -- Public Interfaces --
 
-type DBConnection = Connection
-
-enqueueDaemon :: DBConnection -> ServantId -> DaemonOp -> IO Bool
-enqueueDaemon conn servantId' message =
+enqueueDaemon :: DBConnPool -> ServantId -> DaemonOp -> IO Bool
+enqueueDaemon pool servantId' message = withDBConn pool $ \conn ->
   insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue servantId' message) :: IO Bool
 
 -- This function sets 'servantId' same as 'qid'
-enqueueDaemonNew :: DBConnection -> DaemonOp -> IO (Maybe ServantId)
-enqueueDaemonNew conn message = withTransaction conn $ do
-  prevQid <- qidOrZero <$> selectResult
+enqueueDaemonNew :: DBConnPool -> DaemonOp -> IO (Maybe ServantId)
+enqueueDaemonNew pool message = withDBConn pool $ \conn -> withTransaction conn $ do
+  prevQid <- qidOrZero <$> selectResult conn
   let newServantId = ServantId (coerce prevQid + 1)
-  insertResult newServantId message >>= \success -> if success
+  insertResult conn newServantId message >>= \success -> if success
     then return (Just newServantId)
     else return Nothing
   where
-    selectResult = Qid <<$>> runSelect conn (selectMaxQid daemonMessageQueue) :: IO [Qid]
-    insertResult sid msg = insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
+    selectResult conn = Qid <<$>> runSelect conn (selectMaxQid daemonMessageQueue) :: IO [Qid]
+    insertResult conn sid msg = insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
-enqueueServant :: DBConnection -> ServantId -> ServantOp -> IO Bool
-enqueueServant conn servantId' message =
+enqueueServant :: DBConnPool -> ServantId -> ServantOp -> IO Bool
+enqueueServant pool servantId' message = withDBConn pool $ \conn -> do
   insertIsSuccess <$> runInsert_ conn (insertMessage servantMessageQueue servantId' message) :: IO Bool
 
-dequeueDaemon :: DBConnection -> IO (Maybe DaemonMessage)
-dequeueDaemon conn = withTransaction conn $ runMaybeT $ do
-  targetQid <- MaybeT $ listToMaybe <$> selectResult
-  MaybeT $ listToMaybe <$> deleteResult targetQid where
-    selectResult = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
-    deleteResult qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
+dequeueDaemon :: DBConnPool -> IO (Maybe DaemonMessage)
+dequeueDaemon pool = withDBConn pool $ \conn ->
+  withTransaction conn $ runMaybeT $ do
+    targetQid <- MaybeT $ listToMaybe <$> selectResult conn
+    MaybeT $ listToMaybe <$> deleteResult conn targetQid where
+      selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
+      deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
 
-dequeueServant :: DBConnection -> ServantId -> IO (Maybe ServantMessage)
-dequeueServant conn sid = withTransaction conn $ runMaybeT $ do
-  targetQid <- MaybeT $ listToMaybe <$> selectResult
-  MaybeT $ listToMaybe <$> deleteResult targetQid
-  where
-    selectResult = Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
-    deleteResult qid = runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
+dequeueServant :: DBConnPool -> ServantId -> IO (Maybe ServantMessage)
+dequeueServant pool sid = withDBConn pool $ \conn -> 
+  withTransaction conn $ runMaybeT $ do
+    targetQid <- MaybeT $ listToMaybe <$> selectResult conn
+    MaybeT $ listToMaybe <$> deleteResult conn targetQid
+    where
+      selectResult conn = Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
+      deleteResult conn qid = runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
 
 -- Queries --
 

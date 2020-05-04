@@ -35,6 +35,7 @@ dependencies:
   - product-profunctors
   - profunctors
   - relude
+  - resource-pool
   - servant
   - servant-server
   - servant-websockets
