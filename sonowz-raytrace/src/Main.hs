@@ -24,7 +24,7 @@ connectInfoP = do
   connectHost     <- strOption (long "pghost" <> short 'h' <> value (PGS.connectHost def))
   connectPort     <- option auto (long "pgport" <> short 'P' <> value (PGS.connectPort def))
   connectUser     <- strOption (long "pguser" <> short 'u' <> value (PGS.connectUser def))
-  connectPassword <- strOption (long "pgpasswd" <> short 'w' <> value (PGS.connectPassword def))
+  connectPassword <- strOption (long "pgpasswd" <> short 'w')
   connectDatabase <- strOption (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def))
   return PGS.ConnectInfo { .. }
 
@@ -45,7 +45,9 @@ main = do
   pgConnection                    <- PGS.connect pgConnectInfo
   let env = Env warpPort pgConnection
 
+  putTextLn "Forking daemon thread..."
   RTDaemon.forkDaemon env
 
+  putTextLn "Starting servant server..."
   let waiApp = serve RTServant.api (RTServant.server env)
   run warpPort waiApp

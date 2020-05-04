@@ -3,7 +3,6 @@ module Sonowz.Raytrace.Monad.MQueue.Db.Types where
 
 import Relude
 import Opaleye
-import Control.Concurrent (threadDelay)
 import Data.Time
 import Data.Profunctor.Product.Default (Default(..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
@@ -87,20 +86,3 @@ ffByReadInstance name field (Just bs) = either
     return
     (readEither $ decodeUtf8 @Text bs)
 ffByReadInstance name field Nothing = FF.returnError FF.UnexpectedNull field ("Null value in: " <> name)
-
--- Thread interface --
--- Minimal definition: `peekMessage`
-class MonadIO io => BlockingThread io msg where
-  peekMessage :: io (Maybe msg)
-  runBlockingThread :: (msg -> io ThreadHandleResult) -> io ()
-  runBlockingThread handler = do
-    handlerResult <- handler =<< getMessageBlocking
-    case handlerResult of
-      TContinue -> runBlockingThread handler
-      TTerminate -> pass
-  getMessageBlocking :: io msg
-  getMessageBlocking = peekMessage >>= \case
-    Just message -> return message
-    Nothing -> liftIO (threadDelay 1000) >> getMessageBlocking
-
-data ThreadHandleResult = TContinue | TTerminate

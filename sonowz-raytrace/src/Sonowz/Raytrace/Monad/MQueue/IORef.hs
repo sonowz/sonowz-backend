@@ -11,6 +11,8 @@ import Data.List (partition)
 
 import Sonowz.Raytrace.Core.Has (MonadHas(..))
 
+-- TODO: Use TMVar (STM)
+
 type IORefQueue a = IORef [a]
 
 grabIORef :: MonadHas (IORefQueue a) m => m (IORefQueue a)

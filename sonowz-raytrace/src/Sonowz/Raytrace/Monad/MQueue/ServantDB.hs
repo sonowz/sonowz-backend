@@ -18,10 +18,10 @@ import Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil (grabConn, boolToException)
 
 
 enqueueServantDB :: (WithDb m, MonadHas ServantId m) => ServantMessage -> m ()
-enqueueServantDB msg =
-  boolToException "enqueueDaemonDB"
-    $   grabConn
-    >>= (\conn -> liftIO $ enqueueServant conn (servantId msg) (operation msg))
+enqueueServantDB msg = boolToException "enqueueServantDB" $ do
+  conn <- grabConn
+  liftIO $ enqueueServant conn (servantId msg) (operation msg)
+
 
 dequeueServantDB :: (WithDb m, MonadHas ServantId m) => m (Maybe ServantMessage)
 dequeueServantDB = do

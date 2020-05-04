@@ -10,10 +10,12 @@ import Sonowz.Raytrace.Monad.MQueue (WithDb, MQueueException(..))
 grabConn :: WithDb m => m PGS.Connection
 grabConn = grab
 
-throwException text = throwIO (MQueueException $ "Error occurred while" <> text)
+throwException text = throwIO (MQueueException $ "Error occurred while " <> text)
 
 boolToException :: MonadIO m => Text -> m Bool -> m ()
 boolToException actionText action = unlessM action (throwException actionText)
 
 maybeToException :: MonadIO m => Text -> m (Maybe a) -> m a
-maybeToException actionText action = fromMaybe <$> throwException actionText <*> action
+maybeToException actionText action = action >>= \case
+  Nothing -> throwException actionText
+  Just value -> return value

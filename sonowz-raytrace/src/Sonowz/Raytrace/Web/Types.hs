@@ -29,7 +29,7 @@ instance Has field ServantAppEnv => MonadHas field ServantApp where
   grab = ServantApp $ obtain <$> ask
 
 data ServantAppEnv = ServantAppEnv
-  { eWsConn :: WS.Connection
+  { eWsConn :: ~WS.Connection -- This may contain undefined connection, so make it lazy
   , ePgConn :: PGS.Connection
   }
 instance Has WS.Connection ServantAppEnv where

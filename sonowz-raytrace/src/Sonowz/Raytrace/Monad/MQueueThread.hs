@@ -38,4 +38,4 @@ runHeteroMQueueThread hoist handler = do
 dequeueBlocking :: (MonadIO m, MonadMQueue rx m) => m rx
 dequeueBlocking = dequeue >>= \case
   Just message -> return message
-  Nothing      -> threadDelay 1000 >> dequeueBlocking
+  Nothing      -> threadDelay (10^6) >> dequeueBlocking
