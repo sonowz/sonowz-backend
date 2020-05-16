@@ -2,7 +2,6 @@ module Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil where
 
 import Relude
 import UnliftIO.Exception (throwIO)
-import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Core.Has (grab)
 import Sonowz.Raytrace.Core.DB (DBConnPool)

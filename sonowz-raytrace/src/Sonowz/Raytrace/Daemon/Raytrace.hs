@@ -57,9 +57,9 @@ runnerThread = runMQueueThread handle where
     => ThreadHandler m RunInfo Void
   handle runInfo@(RunInfo servantId' _) = do
     writeRaytraceStart servantId'
-    runnerProcess <- async $ runRaytraceScript runInfo
-    setCurrentRunInfo runInfo runnerProcess
     writeQueueStatus
+    runnerProcess <- async $ runRaytraceScript runInfo
+    setCurrentRunInfo runInfo (RunnerProcess runnerProcess)
     processResult <- waitCatch runnerProcess
     writeRaytraceResult servantId' processResult
     return HContinue
@@ -137,13 +137,13 @@ runnerControlThread = runMQueueThread runnerControlThread' where
   stopRunnerIfDequeued :: (MonadHas CurrentRunInfo m, MonadIO m) => ServantId -> m ()
   stopRunnerIfDequeued servantId' = do
     CurrentRunInfo ref                <- grab @CurrentRunInfo
-    (RunInfo runSid _, runnerProcess) <- readIORef ref
+    (RunInfo runSid _, RunnerProcess runnerProcess) <- readIORef ref
     if runSid == servantId' then liftIO (cancel runnerProcess) else pass
 
 
 logRaytrace :: MonadIO m => ServantId -> Text -> m ()
 logRaytrace (ServantId servantId') msg = do
-  time <- liftIO $ fmap show getZonedTime
+  time <- liftIO $ show <$> getZonedTime
   let header = time <> ": Job #" <> show servantId' :: Text
   putTextLn (header <> " " <> msg)
 

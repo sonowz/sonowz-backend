@@ -15,7 +15,7 @@ import qualified Sonowz.Raytrace.Daemon.RunnerScript as Script
 
 
 data RunInfo = RunInfo ServantId Config deriving (Show, Read)
-type RunnerProcess = Async Script.ShellResult
+data RunnerProcess = RunnerProcess (Async Script.ShellResult)
 newtype CurrentRunInfo = CurrentRunInfo (IORef (RunInfo, RunnerProcess))
 
 newtype DaemonApp a = DaemonApp (ReaderT DaemonAppEnv IO a)
