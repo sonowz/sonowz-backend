@@ -12,10 +12,14 @@ extra-source-files:
   - README.md
 
 ghc-options:
+  - -O2
+  - -flate-specialise
+  - -fspecialise-aggressively
+  - -fplugin=Polysemy.Plugin
   - -W
 #  - -ddump-to-file
 #  - -ddump-tc-trace
-  - -fprint-potential-instances
+#  - -fprint-potential-instances
 #  - -fforce-recomp
 
 dependencies:
@@ -30,6 +34,8 @@ dependencies:
 # - filepath
   - opaleye
   - optparse-applicative
+  - polysemy
+  - polysemy-plugin
   - postgresql-simple
 # - process
   - product-profunctors
