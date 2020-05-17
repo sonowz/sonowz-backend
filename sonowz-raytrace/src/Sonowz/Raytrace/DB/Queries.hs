@@ -1,17 +1,17 @@
 {-# LANGUAGE Arrows #-}
-module Sonowz.Raytrace.Monad.MQueue.Db.Queries where
+module Sonowz.Raytrace.DB.Queries where
 
-import Relude hiding (null)
 import Opaleye
 import Control.Arrow
 import Data.Profunctor.Product.Default (Default)
+import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Data.Profunctor (dimap)
 import Data.Profunctor.Product (p3)
 import qualified Opaleye.Aggregate as Agg
 
-import Sonowz.Raytrace.Core.DB (DBConnPool, withDBConn)
-import Sonowz.Raytrace.Monad.MQueue.Db.Types
+import Sonowz.Raytrace.Imports hiding (null)
+import Sonowz.Raytrace.DB.Types
 
 -- Message queue is implemented with PostgreSQL, for studying.
 -- Queries are written in a way that they just look like plain code (not SQL),
@@ -23,10 +23,10 @@ import Sonowz.Raytrace.Monad.MQueue.Db.Types
 -- Table declarations --
 
 daemonMessageQueue :: DaemonMessageTable
-daemonMessageQueue = table "daemon_message_queue" (pMessageQueue messageQueueFields)
+daemonMessageQueue = table "daemon_message_queue" (pMessage messageQueueFields)
 
 servantMessageQueue :: ServantMessageTable
-servantMessageQueue = table "servant_message_queue" (pMessageQueue messageQueueFields)
+servantMessageQueue = table "servant_message_queue" (pMessage messageQueueFields)
 
 type SeqTable = Table (Field SqlInt4, Field SqlInt4, Field SqlBool) (Field SqlInt4, Field SqlInt4, Field SqlBool)
 
@@ -42,14 +42,14 @@ daemonMessageSeq = seqTableTemplate "daemon_message_queue_qid_seq"
 servantMessageSeq :: SeqTable
 servantMessageSeq = seqTableTemplate "servant_message_queue_qid_seq"
 
-messageQueueFields = MessageQueue
+messageQueueFields = Message
   { qid         = tableField "qid"
   , servantId   = tableField "servant_id"
   , operation   = tableField "operation"
   , createdTime = tableField "created_time"
   }
 
-emptyAggMessageQueue = MessageQueue
+emptyAggMessageQueue = Message
   { qid = nullify
   , servantId = nullify
   , operation = nullify
@@ -58,13 +58,13 @@ emptyAggMessageQueue = MessageQueue
 
 -- Public Interfaces --
 
-enqueueDaemon :: DBConnPool -> ServantId -> DaemonOp -> IO Bool
-enqueueDaemon pool servantId' message = withDBConn pool $ \conn ->
+enqueueDaemon :: Connection -> ServantId -> DaemonOp -> IO Bool
+enqueueDaemon conn servantId' message =
   insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue servantId' message) :: IO Bool
 
 -- This function sets 'servantId' same as 'qid'
-enqueueDaemonNew :: DBConnPool -> DaemonOp -> IO (Maybe ServantId)
-enqueueDaemonNew pool message = withDBConn pool $ \conn -> withTransaction conn $ do
+enqueueDaemonNew :: Connection -> DaemonOp -> IO (Maybe ServantId)
+enqueueDaemonNew conn message = withTransaction conn $ do
   maxQid <- qidOrZero <$> selectResult conn
   let newServantId = ServantId (coerce maxQid)
   insertResult conn newServantId message >>= \success -> if success
@@ -74,20 +74,20 @@ enqueueDaemonNew pool message = withDBConn pool $ \conn -> withTransaction conn 
     selectResult conn = Qid <<$>> runSelect conn (selectMaxSeq daemonMessageSeq) :: IO [Qid]
     insertResult conn sid msg = insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
-enqueueServant :: DBConnPool -> ServantId -> ServantOp -> IO Bool
-enqueueServant pool servantId' message = withDBConn pool $ \conn ->
+enqueueServant :: Connection -> ServantId -> ServantOp -> IO Bool
+enqueueServant conn servantId' message =
   insertIsSuccess <$> runInsert_ conn (insertMessage servantMessageQueue servantId' message) :: IO Bool
 
-dequeueDaemon :: DBConnPool -> IO (Maybe DaemonMessage)
-dequeueDaemon pool = withDBConn pool $ \conn ->
+dequeueDaemon :: Connection -> IO (Maybe DaemonMessage)
+dequeueDaemon conn =
   withTransaction conn $ runMaybeT $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
     MaybeT $ listToMaybe <$> deleteResult conn targetQid where
       selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
       deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
 
-dequeueServant :: DBConnPool -> ServantId -> IO (Maybe ServantMessage)
-dequeueServant pool sid = withDBConn pool $ \conn -> 
+dequeueServant :: Connection -> ServantId -> IO (Maybe ServantMessage)
+dequeueServant conn sid =
   withTransaction conn $ runMaybeT $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
     MaybeT $ listToMaybe <$> deleteResult conn targetQid
@@ -99,7 +99,7 @@ dequeueServant pool sid = withDBConn pool $ \conn ->
 
 selectMinQid :: MessageTable op -> Select (Field SqlInt4)
 selectMinQid table = qid <$> Agg.aggregate
-  (pMessageQueue $ emptyAggMessageQueue { qid = Agg.min })
+  (pMessage $ emptyAggMessageQueue { qid = Agg.min })
   (selectTable table)
 
 -- You may not want to use this! Use 'selectMaxSeq' instead.
@@ -118,14 +118,14 @@ selectMaxSeq seqTable = proc () -> do
 selectServantMinQid :: MessageTable op -> SelectArr ServantId (Field SqlInt4)
 selectServantMinQid table = proc servantIdEq -> do
   row <- Agg.aggregate
-    (pMessageQueue $ emptyAggMessageQueue { qid = Agg.min, servantId = Agg.groupBy })
+    (pMessage $ emptyAggMessageQueue { qid = Agg.min, servantId = Agg.groupBy })
     (selectTable table)
     -< ()
   restrict -< servantId row .== toFields servantIdEq
   returnA -< qid row
 
 popMessage :: QueryRunnerColumnDefault SqlText op =>
-  MessageTable op -> Qid -> Delete [Message op]
+  MessageTable op -> Qid -> Delete [MessageHask op]
 popMessage dTable qidEq = Delete{..} where
   dWhere (qid -> rowQid) = rowQid .== toFields qidEq
   dReturning = rReturning id
@@ -138,7 +138,7 @@ insertMessage table servantId' operation' = Insert
   , iReturning = rCount
   , iOnConflict = Just DoNothing
   } where
-    message = MessageQueue
+    message = Message
       { qid         = Nothing
       , servantId   = toFields servantId'
       , operation   = toFields operation'

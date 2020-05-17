@@ -1,14 +1,15 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.Raytrace.Monad.MQueue.Db.Types where
+module Sonowz.Raytrace.DB.Types where
 
-import Relude
 import Opaleye
 import Data.Time
 import Data.Profunctor.Product.Default (Default(..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import qualified Database.PostgreSQL.Simple.FromField as FF
 
+import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.RaytraceConfig (Config(..))
+
 
 newtype Qid = Qid Int
   deriving (Eq, Show, Read) deriving (Num) via Int
@@ -29,31 +30,31 @@ data ServantOp =
   | ProcessFailed
   deriving (Eq, Show, Read)
 
-data MessageQueue c1 c2 c3 c4 = MessageQueue {
+data Message c1 c2 c3 c4 = Message {
   qid :: ~c1,
   servantId :: ~c2,
   operation :: ~c3,
   createdTime :: ~c4
 } deriving (Show, Read)
-type Message op = MessageQueue Qid ServantId op UTCTime
-type MessageFieldW op = MessageQueue -- Write fields
+type MessageHask op = Message Qid ServantId op UTCTime
+type MessageFieldW op = Message -- Write fields
   (Maybe (Field SqlInt4))
   (Field SqlInt4)
   (Field SqlText)
   (Maybe (Field SqlTimestamptz))
-type MessageFieldR op = MessageQueue -- Read fields
+type MessageFieldR op = Message -- Read fields
   (Field SqlInt4)
   (Field SqlInt4)
   (Field SqlText)
   (Field SqlTimestamptz)
 type MessageTable op = Table (MessageFieldW op) (MessageFieldR op)
 type DaemonMessageTable = MessageTable DaemonOp
-type DaemonMessage = Message DaemonOp
+type DaemonMessage = MessageHask DaemonOp
 type ServantMessageTable = MessageTable ServantOp
-type ServantMessage = Message ServantOp
+type ServantMessage = MessageHask ServantOp
 
-emptyMessage :: MessageQueue c1 c2 c3 c4
-emptyMessage = MessageQueue
+emptyMessage :: Message c1 c2 c3 c4
+emptyMessage = Message
   { qid = error "Unexpected 'qid' access"
   , servantId = error "Unexpected 'servantId' access"
   , operation = error "Unexpected 'operation' access"
@@ -61,7 +62,7 @@ emptyMessage = MessageQueue
   }
 
 -- Opaleye-related stuffs --
-$(makeAdaptorAndInstance "pMessageQueue" ''MessageQueue)
+$(makeAdaptorAndInstance "pMessage" ''Message)
 deriving via Int instance QueryRunnerColumnDefault SqlInt4 Qid
 deriving via Int instance QueryRunnerColumnDefault SqlInt4 ServantId
 instance QueryRunnerColumnDefault SqlText DaemonOp where

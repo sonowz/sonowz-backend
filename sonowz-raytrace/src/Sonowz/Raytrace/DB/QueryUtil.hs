@@ -1,14 +1,13 @@
-module Sonowz.Raytrace.Monad.MQueue.Db.QueryUtil where
+module Sonowz.Raytrace.DB.QueryUtil
+  ( boolToException
+  , maybeToException
+  )
+where
 
-import Relude
 import UnliftIO.Exception (throwIO)
 
-import Sonowz.Raytrace.Core.Has (grab)
-import Sonowz.Raytrace.Core.DB (DBConnPool)
-import Sonowz.Raytrace.Monad.MQueue (WithDb, MQueueException(..))
-
-grabPool :: WithDb m => m DBConnPool
-grabPool = grab
+import Sonowz.Raytrace.Imports
+import Sonowz.Raytrace.Monad.MQueue (MQueueException(..))
 
 throwException text = throwIO (MQueueException $ "Error occurred while " <> text)
 
