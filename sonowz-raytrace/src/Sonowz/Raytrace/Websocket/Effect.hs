@@ -4,6 +4,7 @@ module Sonowz.Raytrace.Websocket.Effect
   , getWSMessage
   , putWSMessage
   , sendCloseSignal
+  , receiveAny
   , WSMessage(..)
   , runWebsocketToIO
   )
@@ -16,13 +17,11 @@ import Sonowz.Raytrace.Imports
 
 newtype WSMessage = WSMessage Text deriving (Show) via Text
 
--- This exception implies that close signal should be sent to the client
-newtype WSCloseException = WSCloseException Text deriving (Show, Exception)
-
 data Websocket m a where
   GetWSMessage :: Websocket m WSMessage
   PutWSMessage :: WSMessage -> Websocket m ()
   SendCloseSignal :: Websocket m ()
+  ReceiveAny :: Websocket m ()
 
 makeSem ''Websocket
 
@@ -34,3 +33,4 @@ runWebsocketToIO conn = interpret $ \case
   SendCloseSignal -> resourceToIO $ do
       -- TODO: putStrLn "closeRequest"
       onException (embed $ WS.sendClose conn ("Closing connection" :: Text)) pass
+  ReceiveAny -> embed $ void $ WS.receive conn

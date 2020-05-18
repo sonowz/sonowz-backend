@@ -50,11 +50,10 @@ forkRaytraceDaemon pool = do
     & runM
  where
   doFork :: (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r) => Sem r ()
-  doFork = do
+  doFork = void $ P.async $ do
     tRunnerControl <- P.async runnerControlThread
     tRunner        <- P.async runnerThread
     embed $ waitAnyCancel [tRunner, tRunnerControl]
-    pass
 
 -- Actual Runner Thread --
 
