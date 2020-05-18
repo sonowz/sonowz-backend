@@ -1,4 +1,4 @@
-module Sonowz.Raytrace.Daemon.RunnerScript
+module Sonowz.Raytrace.App.Daemon.RunnerScript
   ( ShellResult(..)
   , raytraceScript
   , example

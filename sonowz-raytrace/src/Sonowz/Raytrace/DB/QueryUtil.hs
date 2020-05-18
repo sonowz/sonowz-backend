@@ -7,9 +7,9 @@ where
 import UnliftIO.Exception (throwIO)
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.Monad.MQueue (MQueueException(..))
+import Sonowz.Raytrace.DB.Types (DatabaseException(..))
 
-throwException text = throwIO (MQueueException $ "Error occurred while " <> text)
+throwException text = throwIO (DatabaseException $ "Error occurred while " <> text)
 
 boolToException :: MonadIO m => Text -> m Bool -> m ()
 boolToException actionText action = unlessM action (throwException actionText)

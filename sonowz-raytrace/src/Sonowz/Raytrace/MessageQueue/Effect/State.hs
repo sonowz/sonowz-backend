@@ -5,13 +5,12 @@ module Sonowz.Raytrace.MessageQueue.Effect.State
 where
 
 import Data.List (partition)
-import Polysemy.AtomicState (AtomicState(..), atomicState')
 
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue(..))
 
-runMQueueState :: Member (AtomicState [msg]) r => Sem (MessageQueue msg : r) a -> Sem r a
-runMQueueState = interpret $ \case
+runMQueueState :: Sem (MessageQueue msg : r) a -> Sem (AtomicState [msg] : r) a
+runMQueueState = reinterpret $ \case
   Enqueue msg -> atomicState' $ \l -> (l <> [msg], ())
   Dequeue -> atomicState' f where
     f (msg : msgs) = (msgs, Just msg)

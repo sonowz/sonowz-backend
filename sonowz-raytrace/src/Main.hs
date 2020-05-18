@@ -8,9 +8,9 @@ import UnliftIO.IO (hSetBuffering, BufferMode(LineBuffering))
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Env (Env(..))
-import Sonowz.Raytrace.Core.DB (createConnPool)
-import qualified Sonowz.Raytrace.Daemon as RTDaemon
-import qualified Sonowz.Raytrace.Web as RTServant
+import Sonowz.Raytrace.DB.Pool (createConnPool)
+import Sonowz.Raytrace.App.Daemon (forkDaemon)
+--import qualified Sonowz.Raytrace.Web as RTServant
 
 
 data Config = Config Port PGS.ConnectInfo
@@ -47,8 +47,10 @@ main = do
   let env = Env warpPort pgConnection
 
   putTextLn "Forking daemon thread..."
-  RTDaemon.forkDaemon env
+  forkDaemon env
 
+  {-
   putTextLn "Starting servant server..."
   let waiApp = serve RTServant.api (RTServant.server env)
   run warpPort waiApp
+  -}

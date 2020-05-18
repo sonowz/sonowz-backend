@@ -11,6 +11,8 @@ import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.RaytraceConfig (Config(..))
 
 
+newtype DatabaseException = DatabaseException Text deriving (Show, Exception)
+
 newtype Qid = Qid Int
   deriving (Eq, Show, Read) deriving (Num) via Int
 newtype ServantId = ServantId Int

@@ -1,4 +1,3 @@
-{-# LANGUAGE UndecidableInstances #-}
 module Sonowz.Raytrace.Imports
   ( module Relude.Applicative
   , module Relude.Base
@@ -24,7 +23,9 @@ module Sonowz.Raytrace.Imports
   , module Relude.String
 
   , module Polysemy
+  , module Polysemy.AtomicState
   , module Polysemy.Reader
+  , module Polysemy.State
   )
 where
 
@@ -72,4 +73,6 @@ import Relude.Print
 import Relude.String
 
 import Polysemy
+import Polysemy.AtomicState
 import Polysemy.Reader
+import Polysemy.State
