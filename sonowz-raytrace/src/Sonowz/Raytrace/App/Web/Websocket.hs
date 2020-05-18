@@ -10,6 +10,7 @@ import qualified Network.WebSockets as WS
 import qualified Polysemy.Async as P
 
 import Sonowz.Raytrace.Imports
+import Sonowz.Raytrace.StdEff.Effect (StdEff, stdEffToIO, throw')
 import Sonowz.Raytrace.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Raytrace.DB.Types
   ( ServantId(..)
@@ -32,10 +33,12 @@ import Sonowz.Raytrace.Websocket.Effect
   (Websocket, getWSMessage, sendCloseSignal, receiveAny, WSMessage(..), runWebsocketToIO)
 
 
+data WSException = WSException Text deriving (Show, Exception)
+
 websocketHandler :: DBConnPool -> WS.Connection -> IO ()
 websocketHandler dbPool wsConn =
-  websocketHandler' & runWebsocketToIO wsConn & resourceToIO & timeToIO & runM where
-  websocketHandler' :: Members '[Websocket, Resource, Time, Embed IO] r => Sem r ()
+  websocketHandler' & runWebsocketToIO wsConn & resourceToIO & timeToIO & stdEffToIO & runM where
+  websocketHandler' :: (Members [Websocket, Resource, Time, Embed IO] r, Members StdEff r) => Sem r ()
   websocketHandler' = flip finally sendCloseSignal $ do
     config <- getRunnerConfig
     bracket (enqueueRaytrace config) dequeueRaytrace forkWaitProgressThreads
@@ -45,7 +48,7 @@ websocketHandler dbPool wsConn =
 
 -- Watch raytrace progress & receive ping from client
 forkWaitProgressThreads
-  :: (Members '[Websocket, Async, Resource, Time] r, Members DBEffects r) => ServantId -> Sem r ()
+  :: (Members [Websocket, Async, Resource, Time] r, Members DBEffects r) => ServantId -> Sem r ()
 forkWaitProgressThreads servantId' = do
   tRaytraceProgress <- P.async (raytraceProgressThread & runMQueueDBServant & runReader servantId')
   tPing             <- P.async pingThread
@@ -53,17 +56,17 @@ forkWaitProgressThreads servantId' = do
   pass
 
 
-getRunnerConfig :: Members '[Websocket, Time] r => Sem r Config
+getRunnerConfig :: (Members [Websocket, Time] r, Members StdEff r) => Sem r Config
 getRunnerConfig = encodeUtf8 <$> receiveText >>= makeRunnerConfig where
 
-  receiveText :: Members '[Websocket, Time] r => Sem r Text
+  receiveText :: (Members [Websocket, Time] r, Members StdEff r) => Sem r Text
   receiveText = timeout (3 * 10 ^ 6) getWSMessage >>= \case
     Just (WSMessage text) -> return text
-    Nothing               -> error "TODO: handle this with exception"
+    Nothing               -> throw' (WSException "Failed to receive config from client")
 
-  makeRunnerConfig :: LByteString -> Sem r Config
+  makeRunnerConfig :: Members StdEff r => LByteString -> Sem r Config
   makeRunnerConfig json = case jsonToConfig json of
-    DecodeFail    errormsg -> error "TODO: logging & exception"
+    DecodeFail    errormsg -> error "TODO: logging" >> throw' (WSException $ "Failed to parse config: " <> errormsg)
     ConfigSuccess config   -> return config
 
 enqueueRaytrace :: Members DBEffects r => Config -> Sem r ServantId

@@ -10,20 +10,20 @@ where
 import Data.Pool (Pool(..), createPool, takeResource, putResource)
 import Database.PostgreSQL.Simple (Connection, ConnectInfo, connect, close)
 import Polysemy.Resource (Resource, bracket)
-import UnliftIO (MonadUnliftIO(..))
-import qualified UnliftIO as U
+import qualified Control.Exception.Safe as E
 
 import Sonowz.Raytrace.Imports
+import Sonowz.Raytrace.StdEff.Effect (StdEff)
 
 newtype DBConnPool = DBConnPool (Pool Connection)
 
-type DBEffects = [Reader DBConnPool, Resource, Embed IO]
+type DBEffects = Reader DBConnPool : Resource : Embed IO : StdEff
 
 createConnPool :: MonadIO m => ConnectInfo -> m DBConnPool
 createConnPool connInfo = liftIO $ DBConnPool <$> createPool (connect connInfo) close 1 10 10
 
-withDBConnIO :: MonadUnliftIO m => DBConnPool -> (Connection -> m a) -> m a
-withDBConnIO (DBConnPool pool) action = U.bracket takeAction putAction doAction where
+withDBConnIO :: DBConnPool -> (Connection -> IO a) -> IO a
+withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction where
   takeAction = liftIO $ takeResource pool
   putAction  = liftIO . uncurry (flip putResource)
   doAction   = action . fst

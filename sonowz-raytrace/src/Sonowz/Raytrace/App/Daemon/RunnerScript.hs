@@ -7,7 +7,7 @@ where
 
 import Relude hiding (stdin, FilePath)
 import Turtle
-import UnliftIO.Exception (onException)
+import Control.Exception.Safe (onException)
 
 data ShellResult = ShellResult ExitCode StdOut StdErr
 type StdOut = Text

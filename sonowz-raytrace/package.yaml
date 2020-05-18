@@ -42,6 +42,7 @@ dependencies:
   - profunctors
   - relude
   - resource-pool
+  - safe-exceptions
   - servant
   - servant-server
   - servant-websockets
@@ -50,7 +51,6 @@ dependencies:
   - time
   - transformers
   - turtle
-  - unliftio
   - unordered-containers
   - vector
   - warp

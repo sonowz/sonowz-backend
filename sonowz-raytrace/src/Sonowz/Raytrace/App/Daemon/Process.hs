@@ -10,6 +10,7 @@ import Turtle (ExitCode(ExitSuccess, ExitFailure))
 import qualified Polysemy.Async as P
 
 import Sonowz.Raytrace.Imports
+import Sonowz.Raytrace.StdEff.Effect (stdEffToIO)
 import Sonowz.Raytrace.App.Daemon.Types (RunInfo(..), RunnerProcess(..), CurrentRunInfo(..))
 import Sonowz.Raytrace.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Raytrace.DB.Types
@@ -47,6 +48,7 @@ forkRaytraceDaemon pool = do
     & timeToIO
     & resourceToIO
     & asyncToIO
+    & stdEffToIO
     & runM
  where
   doFork :: (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r) => Sem r ()

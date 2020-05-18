@@ -24,6 +24,7 @@ module Sonowz.Raytrace.Imports
 
   , module Polysemy
   , module Polysemy.AtomicState
+  , module Polysemy.Error
   , module Polysemy.Reader
   , module Polysemy.State
   )
@@ -74,5 +75,6 @@ import Relude.String
 
 import Polysemy
 import Polysemy.AtomicState
+import Polysemy.Error
 import Polysemy.Reader
 import Polysemy.State

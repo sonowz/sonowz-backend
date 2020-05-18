@@ -4,7 +4,7 @@ import Relude
 import Network.Wai.Handler.Warp (Port, run)
 import Options.Applicative
 import Servant.Server (serve)
-import UnliftIO.IO (hSetBuffering, BufferMode(LineBuffering))
+import System.IO (hSetBuffering, BufferMode(LineBuffering))
 import qualified Database.PostgreSQL.Simple as PGS
 
 import Sonowz.Raytrace.Env (Env(..))

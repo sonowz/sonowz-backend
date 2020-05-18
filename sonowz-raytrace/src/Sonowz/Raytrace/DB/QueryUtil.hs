@@ -4,17 +4,17 @@ module Sonowz.Raytrace.DB.QueryUtil
   )
 where
 
-import UnliftIO.Exception (throwIO)
-
 import Sonowz.Raytrace.Imports
+import Sonowz.Raytrace.StdEff.Effect (StdEff, throw')
 import Sonowz.Raytrace.DB.Types (DatabaseException(..))
 
-throwException text = throwIO (DatabaseException $ "Error occurred while " <> text)
+throwException :: Members StdEff r => Text -> Sem r a
+throwException text = throw' ( DatabaseException $ "Error occurred while " <> text)
 
-boolToException :: MonadIO m => Text -> m Bool -> m ()
+boolToException :: Members StdEff r => Text -> Sem r Bool -> Sem r ()
 boolToException actionText action = unlessM action (throwException actionText)
 
-maybeToException :: MonadIO m => Text -> m (Maybe a) -> m a
+maybeToException :: Members StdEff r => Text -> Sem r (Maybe a) -> Sem r a
 maybeToException actionText action = action >>= \case
   Nothing -> throwException actionText
   Just value -> return value
