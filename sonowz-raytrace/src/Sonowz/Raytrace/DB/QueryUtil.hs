@@ -9,7 +9,7 @@ import Sonowz.Raytrace.StdEff.Effect (StdEff, throw')
 import Sonowz.Raytrace.DB.Types (DatabaseException(..))
 
 throwException :: Members StdEff r => Text -> Sem r a
-throwException text = throw' ( DatabaseException $ "Error occurred while " <> text)
+throwException text = throw' (DatabaseException $ "Error occurred while " <> text)
 
 boolToException :: Members StdEff r => Text -> Sem r Bool -> Sem r ()
 boolToException actionText action = unlessM action (throwException actionText)

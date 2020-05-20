@@ -31,8 +31,8 @@ withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction 
 withDBConn :: Members DBEffects r => (Connection -> Sem r a) -> Sem r a
 withDBConn action = do
   DBConnPool pool <- ask
-  let 
-    takeAction = embed $ takeResource pool
-    putAction  = embed . uncurry (flip putResource)
-    doAction   = action . fst
+  let
+    !takeAction = liftIO (takeResource pool)
+    !putAction  = liftIO . uncurry (flip putResource)
+    !doAction   = action . fst
   bracket takeAction putAction doAction

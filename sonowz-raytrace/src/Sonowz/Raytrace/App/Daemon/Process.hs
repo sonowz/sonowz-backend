@@ -40,6 +40,7 @@ forkRaytraceDaemon pool = do
     (error "Attempt to access uninitialized CurrentRunInfo" :: CurrentRunInfo)
   doFork
     & runMQueueDBDaemon
+    & stdEffToIO
     & runMQueueState
     & subsume -- For 'runMQueueState'
     & runAtomicStateTVar runInfoQueue
@@ -48,14 +49,13 @@ forkRaytraceDaemon pool = do
     & timeToIO
     & resourceToIO
     & asyncToIO
-    & stdEffToIO
     & runM
  where
   doFork :: (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r) => Sem r ()
   doFork = void $ P.async $ do
     tRunnerControl <- P.async runnerControlThread
     tRunner        <- P.async runnerThread
-    embed $ waitAnyCancel [tRunner, tRunnerControl]
+    liftIO $ waitAnyCancel [tRunner, tRunnerControl]
 
 -- Actual Runner Thread --
 
@@ -68,15 +68,15 @@ type RunnerEffects =
   : DBEffects
 
 runnerThread :: Members RunnerEffects r => Sem r ()
-runnerThread = doStreamLoop & runMQueueStream handle & subsume & runMQueueVoid where
+runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid where
 
   handle :: Members RunnerEffects r => StreamHandler r RunInfo Void
   handle runInfo@(RunInfo servantId' _) = do
     writeRaytraceStart servantId'
     writeQueueStatus
-    runnerProcess <- embed $ async $ runRaytraceScript runInfo
+    runnerProcess <- liftIO $ async $ runRaytraceScript runInfo
     setCurrentRunInfo runInfo (RunnerProcess runnerProcess)
-    processResult <- embed $ waitCatch runnerProcess
+    processResult <- liftIO $ waitCatch runnerProcess
     writeRaytraceResult servantId' processResult
     return HContinue
 
@@ -119,7 +119,7 @@ type RunnerControlEffects =
   : DBEffects
 
 runnerControlThread :: Members RunnerControlEffects r => Sem r ()
-runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread' & subsume & subsume where
+runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread' where
 
   runnerControlThread' :: Members RunnerControlEffects r => StreamHandler r DaemonMessage RunInfo
   runnerControlThread' Message {..} = handle servantId operation
@@ -145,8 +145,8 @@ runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread' & subs
 
 -- Utility Functions --
 
-logRaytrace :: _ -> _ -> m ()
-logRaytrace (ServantId servantId') msg = undefined {- do
+logRaytrace :: Monad m => _ -> _ -> m ()
+logRaytrace (ServantId servantId') msg = trace msg $ pass {- do
   time <- liftIO $ show <$> getZonedTime
   let header = time <> ": Job #" <> show servantId' :: Text
   putTextLn (header <> " " <> msg) -}

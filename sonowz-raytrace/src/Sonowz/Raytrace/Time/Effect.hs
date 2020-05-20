@@ -20,7 +20,7 @@ makeSem ''Time
 
 timeToIO :: Member (Embed IO) r => Sem (Time : r) a -> Sem r a
 timeToIO = interpretH $ \case
-  ThreadDelay microsec -> pureT =<< embed (T.threadDelay microsec)
+  ThreadDelay microsec -> pureT =<< liftIO (T.threadDelay microsec)
   Timeout microsec action -> do
     action' <- runT action
     nothing <- pureT Nothing

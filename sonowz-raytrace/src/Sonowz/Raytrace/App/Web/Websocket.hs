@@ -37,14 +37,21 @@ data WSException = WSException Text deriving (Show, Exception)
 
 websocketHandler :: DBConnPool -> WS.Connection -> IO ()
 websocketHandler dbPool wsConn =
-  websocketHandler' & runWebsocketToIO wsConn & resourceToIO & timeToIO & stdEffToIO & runM where
-  websocketHandler' :: (Members [Websocket, Resource, Time, Embed IO] r, Members StdEff r) => Sem r ()
+  websocketHandler'
+    & stdEffToIO
+    & runWebsocketToIO wsConn
+    & runReader dbPool
+    & resourceToIO
+    & timeToIO
+    & asyncToIO 
+    & runM where
+  websocketHandler'
+    :: (Members [Websocket, Async, Resource, Time] r, Members DBEffects r) => Sem r ()
   websocketHandler' = flip finally sendCloseSignal $ do
     config <- getRunnerConfig
-    bracket (enqueueRaytrace config) dequeueRaytrace forkWaitProgressThreads
+    bracket (enqueueRaytrace config ) (dequeueRaytrace) forkWaitProgressThreads
       & runMQueueDBDaemon
-      & runReader dbPool
-      & asyncToIO
+      
 
 -- Watch raytrace progress & receive ping from client
 forkWaitProgressThreads
@@ -52,7 +59,7 @@ forkWaitProgressThreads
 forkWaitProgressThreads servantId' = do
   tRaytraceProgress <- P.async (raytraceProgressThread & runMQueueDBServant & runReader servantId')
   tPing             <- P.async pingThread
-  embed $ waitAnyCancel [tRaytraceProgress, tPing] -- If any of two exits, close websocket
+  liftIO $ waitAnyCancel [tRaytraceProgress, tPing] -- If any of two exits, close websocket
   pass
 
 
@@ -88,7 +95,7 @@ type RaytraceProgressEffects =
 
 raytraceProgressThread :: Members RaytraceProgressEffects r => Sem r ()
 raytraceProgressThread =
-  doStreamLoop & runMQueueStream raytraceProgressThread' & subsume & runMQueueWebsocket where
+  doStreamLoop & runMQueueStream raytraceProgressThread' & runMQueueWebsocket where
 
   raytraceProgressThread'
     :: Members RaytraceProgressEffects r => StreamHandler r ServantMessage WSMessage
@@ -107,5 +114,5 @@ raytraceProgressThread =
 
 pingThread :: Members '[Websocket, Time] r => Sem r ()
 pingThread = forever $ do
-  receiveAny
-  threadDelay (10 * 10 ^ 6)
+  timeout (10 * 10 ^ 6) receiveAny
+  threadDelay (10 ^ 6)
