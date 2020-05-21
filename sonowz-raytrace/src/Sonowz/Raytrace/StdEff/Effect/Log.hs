@@ -117,7 +117,7 @@ makeStdMessageIO sev text = withFrozenCallStack (makeStdMessage sev text & timeT
 
 fmtStdMessage :: StdMessage -> Text
 fmtStdMessage StdMessage {..} =
-  withPadding 33 (show stdMessageTime)
+  withPadding 34 (show stdMessageTime)
     <> showSourceLoc stdMessageCallStack
     <> " "
     <> showThreadId stdMessageThreadId
@@ -133,7 +133,7 @@ withPadding :: Int -> Text -> Text
 withPadding padding text = text <> stimes n " " where n = max 1 (padding - lengthText text)
 
 sourcePaddingCount :: Int
-sourcePaddingCount = 60
+sourcePaddingCount = 65
 
 showSeverity :: Severity -> Text
 showSeverity = \case
@@ -151,14 +151,17 @@ showSourceLoc cs = braceWithPadding sourcePaddingCount showCallStack
  where
   showCallStack :: Text
   showCallStack = case getCallStack cs of
+    {-
     [] -> "<unknown loc>"
     [(name, loc)] -> showLoc name loc
     _ : [(name, loc)] -> showLoc name loc
+    -}
     _ : (_, loc) : (callerName, _) : _ -> showLoc callerName loc
+    _ -> "<unknown loc>"
 
   showLoc :: String -> SrcLoc -> Text
   showLoc name SrcLoc {..} =
     toText srcLocModule <> "." <> toText name <> "#" <> show srcLocStartLine
 
 showThreadId :: ThreadId -> Text
-showThreadId = braceWithPadding 10 . show
+showThreadId = braceWithPadding 13 . show

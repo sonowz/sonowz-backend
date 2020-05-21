@@ -11,6 +11,7 @@ import Data.Profunctor.Product (p3)
 import qualified Opaleye.Aggregate as Agg
 
 import Sonowz.Raytrace.Imports hiding (null)
+import Sonowz.Raytrace.StdEff.Effect
 import Sonowz.Raytrace.DB.Types
 
 -- Message queue is implemented with PostgreSQL, for studying.
@@ -58,39 +59,39 @@ emptyAggMessageQueue = Message
 
 -- Public Interfaces --
 
-enqueueDaemon :: Connection -> ServantId -> DaemonOp -> IO Bool
-enqueueDaemon conn servantId' message =
+enqueueDaemon :: HasCallStack => Connection -> ServantId -> DaemonOp -> IO Bool
+enqueueDaemon conn servantId' message = logCheckBool =<<
   insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue servantId' message) :: IO Bool
 
 -- This function sets 'servantId' same as 'qid'
-enqueueDaemonNew :: Connection -> DaemonOp -> IO (Maybe ServantId)
+enqueueDaemonNew :: HasCallStack => Connection -> DaemonOp -> IO (Maybe ServantId)
 enqueueDaemonNew conn message = withTransaction conn $ do
   maxQid <- qidOrZero <$> selectResult conn
   let newServantId = ServantId (coerce maxQid)
-  insertResult conn newServantId message >>= \success -> if success
+  insertResult conn newServantId message >>= logCheckBool >>= \success -> if success
     then return (Just newServantId)
     else return Nothing
   where
     selectResult conn = Qid <<$>> runSelect conn (selectMaxSeq daemonMessageSeq) :: IO [Qid]
     insertResult conn sid msg = insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
-enqueueServant :: Connection -> ServantId -> ServantOp -> IO Bool
-enqueueServant conn servantId' message =
+enqueueServant :: HasCallStack => Connection -> ServantId -> ServantOp -> IO Bool
+enqueueServant conn servantId' message = logCheckBool =<<
   insertIsSuccess <$> runInsert_ conn (insertMessage servantMessageQueue servantId' message) :: IO Bool
 
-dequeueDaemon :: Connection -> IO (Maybe DaemonMessage)
+dequeueDaemon :: HasCallStack => Connection -> IO (Maybe DaemonMessage)
 dequeueDaemon conn =
   withTransaction conn $ runMaybeT $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-    MaybeT $ listToMaybe <$> deleteResult conn targetQid where
+    MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe where
       selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
       deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
 
-dequeueServant :: Connection -> ServantId -> IO (Maybe ServantMessage)
+dequeueServant :: HasCallStack => Connection -> ServantId -> IO (Maybe ServantMessage)
 dequeueServant conn sid =
   withTransaction conn $ runMaybeT $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-    MaybeT $ listToMaybe <$> deleteResult conn targetQid
+    MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe
     where
       selectResult conn = Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
       deleteResult conn qid = runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
@@ -158,3 +159,14 @@ qidOrZero = fromMaybe 0 . listToMaybe
 
 insertIsSuccess :: Int64 -> Bool
 insertIsSuccess result = result > 0
+
+logWarnDB :: HasCallStack => IO ()
+logWarnDB = withFrozenCallStack $ logWarningIO "Query result might be wrong!"
+
+logCheckBool :: HasCallStack => Bool -> IO Bool
+logCheckBool False = withFrozenCallStack $ logWarnDB >> return False
+logCheckBool True = withFrozenCallStack $ return True
+
+logCheckMaybe :: HasCallStack => Maybe a -> IO (Maybe a)
+logCheckMaybe Nothing = withFrozenCallStack $ logWarnDB >> return Nothing
+logCheckMaybe x = withFrozenCallStack $ return x

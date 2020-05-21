@@ -3,14 +3,14 @@ module Sonowz.Raytrace.App.Daemon.Process
   )
 where
 
-import Control.Concurrent.Async (async, cancel, waitCatch, waitAnyCancel)
+import Control.Concurrent.Async (async, cancel, waitCatch, waitAnyCatchCancel, asyncThreadId)
 import Polysemy.Async (asyncToIO)
 import Polysemy.Resource (resourceToIO)
 import Turtle (ExitCode(ExitSuccess, ExitFailure))
 import qualified Polysemy.Async as P
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect (stdEffToIO)
+import Sonowz.Raytrace.StdEff.Effect
 import Sonowz.Raytrace.App.Daemon.Types (RunInfo(..), RunnerProcess(..), CurrentRunInfo(..))
 import Sonowz.Raytrace.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Raytrace.DB.Types
@@ -51,11 +51,18 @@ forkRaytraceDaemon pool = do
     & asyncToIO
     & runM
  where
-  doFork :: (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r) => Sem r ()
+  doFork
+    :: (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r, HasCallStack)
+    => Sem r ()
   doFork = void $ P.async $ do
+    logDebug "Forking 'runnerControlThread'.."
     tRunnerControl <- P.async runnerControlThread
-    tRunner        <- P.async runnerThread
-    liftIO $ waitAnyCancel [tRunner, tRunnerControl]
+    logDebug "Forking 'runnerThread'.."
+    tRunner      <- P.async runnerThread
+    (aborted, _) <- liftIO $ waitAnyCatchCancel [tRunner, tRunnerControl]
+    if ((==) `on` asyncThreadId) aborted tRunnerControl
+      then logDebug "'runnerControlThread' was aborted."
+      else logDebug "'runnerThread' was aborted."
 
 -- Actual Runner Thread --
 
@@ -83,25 +90,28 @@ runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid where
   setCurrentRunInfo :: Member (AtomicState CurrentRunInfo) r => RunInfo -> RunnerProcess -> Sem r ()
   setCurrentRunInfo = curry (atomicPut . CurrentRunInfo)
 
-  writeRaytraceStart :: Members DBEffects r => ServantId -> Sem r ()
+  writeRaytraceStart :: (Members DBEffects r, HasCallStack) => ServantId -> Sem r ()
   writeRaytraceStart servantId' = do
     sendToServant servantId' ProcessStarted
-    logRaytrace servantId' "started."
+    logInfo $ jobHeader servantId' <> "started."
 
   writeRaytraceResult
-    :: Members DBEffects r => ServantId -> Either SomeException Script.ShellResult -> Sem r ()
+    :: (Members DBEffects r, HasCallStack)
+    => ServantId
+    -> Either SomeException Script.ShellResult
+    -> Sem r ()
   writeRaytraceResult servantId' processResult = case processResult of
     Left _ -> do
       sendToServant servantId' ProcessFailed
-      logRaytrace servantId' "aborted."
+      logInfo $ jobHeader servantId' <> "aborted."
     Right (Script.ShellResult (ExitFailure _) out err) -> do
       sendToServant servantId' ProcessFailed
-      logRaytrace servantId' "failed."
+      logInfo $ jobHeader servantId' <> "failed."
       putTextLn out
       putTextLn err
     Right (Script.ShellResult ExitSuccess _ _) -> do
       sendToServant servantId' ProcessFinished
-      logRaytrace servantId' "finished."
+      logInfo $ jobHeader servantId' <> "finished."
 
   writeQueueStatus :: Sem r ()
   writeQueueStatus = pass -- TODO: send 'RemainingQueue' to servant
@@ -124,9 +134,13 @@ runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread' where
   runnerControlThread' :: Members RunnerControlEffects r => StreamHandler r DaemonMessage RunInfo
   runnerControlThread' Message {..} = handle servantId operation
 
-  handle :: Members RunnerControlEffects r => ServantId -> DaemonOp -> Sem r (StreamResult RunInfo)
+  handle
+    :: (Members RunnerControlEffects r, HasCallStack)
+    => ServantId
+    -> DaemonOp
+    -> Sem r (StreamResult RunInfo)
   handle servantId' (Enqueue config) = do
-    logRaytrace servantId' "queued."
+    logInfo $ jobHeader servantId' <> "queued."
     sendToServant servantId' Enqueued
     return $ HSend (RunInfo servantId' config)
   handle servantId' Dequeue = do
@@ -137,19 +151,21 @@ runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread' where
   removeFromQueue :: Member (AtomicState [RunInfo]) r => ServantId -> Sem r Bool
   removeFromQueue servantId' = removeMQueueState (\(RunInfo sid _) -> sid == servantId')
 
-  stopRunnerIfDequeued :: Members '[AtomicState CurrentRunInfo, Embed IO] r => ServantId -> Sem r ()
+  stopRunnerIfDequeued
+    :: (Members '[AtomicState CurrentRunInfo, Embed IO] r, Members StdEff r)
+    => ServantId
+    -> Sem r ()
   stopRunnerIfDequeued servantId' = do
     CurrentRunInfo (RunInfo runSid _, RunnerProcess runnerProcess) <- atomicGet
-    if runSid == servantId' then liftIO (cancel runnerProcess) else pass
+    if runSid == servantId'
+      then logDebug ("Aborting " <> jobHeader servantId') >> liftIO (cancel runnerProcess)
+      else pass
 
 
 -- Utility Functions --
 
-logRaytrace :: Monad m => _ -> _ -> m ()
-logRaytrace (ServantId servantId') msg = trace msg $ pass {- do
-  time <- liftIO $ show <$> getZonedTime
-  let header = time <> ": Job #" <> show servantId' :: Text
-  putTextLn (header <> " " <> msg) -}
+jobHeader :: ServantId -> Text
+jobHeader (ServantId servantId') = "Job #" <> show servantId' <> " "
 
 sendToServant :: Members DBEffects r => ServantId -> ServantOp -> Sem r ()
 sendToServant servantId operation = do

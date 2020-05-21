@@ -13,14 +13,19 @@ import Polysemy.Resource (Resource, bracket)
 import qualified Control.Exception.Safe as E
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect (StdEff)
+import Sonowz.Raytrace.StdEff.Effect
 
 newtype DBConnPool = DBConnPool (Pool Connection)
 
 type DBEffects = Reader DBConnPool : Resource : Embed IO : StdEff
 
+maxDBConn :: Int
+maxDBConn = 10
+
 createConnPool :: MonadIO m => ConnectInfo -> m DBConnPool
-createConnPool connInfo = liftIO $ DBConnPool <$> createPool (connect connInfo) close 1 10 10
+createConnPool connInfo = liftIO $ do
+  logDebugIO $ "DB connection pool was created. (Max connection: " <> show maxDBConn <> ")"
+  DBConnPool <$> createPool (connect connInfo) close 1 10 maxDBConn
 
 withDBConnIO :: DBConnPool -> (Connection -> IO a) -> IO a
 withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction where

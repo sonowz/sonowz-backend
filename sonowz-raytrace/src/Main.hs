@@ -1,12 +1,14 @@
 module Main where
 
-import Relude
-import Network.Wai.Handler.Warp (Port, run)
+import Network.Wai.Handler.Warp (Port)
 import Options.Applicative
 import Servant.Server (serve)
 import System.IO (hSetBuffering, BufferMode(LineBuffering))
 import qualified Database.PostgreSQL.Simple as PGS
+import qualified Network.Wai.Handler.Warp as Warp
 
+import Sonowz.Raytrace.Imports
+import Sonowz.Raytrace.StdEff.Effect
 import Sonowz.Raytrace.Env (Env(..))
 import Sonowz.Raytrace.DB.Pool (createConnPool)
 import Sonowz.Raytrace.App.Daemon (forkDaemon)
@@ -46,9 +48,9 @@ main = do
   pgConnection                    <- createConnPool pgConnectInfo
   let env = Env warpPort pgConnection
 
-  putTextLn "Forking daemon thread..."
+  logInfoIO "Forking daemon thread..."
   forkDaemon env
 
-  putTextLn "Starting servant server..."
+  logInfoIO "Starting servant server..."
   let waiApp = serve api (server env)
-  run warpPort waiApp
+  Warp.run warpPort waiApp
