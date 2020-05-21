@@ -24,9 +24,11 @@ ghc-options:
 
 dependencies:
   - aeson
+  - ansi-terminal
   - async
   - base
   - bytestring
+  - co-log-core
   - containers
   - deepseq
 # - directory

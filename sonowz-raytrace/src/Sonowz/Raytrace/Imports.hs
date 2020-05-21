@@ -27,6 +27,8 @@ module Sonowz.Raytrace.Imports
   , module Polysemy.Error
   , module Polysemy.Reader
   , module Polysemy.State
+
+  , lengthText
   )
 where
 
@@ -78,3 +80,8 @@ import Polysemy.AtomicState
 import Polysemy.Error
 import Polysemy.Reader
 import Polysemy.State
+
+import Data.Text as T
+
+lengthText :: Text -> Int
+lengthText = T.length
