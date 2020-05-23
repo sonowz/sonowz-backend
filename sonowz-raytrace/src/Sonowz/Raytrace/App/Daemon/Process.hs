@@ -4,8 +4,8 @@ module Sonowz.Raytrace.App.Daemon.Process
 where
 
 import Control.Concurrent.Async (async, cancel, waitCatch, waitAnyCatchCancel, asyncThreadId)
-import Polysemy.Async (asyncToIO)
-import Polysemy.Resource (resourceToIO)
+import Polysemy.Async (asyncToIOFinal)
+import Polysemy.Resource (resourceToIOFinal)
 import Turtle (ExitCode(ExitSuccess, ExitFailure))
 import qualified Polysemy.Async as P
 
@@ -47,9 +47,10 @@ forkRaytraceDaemon pool = do
     & runAtomicStateTVar currentRunInfo
     & runReader pool
     & timeToIO
-    & resourceToIO
-    & asyncToIO
-    & runM
+    & resourceToIOFinal
+    & asyncToIOFinal
+    & embedToFinal
+    & runFinal
  where
   doFork
     :: (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r, HasCallStack)

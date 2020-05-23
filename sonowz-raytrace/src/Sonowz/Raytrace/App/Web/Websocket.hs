@@ -4,8 +4,8 @@ module Sonowz.Raytrace.App.Web.Websocket
 where
 
 import Control.Concurrent.Async (waitAnyCatchCancel, asyncThreadId)
-import Polysemy.Async (Async, asyncToIO)
-import Polysemy.Resource (Resource, finally, bracket, resourceToIO)
+import Polysemy.Async (Async, asyncToIOFinal)
+import Polysemy.Resource (Resource, finally, bracket, resourceToIOFinal)
 import qualified Network.WebSockets as WS
 import qualified Polysemy.Async as P
 
@@ -39,12 +39,13 @@ websocketHandler :: DBConnPool -> WS.Connection -> IO ()
 websocketHandler dbPool wsConn =
   websocketHandler'
     & runWebsocketToIO wsConn
-    & stdEffToIO
     & runReader dbPool
-    & resourceToIO
+    & stdEffToIO
     & timeToIO
-    & asyncToIO
-    & runM where
+    & resourceToIOFinal
+    & asyncToIOFinal
+    & embedToFinal
+    & runFinal where
   websocketHandler'
     :: (Members '[Websocket, Async, Resource, Time] r, Members DBEffects r) => Sem r ()
   websocketHandler' = flip finally sendCloseSignal $ do
@@ -102,11 +103,11 @@ dequeueRaytrace servantId' = do
 -- https://github.com/lspitzner/brittany/issues/271
 -- brittany-disable-next-binding
 type RaytraceProgressEffects =
-  [ Websocket
-  , Time
-  , MessageQueue ServantMessage
-  , Reader ServantId
-  ]
+   Websocket
+  : Time
+  : MessageQueue ServantMessage
+  : Reader ServantId
+  : StdEff
 
 raytraceProgressThread :: Members RaytraceProgressEffects r => Sem r ()
 raytraceProgressThread =
@@ -129,6 +130,6 @@ raytraceProgressThread =
 
 pingThread :: (Members '[Websocket, Time] r, Members StdEff r) => Sem r ()
 pingThread = forever $ do
-  timeout (10 * 10 ^ 6) receiveAny
+  timeout (10 * (10 ^ 6)) receiveAny
   logDebug "Ping received from client."
   threadDelay (10 ^ 6)

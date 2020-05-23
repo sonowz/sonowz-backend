@@ -164,4 +164,4 @@ showSourceLoc cs = braceWithPadding sourcePaddingCount showCallStack
     toText srcLocModule <> "." <> toText name <> "#" <> show srcLocStartLine
 
 showThreadId :: ThreadId -> Text
-showThreadId = braceWithPadding 13 . show
+showThreadId = braceWithPadding 14 . show
