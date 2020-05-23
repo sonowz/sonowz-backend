@@ -8,11 +8,15 @@ Assignment code not included.
 
 http://61.74.24.50:5555
 
+## System Architecture
+![image](https://github.com/sonowz/sonowz-backend/blob/master/sonowz-raytrace/SystemArchitecture.png)
+
+[edit link](https://app.cloudcraft.co/view/90ca36c3-b22b-4112-8b5e-d9420dcdee19?key=7hnJeHCJhj1sj34R8mcrig)
+
 #### Used:
-- Sqlite for simple message queue
+- PostgreSQL for simple message queue
 - Websocket for receiving queue status
 
 ## TODO
 - Purchase domain
 - Pretty web page
-- Ways to stop interrupted raytrace process
