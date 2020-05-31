@@ -62,8 +62,8 @@ forkRaytraceDaemon pool = do
     tRunner      <- P.async runnerThread
     (aborted, _) <- liftIO $ waitAnyCatchCancel [tRunner, tRunnerControl]
     if ((==) `on` asyncThreadId) aborted tRunnerControl
-      then logDebug "'runnerControlThread' was aborted."
-      else logDebug "'runnerThread' was aborted."
+      then logError "'runnerControlThread' was aborted."
+      else logError "'runnerThread' was aborted."
 
 -- Actual Runner Thread --
 

@@ -39,6 +39,7 @@ websocketHandler :: DBConnPool -> WS.Connection -> IO ()
 websocketHandler dbPool wsConn =
   websocketHandler'
     & runWebsocketToIO wsConn
+    & runMQueueDBDaemon
     & runReader dbPool
     & stdEffToIO
     & timeToIO
@@ -47,11 +48,11 @@ websocketHandler dbPool wsConn =
     & embedToFinal
     & runFinal where
   websocketHandler'
-    :: (Members '[Websocket, Async, Resource, Time] r, Members DBEffects r) => Sem r ()
+    :: (Members '[Websocket, Async, Resource, Time, MessageQueue DaemonMessage] r, Members DBEffects r) => Sem r ()
   websocketHandler' = flip finally sendCloseSignal $ do
     logInfo "Websocket connection established."
     config <- getRunnerConfig
-    bracket (enqueueRaytrace config) dequeueRaytrace forkWaitProgressThreads & runMQueueDBDaemon
+    bracket (enqueueRaytrace config) dequeueRaytrace forkWaitProgressThreads
 
 
 -- Watch raytrace progress & receive ping from client
@@ -67,8 +68,8 @@ forkWaitProgressThreads servantId' = do
   -- If any of two exits, close websocket
   (aborted, _) <- liftIO $ waitAnyCatchCancel [tRaytraceProgress, tPing]
   if ((==) `on` asyncThreadId) aborted tRaytraceProgress
-    then logDebug "'raytraceProgressThread' finished, or was aborted."
-    else logDebug "'pingThread' was aborted."
+    then logInfo "'raytraceProgressThread' finished, or was aborted."
+    else logError "'pingThread' was aborted."
   pass
 
 
