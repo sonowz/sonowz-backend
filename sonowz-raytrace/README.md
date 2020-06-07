@@ -6,7 +6,7 @@ It takes some time to process image, so message queue was implemented.
 
 Assignment code not included.
 
-http://61.74.24.50:5555
+http://sonowz.me/raytrace
 
 ## System Architecture
 ![image](https://github.com/sonowz/sonowz-backend/blob/master/sonowz-raytrace/SystemArchitecture.png)
