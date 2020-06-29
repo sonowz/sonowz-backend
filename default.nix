@@ -6,9 +6,18 @@ stdenv.mkDerivation {
   name = "sonowz-backend";
   version = "1.0";
   src = ./bin;
+  nativeBuildInputs = [ autoPatchelfHook ];
+  buildInputs = [
+    gmp
+    libffi
+    libpqxx
+    ncurses
+    zlib
+  ];
   installPhase = ''
     mkdir -p $out/bin
     cp sonowz-raytrace $out/bin
   '';
+  
 }
 

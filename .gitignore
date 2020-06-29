@@ -25,3 +25,5 @@ cabal.project.local~
 *.sqlite3*
 
 bin/
+result
+test.sh
