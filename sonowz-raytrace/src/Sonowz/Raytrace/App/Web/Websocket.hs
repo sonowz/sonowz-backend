@@ -43,8 +43,8 @@ websocketHandler dbPool wsConn =
     & runReader dbPool
     & stdEffToIO
     & timeToIO
-    & resourceToIOFinal
     & asyncToIOFinal
+    & resourceToIOFinal
     & embedToFinal
     & runFinal where
   websocketHandler'

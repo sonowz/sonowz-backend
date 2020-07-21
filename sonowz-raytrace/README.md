@@ -20,3 +20,9 @@ http://sonowz.me/raytrace
 ## TODO
 - Purchase domain
 - Pretty web page
+
+## Refactoring ideas
+- Split `App/Daemon/Process.hs` and `App/Web/Websocket.hs` by thread
+- Split Daemon and Web process as separate binary
+- Use `ekg` library
+- Make `timeToIOFinal` (this might eliminate the need to do second idea)

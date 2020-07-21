@@ -47,8 +47,8 @@ forkRaytraceDaemon pool = do
     & runAtomicStateTVar currentRunInfo
     & runReader pool
     & timeToIO
-    & resourceToIOFinal
     & asyncToIOFinal
+    & resourceToIOFinal
     & embedToFinal
     & runFinal
  where
