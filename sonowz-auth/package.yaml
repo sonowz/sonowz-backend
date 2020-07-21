@@ -1,4 +1,4 @@
-name:                sonowz-raytrace
+name:                sonowz-auth
 version:             0.1.0.0
 #synopsis:
 #description:
@@ -31,15 +31,14 @@ dependencies:
   - co-log-core
   - containers
   - deepseq
-# - directory
-  - exceptions
-# - filepath
+  - hoauth2
+  - http-client
+  - http-client-tls
   - opaleye
   - optparse-applicative
   - polysemy
   - polysemy-plugin
   - postgresql-simple
-# - process
   - product-profunctors
   - profunctors
   - relude
@@ -47,17 +46,14 @@ dependencies:
   - safe-exceptions
   - servant
   - servant-server
-  - servant-websockets
 # - stm
   - text
   - time
-  - transformers
-  - turtle
   - unordered-containers
+  - uri-bytestring
   - vector
   - warp
   - wai
-  - websockets
 
 default-extensions:
   - ApplicativeDo          # New syntax #
@@ -111,6 +107,6 @@ default-extensions:
 #     - -Werror
 
 executables:
-  sonowz-raytrace:
+  sonowz-auth:
     source-dirs:      src
     main:             Main.hs
