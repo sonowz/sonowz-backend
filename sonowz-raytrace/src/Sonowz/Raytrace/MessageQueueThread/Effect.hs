@@ -10,7 +10,7 @@ where
 
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue, enqueue, dequeue)
-import Sonowz.Raytrace.Time.Effect (Time, threadDelay)
+import Sonowz.Core.Time.Effect (Time, threadDelay)
 
 data MessageQueueStream rx tx m a where
   DoStreamLoop ::MessageQueueStream rx tx m ()

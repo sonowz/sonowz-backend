@@ -14,7 +14,7 @@ import Polysemy.Resource (onException, resourceToIO)
 import qualified Network.WebSockets as WS
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect
+
 
 newtype WSMessage = WSMessage Text deriving (Show) via Text
 

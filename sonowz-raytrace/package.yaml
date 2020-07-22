@@ -48,6 +48,7 @@ dependencies:
   - servant
   - servant-server
   - servant-websockets
+  - sonowz-core
 # - stm
   - text
   - time

@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.Raytrace.StdEff.Effect.Log
+module Sonowz.Core.StdEff.Effect.Log
   ( StdLog
   , logDebug
   , logInfo
@@ -25,8 +25,8 @@ import GHC.IO (unsafePerformIO)
 import System.Console.ANSI
   (Color(..), ColorIntensity(Vivid), ConsoleLayer(Foreground), SGR(..), setSGRCode)
 
-import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.Time.Effect (Time, getTime, timeToIO)
+import Sonowz.Core.Imports
+import Sonowz.Core.Time.Effect (Time, getTime, timeToIO)
 
 
 -- StdLog Effect --

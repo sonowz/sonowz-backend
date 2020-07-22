@@ -1,5 +1,5 @@
-name:                sonowz-auth
-version:             0.1.0.0
+name:                sonowz-core
+version:             1.0.0.0
 #synopsis:
 #description:
 homepage:            https://github.com/sonowz/sonowz-backend
@@ -23,7 +23,6 @@ ghc-options:
 #  - -fforce-recomp
 
 dependencies:
-  - aeson
   - ansi-terminal
   - async
   - base
@@ -46,7 +45,6 @@ dependencies:
   - safe-exceptions
   - servant
   - servant-server
-  - sonowz-core
 # - stm
   - text
   - time
@@ -102,12 +100,5 @@ default-extensions:
   - ViewPatterns            # New syntax #
 
 
-# library:
-#   ghc-options:
-#     - -W
-#     - -Werror
-
-executables:
-  sonowz-auth:
-    source-dirs:      src
-    main:             Main.hs
+library:
+  source-dirs:      src

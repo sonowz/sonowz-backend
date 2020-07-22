@@ -8,9 +8,9 @@ import qualified Database.PostgreSQL.Simple as PGS
 import qualified Network.Wai.Handler.Warp as Warp
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect
+
 import Sonowz.Raytrace.Env (Env(..))
-import Sonowz.Raytrace.DB.Pool (createConnPool)
+import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Raytrace.App.Daemon (forkDaemon)
 import Sonowz.Raytrace.App.Web (api, server)
 

@@ -11,7 +11,7 @@ import Data.Profunctor.Product (p3)
 import qualified Opaleye.Aggregate as Agg
 
 import Sonowz.Raytrace.Imports hiding (null)
-import Sonowz.Raytrace.StdEff.Effect
+
 import Sonowz.Raytrace.DB.Types
 
 -- Message queue is implemented with PostgreSQL, for studying.
