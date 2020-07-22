@@ -24,11 +24,9 @@ ghc-options:
 
 dependencies:
   - aeson
-  - ansi-terminal
   - async
   - base
   - bytestring
-  - co-log-core
   - containers
   - deepseq
   - hoauth2
@@ -42,7 +40,6 @@ dependencies:
   - product-profunctors
   - profunctors
   - relude
-  - resource-pool
   - safe-exceptions
   - servant
   - servant-server

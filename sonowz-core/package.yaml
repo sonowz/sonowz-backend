@@ -17,9 +17,6 @@ ghc-options:
   - -fspecialise-aggressively
   - -fplugin=Polysemy.Plugin
   - -W
-#  - -ddump-to-file
-#  - -ddump-tc-trace
-#  - -fprint-potential-instances
 #  - -fforce-recomp
 
 dependencies:
@@ -30,11 +27,6 @@ dependencies:
   - co-log-core
   - containers
   - deepseq
-  - hoauth2
-  - http-client
-  - http-client-tls
-  - opaleye
-  - optparse-applicative
   - polysemy
   - polysemy-plugin
   - postgresql-simple
@@ -43,16 +35,10 @@ dependencies:
   - relude
   - resource-pool
   - safe-exceptions
-  - servant
-  - servant-server
-# - stm
   - text
   - time
   - unordered-containers
-  - uri-bytestring
   - vector
-  - warp
-  - wai
 
 default-extensions:
   - ApplicativeDo          # New syntax #
