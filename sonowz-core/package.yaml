@@ -26,12 +26,14 @@ dependencies:
   - bytestring
   - co-log-core
   - containers
+  - cryptonite
   - deepseq
   - polysemy
   - polysemy-plugin
   - postgresql-simple
   - product-profunctors
   - profunctors
+  - random
   - relude
   - resource-pool
   - safe-exceptions

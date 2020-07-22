@@ -1,10 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.Auth.Session.Effect
+module Sonowz.Core.Session.Effect
   ( Session
   , SessionKey
   , ExpirySec
   , getSession
   , setSession
+  , newSession
   , runSessionToIO
   )
 where
@@ -13,11 +14,14 @@ import Data.Fixed (Fixed(MkFixed))
 import Data.Time.Clock (secondsToNominalDiffTime)
 import Data.Time.LocalTime (LocalTime, zonedTimeToLocalTime, addLocalTime)
 import Data.HashMap.Strict as H
+import Data.Text as T
+import Crypto.Hash (hash, Digest, SHA256)
+import System.Random (randomIO)
 
-import Sonowz.Auth.Imports
+import Sonowz.Core.Imports
 import Sonowz.Core.Time.Effect (Time, getTime, timeToIO)
 
-type SessionKey = Text
+type SessionKey = Text -- Base64-encoded key
 
 type ExpirySec = Int
 type SessionStore v = H.HashMap SessionKey (LocalTime, v)
@@ -26,6 +30,7 @@ type SessionRef v = IORef (SessionStore v)
 data Session (v :: *) m a where
   GetSession :: SessionKey -> Session v m (Maybe v)
   SetSession :: SessionKey -> ExpirySec -> v -> Session v m ()
+  NewSession :: ExpirySec -> v -> Session v m SessionKey
 
 makeSem ''Session
 
@@ -44,18 +49,25 @@ runSessionAsReaderIORef
 runSessionAsReaderIORef = interpret $ \case
   GetSession k   -> maybe (return Nothing) checkValid =<< (H.lookup k <$> askStore)
   SetSession k s v -> void $ H.insert k <$> withExpiry s v <*> askStore
+  NewSession s v -> do
+    k <- generateKey
+    void $ H.insert k <$> withExpiry s v <*> askStore
+    return k
  where
-  askStore :: Members (ReaderIORefEffects v) r => Sem r (SessionStore v)
+  askStore :: Member (Reader (SessionRef v)) r => Sem r (SessionStore v)
   askStore = liftIO . readIORef =<< ask
-  checkValid :: Members (ReaderIORefEffects v) r => (LocalTime, v) -> Sem r (Maybe v)
+  checkValid :: Member Time r => (LocalTime, v) -> Sem r (Maybe v)
   checkValid (expiry, v) = do
     time <- zonedTimeToLocalTime <$> getTime
     return $ if expiry > time then Nothing else Just v
-  withExpiry :: Members (ReaderIORefEffects v) r => ExpirySec -> v -> Sem r (LocalTime, v)
+  withExpiry :: Member Time r => ExpirySec -> v -> Sem r (LocalTime, v)
   withExpiry sec v = do
     time <- zonedTimeToLocalTime <$> getTime
     let expiryTime = secondsToNominalDiffTime (toFixed sec) `addLocalTime` time
     return (expiryTime, v)
+  -- Generate 64-character key using SHA256
+  generateKey :: Member (Embed IO) r => Sem r SessionKey
+  generateKey = T.take 64 . show . sha256 . show <$> generateNumber where
+    sha256 = hash :: ByteString -> Digest SHA256
+    generateNumber = liftIO randomIO :: Member (Embed IO) r => Sem r Int64
   toFixed = MkFixed . fromIntegral
-
-  
