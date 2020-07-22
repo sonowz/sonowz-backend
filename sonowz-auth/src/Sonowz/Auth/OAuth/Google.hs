@@ -58,7 +58,7 @@ oAuthClientURLGoogle (GoogleAppInfo appId _) redirectURL = url { uriQuery = quer
 
 googleUserToOAuthUser :: GoogleUserInfo -> OAuthUser
 googleUserToOAuthUser GoogleUserInfo {..} =
-  OAuthUser { oauthProvider = "Google", oauthUserId = id, oauthUserRep = email }
+  OAuthUser { oauthUserProvider = "Google", oauthUserId = id, oauthUserRep = email }
 
 getUserInfoGoogle :: Manager -> AccessToken -> IO (Either Text OAuthUser)
 getUserInfoGoogle m at = authGetJSON m at urlGetUserInfo >>= \case

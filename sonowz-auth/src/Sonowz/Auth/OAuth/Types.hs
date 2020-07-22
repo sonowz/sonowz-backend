@@ -21,7 +21,7 @@ data FetchOAuthUser = FetchOAuthUser
   }
 
 data OAuthUser = OAuthUser
-  { oauthProvider :: Text
+  { oauthUserProvider :: Text
   , oauthUserId :: Text -- This must be unique within same provider
   , oauthUserRep :: Text -- This is representation of user
   } deriving (Eq)
