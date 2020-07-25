@@ -40,6 +40,7 @@ dependencies:
   - text
   - time
   - unordered-containers
+  - uri-bytestring
   - vector
 
 default-extensions:

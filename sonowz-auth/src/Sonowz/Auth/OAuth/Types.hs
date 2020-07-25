@@ -15,8 +15,9 @@ import qualified Text.Show as S
 data OAuthException = OAuthException Text deriving (Show, Exception)
 
 data FetchOAuthUser = FetchOAuthUser
-  { fetcherOAuthClientURL :: URI -> URI -- Redirect URL as parameter
+  { fetcherOAuthClientURL :: URI -> Text -> URI -- (Redirect URL, State) as parameter
   , fetcherOAuthInfo :: OAuth2
+  , fetcherOAuthRegisterURL :: URI -- Register URL in this 'sonowz-auth' service
   , fetcherGetOAuthUser :: Manager -> AccessToken -> IO (Either Text OAuthUser)
   }
 

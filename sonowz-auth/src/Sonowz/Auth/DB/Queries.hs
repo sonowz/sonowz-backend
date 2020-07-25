@@ -12,7 +12,7 @@ import qualified Opaleye.Aggregate as Agg
 import Sonowz.Auth.Imports hiding (null)
 
 import Sonowz.Auth.DB.Types
-import Sonowz.Auth.OAuth.Types (OAuthUser(..))
+import Sonowz.Auth.OAuth (OAuthUser(..))
 
 
 -- Table declarations --

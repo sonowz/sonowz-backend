@@ -29,11 +29,12 @@ urlOAuthRedirect = [uri|https://accounts.google.com/o/oauth2/v2/auth|]
 urlOAuthAccessToken = [uri|https://oauth2.googleapis.com/token|]
 urlGetUserInfo = [uri|https://www.googleapis.com/userinfo/v2/me|]
 
-fetchOAuthUserGoogle :: GoogleAppInfo -> FetchOAuthUser
-fetchOAuthUserGoogle appInfo = FetchOAuthUser
-  { fetcherOAuthInfo      = oAuthInfoGoogle appInfo
-  , fetcherOAuthClientURL = oAuthClientURLGoogle appInfo
-  , fetcherGetOAuthUser   = getUserInfoGoogle
+fetchOAuthUserGoogle :: GoogleAppInfo -> URI -> FetchOAuthUser
+fetchOAuthUserGoogle appInfo registerURL = FetchOAuthUser
+  { fetcherOAuthInfo        = oAuthInfoGoogle appInfo
+  , fetcherOAuthClientURL   = oAuthClientURLGoogle appInfo
+  , fetcherGetOAuthUser     = getUserInfoGoogle
+  , fetcherOAuthRegisterURL = registerURL
   }
 
 oAuthInfoGoogle :: GoogleAppInfo -> OAuth2
@@ -45,8 +46,8 @@ oAuthInfoGoogle (GoogleAppInfo appId appSecret) = OAuth2
   , oauthAccessTokenEndpoint = urlOAuthAccessToken
   }
 
-oAuthClientURLGoogle :: GoogleAppInfo -> URI -> URI
-oAuthClientURLGoogle (GoogleAppInfo appId _) redirectURL = url { uriQuery = queryParams } where
+oAuthClientURLGoogle :: GoogleAppInfo -> URI -> Text -> URI
+oAuthClientURLGoogle (GoogleAppInfo appId _) redirectURL state = url { uriQuery = queryParams } where
   url         = urlOAuthRedirect
   queryParams = Query
     [ ("client_id"    , encodeUtf8 appId)
@@ -54,6 +55,7 @@ oAuthClientURLGoogle (GoogleAppInfo appId _) redirectURL = url { uriQuery = quer
     , ("response_type", "code")
     , ("access_type"  , "offline")
     , ("redirect_uri" , show redirectURL)
+    , ("state"        , encodeUtf8 state)
     ]
 
 googleUserToOAuthUser :: GoogleUserInfo -> OAuthUser
