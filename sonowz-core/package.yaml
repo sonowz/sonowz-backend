@@ -37,6 +37,8 @@ dependencies:
   - relude
   - resource-pool
   - safe-exceptions
+  - servant
+  - servant-server
   - text
   - time
   - unordered-containers

@@ -83,6 +83,7 @@ import Polysemy.Error
 import Polysemy.Reader
 import Polysemy.State
 
+import Sonowz.Core.Instances ()
 import Sonowz.Core.StdEff.Effect
 
 import Data.Text as T

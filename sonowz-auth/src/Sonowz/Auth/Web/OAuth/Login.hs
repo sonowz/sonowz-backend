@@ -21,13 +21,13 @@ import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
 -- OAuth 1st step
-type GetOAuthRedirectURL = Header "from" Referer :> Get '[] URI
+type GetOAuthRedirectURL = Header "from" Referer :> Get '[PlainText] URI
 -- OAuth 2nd step
 type LoginWithOAuth
-  = ReqParam "code" Text :> ReqParam "state" URI :> Get '[] (WithSessionHeader URI)
+  = ReqParam "code" Text :> ReqParam "state" URI :> Get '[PlainText] (WithSessionHeader URI)
 
 type ReqParam = QueryParam' '[Required, Strict]
-newtype Referer = Referer ByteString deriving (Show, Eq)
+newtype Referer = Referer Text deriving (Show, Eq) deriving (FromHttpApiData) via Text
 
 
 type GetOAuthRedirectURLHandler
@@ -50,7 +50,14 @@ getOAuthRedirectURLHandler FetchOAuthUser {..} referer = do
   let redirectURL = fetcherOAuthClientURL fetcherOAuthRegisterURL callbackURL
   return redirectURL
 
-type LoginWithOAuthEffects = UserSession : Embed IO : Reader Manager : Error ServerError : DBEffects
+-- https://github.com/lspitzner/brittany/issues/271
+-- brittany-disable-next-binding
+type LoginWithOAuthEffects
+  = UserSession 
+  : Embed IO 
+  : Reader Manager 
+  : Error ServerError 
+  : DBEffects
 type LoginWithOAuthHandler
   = forall r . Members LoginWithOAuthEffects r => FetchOAuthUser -> ServerT LoginWithOAuth (Sem r)
 
