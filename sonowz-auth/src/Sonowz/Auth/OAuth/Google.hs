@@ -2,6 +2,7 @@
 module Sonowz.Auth.OAuth.Google
   ( GoogleAppInfo(..)
   , fetchOAuthUserGoogle
+  , identifierGoogle
   )
 where
 
@@ -31,6 +32,8 @@ instance FromJSON GoogleUserInfo where
 
 instance ToJSON GoogleUserInfo where
   toJSON = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' }
+
+identifierGoogle = "google" :: Text
 
 urlOAuthRedirect = [uri|https://accounts.google.com/o/oauth2/v2/auth|]
 urlOAuthAccessToken = [uri|https://oauth2.googleapis.com/token|]

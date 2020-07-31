@@ -9,4 +9,5 @@ import Sonowz.Core.Imports
 
 data WebAppEnv = WebAppEnv
   { eWebDomain :: URI
+  , eWebAPIRoot :: Text -- example: "/api"
   }

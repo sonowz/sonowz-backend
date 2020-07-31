@@ -12,7 +12,7 @@ import Polysemy.Resource (resourceToIOFinal)
 import URI.ByteString (URIRef(uriPath))
 
 import Sonowz.Auth.Imports
-import Sonowz.Auth.OAuth (FetchOAuthUser, fetchOAuthUserGoogle, GoogleAppInfo)
+import Sonowz.Auth.OAuth (FetchOAuthUser, GoogleAppInfo, fetchOAuthUserGoogle, identifierGoogle)
 import Sonowz.Auth.Web.OAuth.Combinators (LoginRedirectURL(..))
 import Sonowz.Auth.Web.OAuth.Login
   ( GetOAuthRedirectURL
@@ -44,7 +44,7 @@ type AuthHandlerEffects
 
 server :: Members AuthHandlerEffects r => WebAppEnv -> GoogleAppInfo -> ServerT AuthAPI (Sem r)
 server env gAppInfo = step1API fetchSet' :<|> step2API fetchSet'
-  where fetchSet' = fetchSet (loginRedirectURL env) gAppInfo
+  where fetchSet' = fetchSet env gAppInfo
 
 runWithEffects :: forall a . WebAppEnv -> OAuthEnv -> Manager -> DBConnPool -> Sem _ a -> Handler a
 runWithEffects env oauthEnv manager dbPool (action :: Members AuthHandlerEffects r => Sem r a) =
@@ -76,14 +76,19 @@ step2API :: Members AuthHandlerEffects r => FetchSetOAuthUser -> ServerT Step2AP
 step2API FetchSetOAuthUser {..} = handlerGoogle
   where handlerGoogle = loginWithOAuthHandlerRedirect fetchGoogle
 
+-- This would be "https://sonowz.me/api/login/google"
 loginRedirectURL :: WebAppEnv -> LoginRedirectURL
-loginRedirectURL WebAppEnv {..} = LoginRedirectURL (eWebDomain { uriPath = "/login/google" })
+loginRedirectURL WebAppEnv {..} =
+  LoginRedirectURL (eWebDomain { uriPath = encodeUtf8 (eWebAPIRoot <> "login/" <> identifierGoogle) })
 
 
 data FetchSetOAuthUser = FetchSetOAuthUser
   { fetchGoogle :: FetchOAuthUser
   }
 
-fetchSet :: LoginRedirectURL -> GoogleAppInfo -> FetchSetOAuthUser
-fetchSet (coerce -> loginRedirectURL) gAppInfo =
-  FetchSetOAuthUser { fetchGoogle = fetchOAuthUserGoogle gAppInfo loginRedirectURL }
+fetchSet :: WebAppEnv -> GoogleAppInfo -> FetchSetOAuthUser
+fetchSet WebAppEnv {..} gAppInfo = FetchSetOAuthUser
+  { fetchGoogle = fetchOAuthUserGoogle
+    gAppInfo
+    (eWebDomain { uriPath = encodeUtf8 (eWebAPIRoot <> "login/" <> identifierGoogle) })
+  }

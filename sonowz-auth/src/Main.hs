@@ -47,7 +47,7 @@ configP :: Parser Config
 configP = Config <$> warpPortP <*> connectInfoP <*> googleAppInfoP
 
 opts :: ParserInfo Config
-opts = info (helper <*> configP) (fullDesc <> progDesc "Raytrace backend server")
+opts = info (helper <*> configP) (fullDesc <> progDesc "Authentication backend server")
 
 main :: IO ()
 main = do
@@ -57,7 +57,7 @@ main = do
   (Config warpPort pgConnectInfo gAppInfo) <- execParser opts
   dbPool                                   <- createConnPool pgConnectInfo
   tlsManager                               <- newTlsManager
-  let webappEnv = WebAppEnv [uri|https://sonowz.me|]
+  let webappEnv = WebAppEnv [uri|https://sonowz.me|] "/api/"
   oauthEnv <- generateOAuthEnv
 
   let
