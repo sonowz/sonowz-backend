@@ -2,9 +2,11 @@
 module Sonowz.Auth.DB.Types where
 
 import Opaleye
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Time
 import Data.Profunctor.Product.Default (Default(..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
+import Servant.Auth.Server (FromJWT, ToJWT)
 
 import Sonowz.Auth.Imports
 
@@ -12,7 +14,7 @@ import Sonowz.Auth.Imports
 newtype DatabaseException = DatabaseException Text deriving (Show, Exception)
 
 newtype Uid = Uid Int
-  deriving (Eq, Show, Read) deriving (Num) via Int
+  deriving (Eq, Show, Read) deriving (Num, ToJSON, FromJSON) via Int
 
 -- 'uid' must be unique
 -- ('oauthProvider', 'oauthId') must be unique
@@ -22,7 +24,7 @@ data User c1 c2 c3 c4 c5 = User
   , oauthId :: c3
   , representation :: c4
   , createdTime :: c5
-  } deriving (Show, Read)
+  } deriving (Show, Read, Generic)
 type UserInfo = User Uid Text Text Text UTCTime
 type UserFieldW = User -- Write fields
   (Maybe (Field SqlInt4))
@@ -38,6 +40,10 @@ type UserFieldR = User -- Read fields
   (Field SqlTimestamptz)
 type UserTable = Table UserFieldW UserFieldR
 
+instance ToJSON UserInfo
+instance ToJWT UserInfo
+instance FromJSON UserInfo
+instance FromJWT UserInfo
 
 -- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pUser" ''User)

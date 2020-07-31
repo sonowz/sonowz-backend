@@ -33,6 +33,7 @@ dependencies:
   - hoauth2
   - http-client
   - http-client-tls
+  - http-types
   - mtl  # For 1 use case
   - opaleye
   - optparse-applicative
@@ -44,6 +45,7 @@ dependencies:
   - relude
   - safe-exceptions
   - servant
+  - servant-auth-server
   - servant-server
   - sonowz-core
 # - stm

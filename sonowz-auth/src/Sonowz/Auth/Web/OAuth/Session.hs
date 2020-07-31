@@ -4,8 +4,13 @@ module Sonowz.Auth.Web.OAuth.Session
   , RequireSession301
   , RequireSession401
   , MaybeSession
+  , AuthSessionContextEffects
+  , AuthSessionContext
   , authSessionContext
+  , AuthSessionContext2Effects
+  , AuthSessionContext2
   , authSessionContext2
+  , UserInfo'(..)
   )
 where
 
@@ -24,7 +29,7 @@ import Sonowz.Core.Session.Effect (Session, SessionKey, getSession)
 
 type UserSession = Session UserInfo
 newtype LoginRedirectURL = LoginRedirectURL URI deriving (Show, Eq) via URI
-newtype UserInfo' a = UserInfo' UserInfo -- Phantom type to discriminate between 301 and 401
+newtype UserInfo' a = UserInfo' { getUserInfo :: UserInfo } -- Phantom type to discriminate between 301 and 401
 
 -- Returns 301 Redirect to default OAuth login URL when no session
 type RequireSession301 = AuthProtect "require-session-301"
@@ -41,14 +46,14 @@ type MaybeSession = AuthProtect "maybe-session"
 type instance AuthServerData (AuthProtect "maybe-session") = Maybe UserInfo
 type MSContextHandler r = Request -> Sem r (Maybe UserInfo)
 
-authSessionContext
-  :: Members '[UserSession, Error ServerError] r
-  => Context '[RS401ContextHandler r, MSContextHandler r]
+type AuthSessionContextEffects = '[UserSession, Error ServerError]
+type AuthSessionContext r = '[RS401ContextHandler r, MSContextHandler r]
+authSessionContext :: Members AuthSessionContextEffects r => Context (AuthSessionContext r)
 authSessionContext = requireSession :. maybeSession :. EmptyContext
 
-authSessionContext2
-  :: Members '[Reader LoginRedirectURL, UserSession, Error ServerError] r
-  => Context '[RS301ContextHandler r, RS401ContextHandler r, MSContextHandler r]
+type AuthSessionContext2Effects = '[Reader LoginRedirectURL, UserSession, Error ServerError]
+type AuthSessionContext2 r = '[RS301ContextHandler r, RS401ContextHandler r, MSContextHandler r]
+authSessionContext2 :: Members AuthSessionContext2Effects r => Context (AuthSessionContext2 r)
 authSessionContext2 = requireSessionRedirect :. requireSession :. maybeSession :. EmptyContext
 
 requireSession :: Members '[UserSession, Error ServerError] r => RS401ContextHandler r
@@ -73,7 +78,9 @@ requireSessionRedirect req = do
   loginRedirectURL <- coerce <$> ask
   catch
     (coerce <$> requireSession req)
-    (\(_ :: ServerError) -> throw err401 { errHeaders = [("Location", serializeURIRef' loginRedirectURL)] })
+    (\(_ :: ServerError) ->
+      throw err401 { errHeaders = [("Location", serializeURIRef' loginRedirectURL)] }
+    )
 
 maybeSession :: Members '[UserSession, Error ServerError] r => MSContextHandler r
 maybeSession req =

@@ -8,28 +8,29 @@ module Sonowz.Auth.Web.OAuth.Login
 where
 
 import Servant hiding (URI)
+import Servant.Auth.Server (acceptLogin)
 import Network.HTTP.Client (Manager)
 import Network.OAuth.OAuth2 (ExchangeToken(..))
 import URI.ByteString (URI, serializeURIRef')
-import Web.Cookie (SetCookie)
+import qualified Network.HTTP.Types as HTTP
 
 import Sonowz.Auth.Imports
 import Sonowz.Auth.DB.Queries (insertOAuthUser)
-import Sonowz.Auth.OAuth (FetchOAuthUser(..), fetchUserInfoFromExchangeToken)
-import Sonowz.Auth.Web.OAuth.SessionRegister (UserSession, WithSessionHeader, registerUserSession)
+import Sonowz.Auth.OAuth (FetchOAuthUser(..), fetchUserInfoFromExchangeToken, OAuthException(..))
+import Sonowz.Auth.Web.OAuth.Types (OAuthEnv)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
 -- OAuth 1st step
 type GetOAuthRedirectURL = Header "from" Referer :> Get '[PlainText] URI
 -- OAuth 2nd step
-type LoginWithOAuth
-  = ReqParam "code" Text :> ReqParam "state" URI :> Get '[PlainText] (WithSessionHeader URI)
+type LoginWithOAuth = ReqParam "code" Text :> ReqParam "state" URI :> Get '[PlainText] URI
 
 type ReqParam = QueryParam' '[Required, Strict]
 newtype Referer = Referer Text deriving (Show, Eq) deriving (FromHttpApiData) via Text
 
-
+-- https://github.com/lspitzner/brittany/issues/271
+-- brittany-disable-next-binding
 type GetOAuthRedirectURLHandler
   =  forall r
    . Members '[Reader WebAppEnv, Error ServerError] r
@@ -53,8 +54,8 @@ getOAuthRedirectURLHandler FetchOAuthUser {..} referer = do
 -- https://github.com/lspitzner/brittany/issues/271
 -- brittany-disable-next-binding
 type LoginWithOAuthEffects
-  = UserSession
-  : Embed IO
+  = Embed IO
+  : Reader OAuthEnv
   : Reader Manager
   : Error ServerError
   : DBEffects
@@ -64,11 +65,9 @@ type LoginWithOAuthHandler
 -- Return as 301 response
 loginWithOAuthHandlerRedirect :: LoginWithOAuthHandler
 loginWithOAuthHandlerRedirect f e r = throw301 =<< loginWithOAuth f e r where
-  throw301 (setCookie, redirectURL) = throwS $ err301
-    { errHeaders = [("Location", serializeURIRef' redirectURL), ("Set-Cookie", toHeader setCookie)]
-    }   where
-    throwS :: Member (Error ServerError) r => ServerError -> Sem r a
-    throwS = throw
+  throw301 headers = throwS $ err301 { errHeaders = headers }
+  throwS :: Member (Error ServerError) r => ServerError -> Sem r a
+  throwS = throw
 
 -- Return URL as response body (not OAuth spec)
 {-
@@ -77,15 +76,25 @@ loginWithOAuthHandler f e r = uncurry addHeader <$> loginWithOAuth f e r
 -}
 
 loginWithOAuth
-  :: Members LoginWithOAuthEffects r => FetchOAuthUser -> Text -> URI -> Sem r (SetCookie, URI)
+  :: (Members LoginWithOAuthEffects r, HasCallStack)
+  => FetchOAuthUser
+  -> Text
+  -> URI
+  -> Sem r [HTTP.Header]
 loginWithOAuth fetch exchangeToken redirectURL = do
   tlsManager <- ask
   -- Do HTTP request to auth server
   oauthUser  <- liftIO
     $ fetchUserInfoFromExchangeToken tlsManager fetch (ExchangeToken exchangeToken)
   -- Insert to DB if new user, otherwise select from DB
-  user      <- withDBConn (\conn -> liftIO $ insertOAuthUser conn oauthUser)
-  -- Create new session
-  setCookie <- registerUserSession user
-  -- Return redirect URL
-  return (setCookie, redirectURL)
+  user                          <- withDBConn (\conn -> liftIO $ insertOAuthUser conn oauthUser)
+  -- Create new JWT 
+  (cookieSettings, jwtSettings) <- ask
+  mApplyCookies                 <- liftIO $ acceptLogin cookieSettings jwtSettings user
+  cookieHeaders                 <- getHeaders <$> case mApplyCookies of
+    Nothing           -> throw' $ OAuthException "Unexpected Error"
+    Just applyCookies -> return $ applyCookies NoContent
+  let redirectHeader = ("Location", serializeURIRef' redirectURL)
+  -- Return SetCookie & Redirect headers
+  return (redirectHeader : cookieHeaders)
+

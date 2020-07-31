@@ -4,15 +4,18 @@ module Main where
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
 import Options.Applicative
-import Servant.Server (serve, hoistServer)
+import Servant (Proxy(..), (:<|>)(..))
+import Servant.Server (Handler, serveWithContext, hoistServerWithContext)
 import System.IO (hSetBuffering, BufferMode(LineBuffering))
 import URI.ByteString.QQ (uri)
 import qualified Database.PostgreSQL.Simple as PGS
 import qualified Network.Wai.Handler.Warp as Warp
 
-import Sonowz.Auth.Imports
-import Sonowz.Auth.App.Web (api, server, runWithEffects)
+import Sonowz.Auth.Imports hiding (Proxy)
+import qualified Sonowz.Auth.App.Web as Web
+import qualified Sonowz.Auth.App.Test as Test
 import Sonowz.Auth.OAuth (GoogleAppInfo(..))
+import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
@@ -55,8 +58,14 @@ main = do
   dbPool                                   <- createConnPool pgConnectInfo
   tlsManager                               <- newTlsManager
   let webappEnv = WebAppEnv [uri|https://sonowz.me|]
+  oauthEnv <- generateOAuthEnv
 
   let
-    waiApp = serve api
-      $ hoistServer api (runWithEffects webappEnv tlsManager dbPool) (server webappEnv gAppInfo)
+    waiApp = serveWithContext api context (hoistServerWithContext api contextProxy nt server)     where
+    api          = Proxy :: Proxy (Web.AuthAPI :<|> Test.TestGetAPI)
+    contextProxy = Proxy :: Proxy OAuthContext
+    context      = makeOAuthContext oauthEnv
+    nt :: forall x . Sem _ x -> Handler x
+    nt     = Web.runWithEffects webappEnv oauthEnv tlsManager dbPool -- Natural Transformation from 'Handler' to 'Sem r'
+    server = Web.server webappEnv gAppInfo :<|> Test.server
   Warp.run warpPort waiApp

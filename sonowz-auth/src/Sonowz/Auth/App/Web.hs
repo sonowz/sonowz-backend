@@ -1,31 +1,27 @@
-{-# LANGUAGE QuasiQuotes #-}
 module Sonowz.Auth.App.Web
-  ( api
+  ( AuthAPI
   , server
   , runWithEffects
-  , AuthAPI
-  , Step1API
-  , Step2API
   )
 where
 
-import Control.Monad.Except (MonadError, throwError)  -- 'mtl' package is used here
+import Control.Monad.Except (MonadError)  -- 'mtl' package is used here
 import Servant hiding (URI, uriPath)
 import Network.HTTP.Client (Manager)
 import Polysemy.Resource (resourceToIOFinal)
-import URI.ByteString (URI, URIRef(uriPath))
+import URI.ByteString (URIRef(uriPath))
 
 import Sonowz.Auth.Imports
 import Sonowz.Auth.OAuth (FetchOAuthUser, fetchOAuthUserGoogle, GoogleAppInfo)
+import Sonowz.Auth.Web.OAuth.Combinators (LoginRedirectURL(..))
 import Sonowz.Auth.Web.OAuth.Login
   ( GetOAuthRedirectURL
   , LoginWithOAuth
   , getOAuthRedirectURLHandlerRedirect
   , loginWithOAuthHandlerRedirect
   )
-import Sonowz.Auth.Web.OAuth.Session (UserSession)
+import Sonowz.Auth.Web.OAuth.Types (OAuthEnv)
 import Sonowz.Core.DB.Pool (DBEffects, DBConnPool)
-import Sonowz.Core.Session.Effect (runSessionToIO)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
 type AuthAPI = Step1API :<|> Step2API
@@ -36,32 +32,31 @@ type Step2API = "login" :> "google" :> LoginWithOAuth
 
 type DefaultGetOAuthRedirectURL = GetOAuthRedirectURL
 
-api :: Proxy AuthAPI
-api = Proxy
-
 -- https://github.com/lspitzner/brittany/issues/271
 -- brittany-disable-next-binding
 type AuthHandlerEffects
   = Reader WebAppEnv
+  : Reader LoginRedirectURL
+  : Reader OAuthEnv
   : Reader Manager
-  : UserSession
   : Error ServerError
   : DBEffects
 
 server :: Members AuthHandlerEffects r => WebAppEnv -> GoogleAppInfo -> ServerT AuthAPI (Sem r)
 server env gAppInfo = step1API fetchSet' :<|> step2API fetchSet'
-  where fetchSet' = fetchSet env gAppInfo
+  where fetchSet' = fetchSet (loginRedirectURL env) gAppInfo
 
-runWithEffects :: WebAppEnv -> Manager -> DBConnPool -> Sem _ a -> Handler a
-runWithEffects env manager dbPool (action :: Members AuthHandlerEffects r => Sem r a) =
+runWithEffects :: forall a . WebAppEnv -> OAuthEnv -> Manager -> DBConnPool -> Sem _ a -> Handler a
+runWithEffects env oauthEnv manager dbPool (action :: Members AuthHandlerEffects r => Sem r a) =
   action
     & runReader env
+    & runReader (loginRedirectURL env)
+    & runReader oauthEnv
     & runReader manager
     & runReader dbPool
-    & runSessionToIO
-    & errorToIOFinal
     & stdEffToIO
     & resourceToIOFinal
+    & errorToIOFinal
     & embedToFinal                -- Embed IO
     & (embed . liftIO . runFinal) -- Final IO
     & runM                        -- Embed Handler
@@ -81,12 +76,14 @@ step2API :: Members AuthHandlerEffects r => FetchSetOAuthUser -> ServerT Step2AP
 step2API FetchSetOAuthUser {..} = handlerGoogle
   where handlerGoogle = loginWithOAuthHandlerRedirect fetchGoogle
 
+loginRedirectURL :: WebAppEnv -> LoginRedirectURL
+loginRedirectURL WebAppEnv {..} = LoginRedirectURL (eWebDomain { uriPath = "/login/google" })
+
 
 data FetchSetOAuthUser = FetchSetOAuthUser
   { fetchGoogle :: FetchOAuthUser
   }
 
-fetchSet :: WebAppEnv -> GoogleAppInfo -> FetchSetOAuthUser
-fetchSet WebAppEnv {..} gAppInfo = FetchSetOAuthUser
-  { fetchGoogle = fetchOAuthUserGoogle gAppInfo ((eWebDomain :: URI) { uriPath = "/login/google" })
-  }
+fetchSet :: LoginRedirectURL -> GoogleAppInfo -> FetchSetOAuthUser
+fetchSet (coerce -> loginRedirectURL) gAppInfo =
+  FetchSetOAuthUser { fetchGoogle = fetchOAuthUserGoogle gAppInfo loginRedirectURL }
