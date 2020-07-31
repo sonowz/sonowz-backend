@@ -5,13 +5,14 @@ module Sonowz.Auth.OAuth.Google
   )
 where
 
-import Sonowz.Auth.Imports
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson
+  (FromJSON(..), ToJSON(..), genericParseJSON, genericToJSON, Options(..), defaultOptions, camelTo2)
 import Network.HTTP.Client (Manager)
 import Network.OAuth.OAuth2 (OAuth2(..), AccessToken, authGetJSON)
-import URI.ByteString (URI, Query(..), URIRef(..))
+import URI.ByteString (URI, Query(..), URIRef(..), serializeURIRef')
 import URI.ByteString.QQ (uri)
 
+import Sonowz.Auth.Imports
 import Sonowz.Auth.OAuth.Types (FetchOAuthUser(..), OAuthUser(..))
 
 data GoogleAppInfo = GoogleAppInfo
@@ -23,7 +24,13 @@ data GoogleUserInfo = GoogleUserInfo
   { id :: Text
   , email :: Text
   , verifiedEmail :: Bool
-  } deriving (Generic, Eq, Show, FromJSON, ToJSON)
+  } deriving (Generic, Eq, Show)
+
+instance FromJSON GoogleUserInfo where
+  parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' }
+
+instance ToJSON GoogleUserInfo where
+  toJSON = genericToJSON defaultOptions { fieldLabelModifier = camelTo2 '_' }
 
 urlOAuthRedirect = [uri|https://accounts.google.com/o/oauth2/v2/auth|]
 urlOAuthAccessToken = [uri|https://oauth2.googleapis.com/token|]
@@ -31,17 +38,17 @@ urlGetUserInfo = [uri|https://www.googleapis.com/userinfo/v2/me|]
 
 fetchOAuthUserGoogle :: GoogleAppInfo -> URI -> FetchOAuthUser
 fetchOAuthUserGoogle appInfo registerURL = FetchOAuthUser
-  { fetcherOAuthInfo        = oAuthInfoGoogle appInfo
+  { fetcherOAuthInfo        = oAuthInfoGoogle appInfo registerURL
   , fetcherOAuthClientURL   = oAuthClientURLGoogle appInfo
   , fetcherGetOAuthUser     = getUserInfoGoogle
   , fetcherOAuthRegisterURL = registerURL
   }
 
-oAuthInfoGoogle :: GoogleAppInfo -> OAuth2
-oAuthInfoGoogle (GoogleAppInfo appId appSecret) = OAuth2
+oAuthInfoGoogle :: GoogleAppInfo -> URI -> OAuth2
+oAuthInfoGoogle (GoogleAppInfo appId appSecret) registerURL = OAuth2
   { oauthClientId            = appId
   , oauthClientSecret        = Just appSecret
-  , oauthCallback            = Nothing
+  , oauthCallback            = Just registerURL -- Google requires this URL to be same as serverside register URL
   , oauthOAuthorizeEndpoint  = urlOAuthRedirect
   , oauthAccessTokenEndpoint = urlOAuthAccessToken
   }
@@ -54,7 +61,7 @@ oAuthClientURLGoogle (GoogleAppInfo appId _) redirectURL state = url { uriQuery 
     , ("scope", "https://www.googleapis.com/auth/userinfo.email")
     , ("response_type", "code")
     , ("access_type"  , "offline")
-    , ("redirect_uri" , show redirectURL)
+    , ("redirect_uri" , serializeURIRef' redirectURL)
     , ("state"        , encodeUtf8 state)
     ]
 

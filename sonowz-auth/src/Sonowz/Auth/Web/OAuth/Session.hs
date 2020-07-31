@@ -9,9 +9,10 @@ module Sonowz.Auth.Web.OAuth.Session
   )
 where
 
-import Servant
+import Servant hiding (URI)
 import Servant.Server.Experimental.Auth (AuthServerData)
 import Network.Wai (Request, requestHeaders)
+import URI.ByteString (URI, serializeURIRef')
 import Web.Cookie (parseCookies)
 
 import Sonowz.Auth.Imports
@@ -69,10 +70,10 @@ requireSession req = do
 requireSessionRedirect
   :: Members '[Reader LoginRedirectURL, UserSession, Error ServerError] r => RS301ContextHandler r
 requireSessionRedirect req = do
-  loginRedirectURL <- ask
+  loginRedirectURL <- coerce <$> ask
   catch
     (coerce <$> requireSession req)
-    (\(_ :: ServerError) -> throw err401 { errHeaders = [("Location", show loginRedirectURL)] })
+    (\(_ :: ServerError) -> throw err401 { errHeaders = [("Location", serializeURIRef' loginRedirectURL)] })
 
 maybeSession :: Members '[UserSession, Error ServerError] r => MSContextHandler r
 maybeSession req =

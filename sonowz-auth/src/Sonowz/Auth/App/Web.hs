@@ -9,14 +9,14 @@ module Sonowz.Auth.App.Web
   )
 where
 
+import Control.Monad.Except (MonadError, throwError)  -- 'mtl' package is used here
 import Servant hiding (URI, uriPath)
 import Network.HTTP.Client (Manager)
 import Polysemy.Resource (resourceToIOFinal)
 import URI.ByteString (URI, URIRef(uriPath))
-import qualified Control.Exception.Safe as E
 
 import Sonowz.Auth.Imports
-import Sonowz.Auth.OAuth (FetchOAuthUser, fetchOAuthUserGoogle)
+import Sonowz.Auth.OAuth (FetchOAuthUser, fetchOAuthUserGoogle, GoogleAppInfo)
 import Sonowz.Auth.Web.OAuth.Login
   ( GetOAuthRedirectURL
   , LoginWithOAuth
@@ -48,8 +48,9 @@ type AuthHandlerEffects
   : Error ServerError
   : DBEffects
 
-server :: Members AuthHandlerEffects r => WebAppEnv -> ServerT AuthAPI (Sem r)
-server env = step1API (fetchSet env) :<|> step2API (fetchSet env)
+server :: Members AuthHandlerEffects r => WebAppEnv -> GoogleAppInfo -> ServerT AuthAPI (Sem r)
+server env gAppInfo = step1API fetchSet' :<|> step2API fetchSet'
+  where fetchSet' = fetchSet env gAppInfo
 
 runWithEffects :: WebAppEnv -> Manager -> DBConnPool -> Sem _ a -> Handler a
 runWithEffects env manager dbPool (action :: Members AuthHandlerEffects r => Sem r a) =
@@ -58,18 +59,18 @@ runWithEffects env manager dbPool (action :: Members AuthHandlerEffects r => Sem
     & runReader manager
     & runReader dbPool
     & runSessionToIO
+    & errorToIOFinal
     & stdEffToIO
     & resourceToIOFinal
-    & errorToIOFinal
     & embedToFinal                -- Embed IO
     & (embed . liftIO . runFinal) -- Final IO
     & runM                        -- Embed Handler
     & logAndThrow
  where
-  logAndThrow :: (E.MonadThrow m, MonadIO m) => m (Either ServerError a) -> m a
+  logAndThrow :: (MonadError ServerError m, MonadIO m) => m (Either ServerError a) -> m a
   logAndThrow action =
-    action >>= either (\e -> (liftIO . logInfoIO . toText . displayException) e >> E.throw e) return
-
+    action
+      >>= either (\e -> (liftIO . logInfoIO . toText . displayException) e >> throwError e) return
 
 step1API :: Members AuthHandlerEffects r => FetchSetOAuthUser -> ServerT Step1API (Sem r)
 step1API FetchSetOAuthUser {..} = handlerDefault :<|> handlerGoogle where
@@ -85,7 +86,7 @@ data FetchSetOAuthUser = FetchSetOAuthUser
   { fetchGoogle :: FetchOAuthUser
   }
 
-fetchSet :: WebAppEnv -> FetchSetOAuthUser
-fetchSet WebAppEnv {..} = FetchSetOAuthUser 
-  { fetchGoogle = fetchOAuthUserGoogle undefined ((eWebDomain :: URI) { uriPath = "/login/google" })
+fetchSet :: WebAppEnv -> GoogleAppInfo -> FetchSetOAuthUser
+fetchSet WebAppEnv {..} gAppInfo = FetchSetOAuthUser
+  { fetchGoogle = fetchOAuthUserGoogle gAppInfo ((eWebDomain :: URI) { uriPath = "/login/google" })
   }

@@ -16,7 +16,7 @@ stdenv.mkDerivation {
   ];
   installPhase = ''
     mkdir -p $out/bin
-    cp sonowz-raytrace $out/bin
+    cp -r . $out/bin
   '';
   
 }

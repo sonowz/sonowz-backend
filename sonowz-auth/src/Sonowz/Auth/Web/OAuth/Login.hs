@@ -10,7 +10,7 @@ where
 import Servant hiding (URI)
 import Network.HTTP.Client (Manager)
 import Network.OAuth.OAuth2 (ExchangeToken(..))
-import URI.ByteString (URI)
+import URI.ByteString (URI, serializeURIRef')
 import Web.Cookie (SetCookie)
 
 import Sonowz.Auth.Imports
@@ -40,23 +40,23 @@ type GetOAuthRedirectURLHandler
 getOAuthRedirectURLHandlerRedirect :: GetOAuthRedirectURLHandler
 getOAuthRedirectURLHandlerRedirect fetch referer = do
   redirectURL <- getOAuthRedirectURLHandler fetch referer
-  throw $ err301 { errHeaders = [("Location", show redirectURL)] }
+  throw $ err301 { errHeaders = [("Location", serializeURIRef' redirectURL)] }
 
 -- Return URL as response body
 getOAuthRedirectURLHandler :: GetOAuthRedirectURLHandler
 getOAuthRedirectURLHandler FetchOAuthUser {..} referer = do
   WebAppEnv {..} <- ask
-  let callbackURL = maybe (show eWebDomain) show referer
+  let callbackURL = maybe (decodeUtf8 $ serializeURIRef' eWebDomain) show referer
   let redirectURL = fetcherOAuthClientURL fetcherOAuthRegisterURL callbackURL
   return redirectURL
 
 -- https://github.com/lspitzner/brittany/issues/271
 -- brittany-disable-next-binding
 type LoginWithOAuthEffects
-  = UserSession 
-  : Embed IO 
-  : Reader Manager 
-  : Error ServerError 
+  = UserSession
+  : Embed IO
+  : Reader Manager
+  : Error ServerError
   : DBEffects
 type LoginWithOAuthHandler
   = forall r . Members LoginWithOAuthEffects r => FetchOAuthUser -> ServerT LoginWithOAuth (Sem r)
@@ -64,8 +64,11 @@ type LoginWithOAuthHandler
 -- Return as 301 response
 loginWithOAuthHandlerRedirect :: LoginWithOAuthHandler
 loginWithOAuthHandlerRedirect f e r = throw301 =<< loginWithOAuth f e r where
-  throw301 (setCookie, redirectURL) = throw'
-    $ err301 { errHeaders = [("Location", show redirectURL), ("Set-Cookie", toHeader setCookie)] }
+  throw301 (setCookie, redirectURL) = throwS $ err301
+    { errHeaders = [("Location", serializeURIRef' redirectURL), ("Set-Cookie", toHeader setCookie)]
+    }   where
+    throwS :: Member (Error ServerError) r => ServerError -> Sem r a
+    throwS = throw
 
 -- Return URL as response body (not OAuth spec)
 {-

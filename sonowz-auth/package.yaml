@@ -33,6 +33,7 @@ dependencies:
   - hoauth2
   - http-client
   - http-client-tls
+  - mtl  # For 1 use case
   - opaleye
   - optparse-applicative
   - polysemy
