@@ -10,6 +10,8 @@ module Sonowz.Core.Session.Effect
   )
 where
 
+-- This code has no usages currently :( --
+
 import Data.Fixed (Fixed(MkFixed))
 import Data.Time.Clock (secondsToNominalDiffTime)
 import Data.Time.LocalTime (LocalTime, zonedTimeToLocalTime, addLocalTime)

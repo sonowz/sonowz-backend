@@ -28,7 +28,6 @@ dependencies:
   - base
   - bytestring
   - containers
-  - cookie
   - deepseq
   - hoauth2
   - http-client
