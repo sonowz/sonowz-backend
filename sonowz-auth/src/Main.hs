@@ -19,7 +19,6 @@ import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthCon
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
--- TODO: parse Google app info & file config option
 
 data Config = Config Port PGS.ConnectInfo GoogleAppInfo
 
@@ -65,7 +64,7 @@ main = do
     api          = Proxy :: Proxy (Web.AuthAPI :<|> Test.TestGetAPI)
     contextProxy = Proxy :: Proxy OAuthContext
     context      = makeOAuthContext oauthEnv
-    nt :: forall x . Sem _ x -> Handler x
-    nt     = Web.runWithEffects webappEnv oauthEnv tlsManager dbPool -- Natural Transformation from 'Handler' to 'Sem r'
+    nt :: forall x . Sem _ x -> Handler x -- Natural Transformation from 'Sem r' to 'Handler' 
+    nt     = Web.runWithEffects webappEnv oauthEnv tlsManager dbPool
     server = Web.server webappEnv gAppInfo :<|> Test.server
   Warp.run warpPort waiApp
