@@ -5,7 +5,6 @@ module Sonowz.Raytrace.DB.QueryUtil
 where
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect (StdEff, throw')
 import Sonowz.Raytrace.DB.Types (DatabaseException(..))
 
 throwException :: Members StdEff r => Text -> Sem r a

@@ -1,4 +1,4 @@
-module Sonowz.Raytrace.Imports
+module Sonowz.Auth.Imports
   ( module Relude.Applicative
   , module Relude.Base
   , module Relude.Bool
@@ -29,7 +29,7 @@ module Sonowz.Raytrace.Imports
   , module Polysemy.State
 
   , module Sonowz.Core.StdEff.Effect
-
+  
   , lengthText
   )
 where

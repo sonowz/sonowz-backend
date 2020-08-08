@@ -27,3 +27,4 @@ cabal.project.local~
 bin/
 result
 test.sh
+appConfig*

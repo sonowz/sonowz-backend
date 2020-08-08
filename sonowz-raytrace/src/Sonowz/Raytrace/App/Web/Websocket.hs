@@ -10,8 +10,8 @@ import qualified Network.WebSockets as WS
 import qualified Polysemy.Async as P
 
 import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect
-import Sonowz.Raytrace.DB.Pool (DBConnPool, DBEffects)
+
+import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Raytrace.DB.Types
   ( ServantId(..)
   , ServantMessage
@@ -28,7 +28,7 @@ import Sonowz.Raytrace.MessageQueue.Effect.Websocket (runMQueueWebsocket)
 import Sonowz.Raytrace.MessageQueueThread.Effect
   (doStreamLoop, runMQueueStream, StreamHandler, StreamResult(..))
 import Sonowz.Raytrace.RaytraceConfig (Config, ConfigResult(..), jsonToConfig)
-import Sonowz.Raytrace.Time.Effect (Time, timeout, threadDelay, timeToIO)
+import Sonowz.Core.Time.Effect (Time, timeout, threadDelay, timeToIO)
 import Sonowz.Raytrace.Websocket.Effect
   (Websocket, getWSMessage, sendCloseSignal, receiveAny, WSMessage(..), runWebsocketToIO)
 

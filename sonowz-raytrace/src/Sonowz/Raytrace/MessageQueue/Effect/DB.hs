@@ -7,7 +7,7 @@ where
 
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue(..))
-import Sonowz.Raytrace.DB.Pool (DBEffects, withDBConn)
+import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Raytrace.DB.Queries (enqueueServant, dequeueServant, enqueueDaemon, enqueueDaemonNew, dequeueDaemon)
 import Sonowz.Raytrace.DB.Types (Message(..), ServantMessage, DaemonMessage, DaemonOp, ServantId(..))
 import Sonowz.Raytrace.DB.QueryUtil (boolToException, maybeToException)

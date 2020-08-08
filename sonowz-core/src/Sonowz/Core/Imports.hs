@@ -1,4 +1,4 @@
-module Sonowz.Raytrace.Imports
+module Sonowz.Core.Imports
   ( module Relude.Applicative
   , module Relude.Base
   , module Relude.Bool
@@ -27,8 +27,6 @@ module Sonowz.Raytrace.Imports
   , module Polysemy.Error
   , module Polysemy.Reader
   , module Polysemy.State
-
-  , module Sonowz.Core.StdEff.Effect
 
   , lengthText
   )
@@ -82,9 +80,6 @@ import Polysemy.AtomicState
 import Polysemy.Error
 import Polysemy.Reader
 import Polysemy.State
-
-import Sonowz.Core.Instances ()
-import Sonowz.Core.StdEff.Effect
 
 import Data.Text as T
 

@@ -1,5 +1,5 @@
-module Sonowz.Raytrace.StdEff.Effect
-  ( module Sonowz.Raytrace.StdEff.Effect.Log
+module Sonowz.Core.StdEff.Effect
+  ( module Sonowz.Core.StdEff.Effect.Log
   , StdEff
   , throw'
   , onExceptionPrint
@@ -9,8 +9,8 @@ where
 
 import qualified Control.Exception.Safe as E
 
-import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect.Log
+import Sonowz.Core.Imports
+import Sonowz.Core.StdEff.Effect.Log
 
 type StdEff = '[Error SomeException, StdLog]
 

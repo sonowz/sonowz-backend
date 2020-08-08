@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.Raytrace.Time.Effect
+module Sonowz.Core.Time.Effect
   ( Time(..)
   , threadDelay
   , timeout
@@ -12,7 +12,7 @@ import Data.Time.LocalTime (ZonedTime, getZonedTime)
 import qualified Control.Concurrent as T
 import qualified System.Timeout as T
 
-import Sonowz.Raytrace.Imports
+import Sonowz.Core.Imports
 
 data Time m a where
   ThreadDelay :: Int -> Time m ()

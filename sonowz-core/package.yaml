@@ -1,5 +1,5 @@
-name:                sonowz-raytrace
-version:             0.1.0.0
+name:                sonowz-core
+version:             1.0.0.0
 #synopsis:
 #description:
 homepage:            https://github.com/sonowz/sonowz-backend
@@ -17,45 +17,33 @@ ghc-options:
   - -fspecialise-aggressively
   - -fplugin=Polysemy.Plugin
   - -W
-#  - -ddump-to-file
-#  - -ddump-tc-trace
-#  - -fprint-potential-instances
 #  - -fforce-recomp
 
 dependencies:
-  - aeson
+  - ansi-terminal
   - async
   - base
   - bytestring
+  - co-log-core
   - containers
+  - cryptonite
   - deepseq
-# - directory
-  - exceptions
-# - filepath
-  - opaleye
-  - optparse-applicative
   - polysemy
   - polysemy-plugin
   - postgresql-simple
-# - process
   - product-profunctors
   - profunctors
+  - random
   - relude
+  - resource-pool
   - safe-exceptions
   - servant
   - servant-server
-  - servant-websockets
-  - sonowz-core
-# - stm
   - text
   - time
-  - transformers
-  - turtle
   - unordered-containers
+  - uri-bytestring
   - vector
-  - warp
-  - wai
-  - websockets
 
 default-extensions:
   - ApplicativeDo          # New syntax #
@@ -103,12 +91,5 @@ default-extensions:
   - ViewPatterns            # New syntax #
 
 
-# library:
-#   ghc-options:
-#     - -W
-#     - -Werror
-
-executables:
-  sonowz-raytrace:
-    source-dirs:      src
-    main:             Main.hs
+library:
+  source-dirs:      src

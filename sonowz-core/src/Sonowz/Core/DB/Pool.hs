@@ -1,4 +1,4 @@
-module Sonowz.Raytrace.DB.Pool
+module Sonowz.Core.DB.Pool
   ( DBConnPool
   , DBEffects
   , createConnPool
@@ -12,8 +12,8 @@ import Database.PostgreSQL.Simple (Connection, ConnectInfo, connect, close)
 import Polysemy.Resource (Resource, bracket)
 import qualified Control.Exception.Safe as E
 
-import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.StdEff.Effect
+import Sonowz.Core.Imports
+import Sonowz.Core.StdEff.Effect
 
 newtype DBConnPool = DBConnPool (Pool Connection)
 
