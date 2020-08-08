@@ -4,9 +4,9 @@ Self-study & Computer graphics class raytrace assignment demonstration
 
 It takes some time to process image, so message queue was implemented.
 
-Assignment code not included.
+Ray tracing assignment code is not included. This code just manages websocket connection with client.
 
-http://sonowz.me/raytrace
+https://sonowz.me/raytrace
 
 ## System Architecture
 ![image](https://github.com/sonowz/sonowz-backend/blob/master/sonowz-raytrace/SystemArchitecture.png)
@@ -18,11 +18,13 @@ http://sonowz.me/raytrace
 - Websocket for receiving queue status
 
 ## TODO
-- Purchase domain
 - Pretty web page
 
 ## Refactoring ideas
 - Split `App/Daemon/Process.hs` and `App/Web/Websocket.hs` by thread
-- Split Daemon and Web process as separate binary
-- Use `ekg` library
-- Make `timeToIOFinal` (this might eliminate the need to do second idea)
+- Use `ekg` library?
+
+## Bugs
+- Websocket sends ProcessStarted to client after ProcessFinished
+    - Split Daemon and Web process as separate binary
+    - Using `timeToIOFinal` might fix the bug
