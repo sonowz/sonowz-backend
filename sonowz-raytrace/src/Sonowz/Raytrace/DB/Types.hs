@@ -87,5 +87,5 @@ ffByReadInstance :: (Typeable a, Read a) => String -> FF.Field -> Maybe ByteStri
 ffByReadInstance name field (Just bs) = either
     (const $ FF.returnError FF.ConversionFailed field ("Parse failed in: " <> name))
     return
-    (readEither $ decodeUtf8 @Text bs)
+    (readEither . toString $ decodeUtf8 @Text bs)
 ffByReadInstance name field Nothing = FF.returnError FF.UnexpectedNull field ("Null value in: " <> name)

@@ -28,3 +28,4 @@ bin/
 result
 test.sh
 appConfig*
+.vscode/

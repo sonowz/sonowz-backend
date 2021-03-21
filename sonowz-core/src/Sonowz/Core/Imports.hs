@@ -38,7 +38,7 @@ import Relude.Bool
 import Relude.Container
 import Relude.Debug
 import Relude.DeepSeq
-import Relude.Exception
+import Relude.Exception hiding (fromException)
 import Relude.File
 import Relude.Foldable
 import Relude.Function
