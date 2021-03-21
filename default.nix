@@ -13,7 +13,9 @@ stdenv.mkDerivation {
     libpqxx
     ncurses
     zlib
+    glibc
   ];
+  LD_LIBRARY_PATH = "${glibc}/lib/";
   installPhase = ''
     mkdir -p $out/bin
     cp -r . $out/bin

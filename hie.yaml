@@ -1,0 +1,10 @@
+cradle:
+  stack:
+    - path: "./sonowz-auth/src"
+      component: "sonowz-auth:exe:sonowz-auth"
+
+    - path: "./sonowz-core/src"
+      component: "sonowz-core:lib"
+
+    - path: "./sonowz-raytrace/src"
+      component: "sonowz-raytrace:exe:sonowz-raytrace"
