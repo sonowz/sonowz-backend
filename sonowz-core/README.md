@@ -1,3 +1,3 @@
-# Sonowz-Auth
+# Sonowz-Core
 
-Package that provides backend authentication, mainly using Google OAuth2.
+Sonowz core library
