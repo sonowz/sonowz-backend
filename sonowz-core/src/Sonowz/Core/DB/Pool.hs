@@ -4,13 +4,12 @@ module Sonowz.Core.DB.Pool
   , createConnPool
   , withDBConn
   , withDBConnIO
-  )
-where
+  ) where
 
-import Data.Pool (Pool(..), createPool, takeResource, putResource)
-import Database.PostgreSQL.Simple (Connection, ConnectInfo, connect, close)
-import Polysemy.Resource (Resource, bracket)
 import qualified Control.Exception.Safe as E
+import Data.Pool (LocalPool, Pool(..), createPool, destroyResource, putResource, takeResource)
+import Database.PostgreSQL.Simple (ConnectInfo, Connection, close, connect, query_)
+import Polysemy.Resource (Resource, bracket)
 
 import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect
@@ -29,7 +28,7 @@ createConnPool connInfo = liftIO $ do
 
 withDBConnIO :: DBConnPool -> (Connection -> IO a) -> IO a
 withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction where
-  takeAction = liftIO $ takeResource pool
+  takeAction = liftIO (getWorkingConnection pool)
   putAction  = liftIO . uncurry (flip putResource)
   doAction   = action . fst
 
@@ -37,7 +36,23 @@ withDBConn :: Members DBEffects r => (Connection -> Sem r a) -> Sem r a
 withDBConn action = do
   DBConnPool pool <- ask
   let
-    !takeAction = liftIO (takeResource pool)
+    !takeAction = liftIO (getWorkingConnection pool)
     !putAction  = liftIO . uncurry (flip putResource)
     !doAction   = action . fst
   bracket takeAction putAction doAction
+
+-- Check connection with "SELECT 1", and try to reconnect
+getWorkingConnection :: Pool Connection -> IO (Connection, LocalPool Connection)
+getWorkingConnection pool = do
+  (conn, localpool) <- takeResource pool
+  E.tryAny (checkPing conn) >>= \case
+    Left _ ->
+      destroyResource pool localpool conn
+        >> logInfoIO "DB connection closed. Reconnecting..."
+        >> getWorkingConnection pool
+    Right _ -> return (conn, localpool)
+ where
+  checkPing conn = query_ conn "SELECT 1" >>= checkResult
+  checkResult l = case viaNonEmpty head (join l) of
+    Just (1 :: Int) -> pass
+    _               -> error "did not return 1"
