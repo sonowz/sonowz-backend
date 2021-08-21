@@ -64,6 +64,7 @@ forkRaytraceDaemon pool = do
     if ((==) `on` asyncThreadId) aborted tRunnerControl
       then logError "'runnerControlThread' was aborted."
       else logError "'runnerThread' was aborted."
+    doFork
 
 -- Actual Runner Thread --
 
