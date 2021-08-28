@@ -38,6 +38,8 @@ packages:
   - ./sonowz-core
   - ./sonowz-auth
   - ./sonowz-raytrace
+  - ./sonowz-news-combinator
+  - ./sonowz-noti
 
 # Dependency packages to be pulled from upstream that are not in the resolver
 # using the same syntax as the packages field.

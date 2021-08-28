@@ -7,7 +7,7 @@ license:             BSD3
 author:              SoonHo Seo
 maintainer:          dnsdhrj123@gmail.com
 copyright:           MIT
-category:            learn
+category:            Library
 extra-source-files:
   - README.md
 

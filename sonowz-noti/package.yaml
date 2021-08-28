@@ -1,4 +1,4 @@
-name:                sonowz-auth
+name:                sonowz-noti
 version:             0.1.0.0
 #synopsis:
 #description:
@@ -23,38 +23,19 @@ ghc-options:
 #  - -fforce-recomp
 
 dependencies:
-  - aeson
-  - async
   - base
   - bytestring
   - containers
-  - deepseq
-  - hoauth2
-  - http-client
-  - http-client-tls
-  - http-types
-  - mtl  # For 1 use case
-  - opaleye
-  - optparse-applicative
   - polysemy
   - polysemy-plugin
   - postgresql-simple
-  - product-profunctors
-  - profunctors
   - relude
+  - resource-pool
   - safe-exceptions
-  - servant
-  - servant-auth-server
-  - servant-server
   - sonowz-core
-# - stm
   - text
   - time
-  - unordered-containers
-  - uri-bytestring
   - vector
-  - warp
-  - wai
 
 default-extensions:
   - ApplicativeDo          # New syntax #
@@ -102,12 +83,10 @@ default-extensions:
   - ViewPatterns            # New syntax #
 
 
-# library:
-#   ghc-options:
-#     - -W
-#     - -Werror
+library:
+  source-dirs:      src
 
 executables:
-  sonowz-auth:
+  sonowz-noti:
     source-dirs:      src
     main:             Main.hs
