@@ -1,4 +1,4 @@
-module Sonowz.Raytrace.MessageQueue.Effect.State
+module Sonowz.Core.MessageQueue.Effect.State
   ( runMQueueState
   , removeMQueueState
   )
@@ -6,8 +6,8 @@ where
 
 import Data.List (partition)
 
-import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue(..))
+import Sonowz.Core.Imports
+import Sonowz.Core.MessageQueue.Effect (MessageQueue(..))
 
 runMQueueState :: Sem (MessageQueue msg : r) a -> Sem (AtomicState [msg] : r) a
 runMQueueState = reinterpret $ \case

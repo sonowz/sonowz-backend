@@ -1,36 +1,35 @@
 module Sonowz.Raytrace.App.Daemon.Process
   ( forkRaytraceDaemon
-  )
-where
+  ) where
 
-import Control.Concurrent.Async (async, cancel, waitCatch, waitAnyCatchCancel, asyncThreadId)
+import Control.Concurrent.Async (async, asyncThreadId, cancel, waitAnyCatchCancel, waitCatch)
 import Polysemy.Async (asyncToIOFinal)
-import Polysemy.Resource (resourceToIOFinal)
-import Turtle (ExitCode(ExitSuccess, ExitFailure))
 import qualified Polysemy.Async as P
+import Polysemy.Resource (resourceToIOFinal)
+import Turtle (ExitCode(ExitFailure, ExitSuccess))
 
 import Sonowz.Raytrace.Imports
 
-import Sonowz.Raytrace.App.Daemon.Types (RunInfo(..), RunnerProcess(..), CurrentRunInfo(..))
 import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
-import Sonowz.Raytrace.DB.Types
-  ( ServantId(..)
-  , ServantMessage
-  , ServantOp(..)
-  , DaemonMessage
-  , DaemonOp(..)
-  , Message(..)
-  , emptyMessage
-  )
-import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue, enqueue)
-import Sonowz.Raytrace.MessageQueue.Effect.DB (runMQueueDBDaemon, runMQueueDBServant)
-import Sonowz.Raytrace.MessageQueue.Effect.State (runMQueueState, removeMQueueState)
-import Sonowz.Raytrace.MessageQueue.Effect.Void (runMQueueVoid)
-import Sonowz.Raytrace.MessageQueueThread.Effect
-  (doStreamLoop, runMQueueStream, StreamHandler, StreamResult(..))
-import Sonowz.Raytrace.RaytraceConfig (Config(..))
+import Sonowz.Core.MessageQueue.Effect (MessageQueue, enqueue)
+import Sonowz.Core.MessageQueue.Effect.State (removeMQueueState, runMQueueState)
+import Sonowz.Core.MessageQueue.Effect.Void (runMQueueVoid)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
 import qualified Sonowz.Raytrace.App.Daemon.RunnerScript as Script
+import Sonowz.Raytrace.App.Daemon.Types (CurrentRunInfo(..), RunInfo(..), RunnerProcess(..))
+import Sonowz.Raytrace.DB.Types
+  ( DaemonMessage
+  , DaemonOp(..)
+  , Message(..)
+  , ServantId(..)
+  , ServantMessage
+  , ServantOp(..)
+  , emptyMessage
+  )
+import Sonowz.Raytrace.MessageQueue.Effect.DB (runMQueueDBDaemon, runMQueueDBServant)
+import Sonowz.Core.MessageQueueThread.Effect
+  (StreamHandler, StreamResult(..), doStreamLoop, runMQueueStream)
+import Sonowz.Raytrace.RaytraceConfig (Config(..))
 
 
 forkRaytraceDaemon :: DBConnPool -> IO ()
@@ -89,7 +88,8 @@ runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid where
     writeRaytraceResult servantId' processResult
     return HContinue
 
-  setCurrentRunInfo :: Member (AtomicState CurrentRunInfo) r => RunInfo -> RunnerProcess -> Sem r ()
+  setCurrentRunInfo
+    :: Member (AtomicState CurrentRunInfo) r => RunInfo -> RunnerProcess -> Sem r ()
   setCurrentRunInfo = curry (atomicPut . CurrentRunInfo)
 
   writeRaytraceStart :: (Members DBEffects r, HasCallStack) => ServantId -> Sem r ()
@@ -154,7 +154,7 @@ runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread' where
   removeFromQueue servantId' = removeMQueueState (\(RunInfo sid _) -> sid == servantId')
 
   stopRunnerIfDequeued
-    :: (Members '[AtomicState CurrentRunInfo, Embed IO] r, Members StdEff r)
+    :: (Members '[AtomicState CurrentRunInfo , Embed IO] r, Members StdEff r)
     => ServantId
     -> Sem r ()
   stopRunnerIfDequeued servantId' = do

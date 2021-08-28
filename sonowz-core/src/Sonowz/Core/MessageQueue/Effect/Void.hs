@@ -1,10 +1,10 @@
-module Sonowz.Raytrace.MessageQueue.Effect.Void
+module Sonowz.Core.MessageQueue.Effect.Void
   ( runMQueueVoid
   )
 where
 
-import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue(..))
+import Sonowz.Core.Imports
+import Sonowz.Core.MessageQueue.Effect (MessageQueue(..))
 
 runMQueueVoid :: Sem (MessageQueue Void : r) a -> Sem r a
 runMQueueVoid = interpret $ \case

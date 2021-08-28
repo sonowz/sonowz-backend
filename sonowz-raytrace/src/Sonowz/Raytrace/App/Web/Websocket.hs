@@ -1,39 +1,39 @@
 module Sonowz.Raytrace.App.Web.Websocket
   ( websocketHandler
-  )
-where
+  ) where
 
-import Control.Concurrent.Async (waitAnyCatchCancel, asyncThreadId)
-import Polysemy.Async (Async, asyncToIOFinal)
-import Polysemy.Resource (Resource, finally, bracket, resourceToIOFinal)
+import Control.Concurrent.Async (asyncThreadId, waitAnyCatchCancel)
 import qualified Network.WebSockets as WS
+import Polysemy.Async (Async, asyncToIOFinal)
 import qualified Polysemy.Async as P
+import Polysemy.Resource (Resource, bracket, finally, resourceToIOFinal)
 
 import Sonowz.Raytrace.Imports
 
 import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
+import Sonowz.Core.MessageQueue.Effect (MessageQueue, enqueue)
+import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIO, timeout)
 import Sonowz.Raytrace.DB.Types
-  ( ServantId(..)
-  , ServantMessage
-  , ServantOp(..)
-  , DaemonMessage
+  ( DaemonMessage
   , DaemonOp(..)
   , Message(..)
+  , ServantId(..)
+  , ServantMessage
+  , ServantOp(..)
   , emptyMessage
   )
-import Sonowz.Raytrace.MessageQueue.Effect (MessageQueue, enqueue)
 import Sonowz.Raytrace.MessageQueue.Effect.DB
-  (runMQueueDBDaemon, runMQueueDBServant, enqueueDBDaemonNew)
+  (enqueueDBDaemonNew, runMQueueDBDaemon, runMQueueDBServant)
 import Sonowz.Raytrace.MessageQueue.Effect.Websocket (runMQueueWebsocket)
-import Sonowz.Raytrace.MessageQueueThread.Effect
-  (doStreamLoop, runMQueueStream, StreamHandler, StreamResult(..))
+import Sonowz.Core.MessageQueueThread.Effect
+  (StreamHandler, StreamResult(..), doStreamLoop, runMQueueStream)
 import Sonowz.Raytrace.RaytraceConfig (Config, ConfigResult(..), jsonToConfig)
-import Sonowz.Core.Time.Effect (Time, timeout, threadDelay, timeToIO)
 import Sonowz.Raytrace.Websocket.Effect
-  (Websocket, getWSMessage, sendCloseSignal, receiveAny, WSMessage(..), runWebsocketToIO)
+  (WSMessage(..), Websocket, getWSMessage, receiveAny, runWebsocketToIO, sendCloseSignal)
 
 
-data WSException = WSException Text deriving (Show, Exception)
+data WSException = WSException Text
+  deriving (Show, Exception)
 
 websocketHandler :: DBConnPool -> WS.Connection -> IO ()
 websocketHandler dbPool wsConn =
@@ -48,7 +48,10 @@ websocketHandler dbPool wsConn =
     & embedToFinal
     & runFinal where
   websocketHandler'
-    :: (Members '[Websocket, Async, Resource, Time, MessageQueue DaemonMessage] r, Members DBEffects r) => Sem r ()
+    :: ( Members '[Websocket , Async , Resource , Time , MessageQueue DaemonMessage] r
+       , Members DBEffects r
+       )
+    => Sem r ()
   websocketHandler' = flip finally sendCloseSignal $ do
     logInfo "Websocket connection established."
     config <- getRunnerConfig
@@ -57,7 +60,7 @@ websocketHandler dbPool wsConn =
 
 -- Watch raytrace progress & receive ping from client
 forkWaitProgressThreads
-  :: (Members '[Websocket, Async, Resource, Time] r, Members DBEffects r, HasCallStack)
+  :: (Members '[Websocket , Async , Resource , Time] r, Members DBEffects r, HasCallStack)
   => ServantId
   -> Sem r ()
 forkWaitProgressThreads servantId' = do
@@ -73,10 +76,10 @@ forkWaitProgressThreads servantId' = do
   pass
 
 
-getRunnerConfig :: (Members '[Websocket, Time] r, Members StdEff r) => Sem r Config
-getRunnerConfig = encodeUtf8 <$> receiveText >>= makeRunnerConfig where
+getRunnerConfig :: (Members '[Websocket , Time] r, Members StdEff r) => Sem r Config
+getRunnerConfig = receiveText >>= makeRunnerConfig . encodeUtf8 where
 
-  receiveText :: (Members '[Websocket, Time] r, Members StdEff r) => Sem r Text
+  receiveText :: (Members '[Websocket , Time] r, Members StdEff r) => Sem r Text
   receiveText = timeout (3 * 10 ^ 6) getWSMessage >>= \case
     Just (WSMessage text) -> return text
     Nothing               -> throw' (WSException "Failed to receive config from client")
@@ -94,7 +97,9 @@ enqueueRaytrace config = do
   enqueueDBDaemonNew (Enqueue config)
 
 dequeueRaytrace
-  :: (Member (MessageQueue DaemonMessage) r, Members StdEff r, HasCallStack) => ServantId -> Sem r ()
+  :: (Member (MessageQueue DaemonMessage) r, Members StdEff r, HasCallStack)
+  => ServantId
+  -> Sem r ()
 dequeueRaytrace servantId' = do
   logDebug "Sending raytace cancel request to daemon.."
   enqueue dequeueMessage where
@@ -129,7 +134,7 @@ raytraceProgressThread =
   hSend          = HSend . WSMessage
   hSendTerminate = HSendTerminate . WSMessage
 
-pingThread :: (Members '[Websocket, Time] r, Members StdEff r) => Sem r ()
+pingThread :: (Members '[Websocket , Time] r, Members StdEff r) => Sem r ()
 pingThread = forever $ do
   timeout (10 * (10 ^ 6)) receiveAny
   logDebug "Ping received from client."
