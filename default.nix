@@ -1,7 +1,8 @@
 with import <nixpkgs> {};
 
-# This derivation just copies binaries from (impure) stack build result.
-# Use 'stack install --local-bin-path=bin' to build binaries
+# This is no longer used for building
+# Used for haskell-language-server environment (dynamic libraries)
+# TODO: use nix-ld
 stdenv.mkDerivation {
   name = "sonowz-backend";
   version = "1.0";

@@ -8,3 +8,9 @@ cradle:
 
     - path: "./sonowz-raytrace/src"
       component: "sonowz-raytrace:exe:sonowz-raytrace"
+
+    - path: "./sonowz-news-combinator/src"
+      component: "sonowz-news-combinatore:exe:sonowz-news-combinator"
+
+    - path: "./sonowz-noti/src"
+      component: "sonowz-noti:exe:sonowz-noti"
