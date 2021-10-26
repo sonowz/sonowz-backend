@@ -13,15 +13,15 @@ module Sonowz.Core.StdEff.Effect.Log
   , logExceptionIO
   , setStdLogActionLevel
   , runStdLogIO
-  )
-where
+  , ignoreStdLog
+  ) where
 
 import Colog.Core.Action (LogAction(..), hoistLogAction)
 import Colog.Core.Severity (Severity(..), filterBySeverity)
 import Control.Concurrent (ThreadId, myThreadId)
 import Data.Time.LocalTime (ZonedTime)
-import GHC.Stack (SrcLoc(..))
 import GHC.IO (unsafePerformIO)
+import GHC.Stack (SrcLoc(..))
 import System.Console.ANSI
   (Color(..), ColorIntensity(Vivid), ConsoleLayer(Foreground), SGR(..), setSGRCode)
 
@@ -48,7 +48,15 @@ runStdLogIO = interpret $ timeToIO <$> \case
   LogError     text -> withFrozenCallStack $ log Error text
   LogException e    -> withFrozenCallStack $ log Error (show $ displayException e)
 
-log :: (Members '[Time, Embed IO] r, HasCallStack) => Severity -> Text -> Sem r ()
+ignoreStdLog :: Sem (StdLog : r) a -> Sem r a
+ignoreStdLog = interpret $ \case
+  LogDebug     _ -> pass
+  LogInfo      _ -> pass
+  LogWarning   _ -> pass
+  LogError     _ -> pass
+  LogException _ -> pass
+
+log :: (Members '[Time , Embed IO] r, HasCallStack) => Severity -> Text -> Sem r ()
 log sev text = withFrozenCallStack $ makeStdMessage sev text >>= unLogAction stdLogAction
 
 
@@ -97,15 +105,15 @@ stdLogActionIO = hoistLogAction runM stdLogAction
 -- Message Type --
 
 data StdMessage = StdMessage
-  { stdMessageText :: Text
-  , stdMessageSeverity :: Severity
+  { stdMessageText      :: Text
+  , stdMessageSeverity  :: Severity
   , stdMessageCallStack :: CallStack
-  , stdMessageThreadId :: ThreadId
-  , stdMessageTime :: ZonedTime
-}
+  , stdMessageThreadId  :: ThreadId
+  , stdMessageTime      :: ZonedTime
+  }
 
 makeStdMessage
-  :: (Members '[Time, Embed IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
+  :: (Members '[Time , Embed IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
 makeStdMessage stdMessageSeverity stdMessageText = withFrozenCallStack $ do
   let stdMessageCallStack = callStack
   stdMessageThreadId <- liftIO myThreadId
