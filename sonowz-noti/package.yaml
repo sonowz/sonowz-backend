@@ -26,12 +26,14 @@ dependencies:
   - base
   - bytestring
   - containers
+  - mime-mail
   - polysemy
   - polysemy-plugin
   - postgresql-simple
   - relude
   - resource-pool
   - safe-exceptions
+  - smtp-mail
   - sonowz-core
   - text
   - time

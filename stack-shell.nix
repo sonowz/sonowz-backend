@@ -5,10 +5,7 @@ with import <nixpkgs> {};
 haskell.lib.buildStackProject {
   inherit ghc;
   name = "sonowz-backend";
-  # TODO: do not hard-code NIX_PATH
-  NIX_PATH = "nixpkgs=/nix/var/nix/profiles/per-user/root/channels/nixos";
   buildInputs = [
-    nix
     postgresql
     zlib
   ];

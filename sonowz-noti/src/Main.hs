@@ -1,6 +1,6 @@
 module Main where
 
-import Sonowz.Core.Imports
+import Sonowz.Noti.Imports
 
 main :: IO ()
 main = pass

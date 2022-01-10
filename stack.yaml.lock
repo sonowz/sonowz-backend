@@ -11,6 +11,13 @@ packages:
       sha256: 20b462f8095a8108ef4d920f0d494ba1299821403ad30169168f4b1968b06c2a
   original:
     hackage: polysemy-plugin-0.2.5.2
+- completed:
+    hackage: smtp-mail-0.3.0.0@sha256:2e6d9cb29d09a5a04d77a905eb1b570b94b5654e24d40630ea96aa374474c12f,1239
+    pantry-tree:
+      size: 450
+      sha256: 4d319cb6c22b35ca043a83210cd09bfbf99eec3dca4945cd53ed5b7c96f7daca
+  original:
+    hackage: smtp-mail-0.3.0.0
 snapshots:
 - completed:
     size: 534126
