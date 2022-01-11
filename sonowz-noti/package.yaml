@@ -27,6 +27,8 @@ dependencies:
   - bytestring
   - containers
   - mime-mail
+  - opaleye
+  - product-profunctors
   - polysemy
   - polysemy-plugin
   - postgresql-simple
