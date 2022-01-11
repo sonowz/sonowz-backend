@@ -5,10 +5,10 @@ module Sonowz.Raytrace.MessageQueue.Effect.DB
   ) where
 
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
+import Sonowz.Core.DB.Utils (boolToException, maybeToException)
 import Sonowz.Core.MessageQueue.Effect (MessageQueue(..))
 import Sonowz.Raytrace.DB.Queries
   (dequeueDaemon, dequeueServant, enqueueDaemon, enqueueDaemonNew, enqueueServant)
-import Sonowz.Raytrace.DB.QueryUtil (boolToException, maybeToException)
 import Sonowz.Raytrace.DB.Types
   (DaemonMessage, DaemonOp, Message(..), ServantId(..), ServantMessage)
 import Sonowz.Raytrace.Imports

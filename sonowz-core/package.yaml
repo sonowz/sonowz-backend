@@ -28,6 +28,7 @@ dependencies:
   - containers
   - cryptonite
   - deepseq
+  - opaleye
   - polysemy
   - polysemy-plugin
   - postgresql-simple

@@ -11,8 +11,6 @@ import Servant.Auth.Server (FromJWT, ToJWT)
 import Sonowz.Auth.Imports
 
 
-newtype DatabaseException = DatabaseException Text deriving (Show, Exception)
-
 newtype Uid = Uid Int
   deriving (Eq, Show, Read) deriving (Num, ToJSON, FromJSON) via Int
 
