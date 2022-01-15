@@ -3,8 +3,8 @@ module Sonowz.Noti.Notification.Handler.Email
   , generateEmailNotification
   ) where
 
-import Network.Mail.Mime (Address, Mail, htmlPart, plainPart)
-import Network.Mail.SMTP (sendMailWithLoginTLS, simpleMail)
+import Network.Mail.Mime (Address, Mail, addressEmail, htmlPart, plainPart)
+import Network.Mail.SMTP (sendMailWithLoginSTARTTLS', simpleMail)
 import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.Types
 
@@ -12,6 +12,7 @@ data EmailConfig = EmailConfig
   { emailConfigEmail    :: Address
   , emailConfigPassword :: Text
   , emailConfigHostname :: Text
+  , emailConfigPort     :: Int
   }
 
 generateEmailNotification
@@ -21,9 +22,10 @@ generateEmailNotification
   -> Sem r ()
 generateEmailNotification noti = do
   config@EmailConfig {..} <- ask
-  liftIO $ sendMailWithLoginTLS
+  liftIO $ sendMailWithLoginSTARTTLS'
     (toString emailConfigHostname)
-    (show emailConfigEmail)
+    (fromIntegral emailConfigPort)
+    (toString $ addressEmail emailConfigEmail)
     (toString emailConfigPassword)
     (makeMail config noti)
 

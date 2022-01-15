@@ -17,7 +17,8 @@ emailConfigP :: Parser EmailConfig
 emailConfigP = do
   emailConfigEmail    <- Address Nothing <$> strOption (long "email")
   emailConfigPassword <- strOption (long "emailpasswd")
-  emailConfigHostname <- strOption (long "emailhostname" <> value "sonowz.me")
+  emailConfigHostname <- strOption (long "emailhostname" <> value "smtp.gmail.com")
+  emailConfigPort     <- option auto (long "emailport" <> value 587)
   return EmailConfig { .. }
 
 
