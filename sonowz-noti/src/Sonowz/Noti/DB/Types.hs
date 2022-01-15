@@ -8,10 +8,9 @@ import qualified Database.PostgreSQL.Simple.FromField as FF
 import Opaleye
 import Sonowz.Core.DB.Utils
 import Sonowz.Noti.Imports
-import Sonowz.Noti.Notification.Types (NotificationBody, NotificationType)
+import Sonowz.Noti.Notification.Types (NotificationBody, NotificationType, Uid(..))
 
-newtype Uid = Uid Int
-  deriving (Eq, Show, Read)
+
 
 data Notification' c1 c2 c3 c4 c5 = Notification'
   { uid         :: c1

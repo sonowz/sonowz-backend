@@ -3,8 +3,8 @@ module Sonowz.Noti.Notification.Handler.Email
   , generateEmailNotification
   ) where
 
-import Network.Mail.Mime (Mail, htmlPart, plainPart)
-import Network.Mail.SMTP (Address, sendMailWithLoginTLS, simpleMail)
+import Network.Mail.Mime (Address, Mail, htmlPart, plainPart)
+import Network.Mail.SMTP (sendMailWithLoginTLS, simpleMail)
 import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.Types
 

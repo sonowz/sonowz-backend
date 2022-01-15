@@ -10,7 +10,7 @@ import Opaleye
 
 import Sonowz.Noti.DB.Types
 import Sonowz.Noti.Imports
-import Sonowz.Noti.Notification.Types (Notification(..))
+import Sonowz.Noti.Notification.Types (Notification(..), Uid)
 
 -- Table declarations --
 
@@ -33,11 +33,11 @@ insertNotification conn noti = withTransaction conn $ checkSuccess <$> insertRes
   checkSuccess 1 = True
   checkSuccess _ = False
 
-selectOneNotification :: HasCallStack => Connection -> IO (Maybe (Uid, Notification))
+selectOneNotification :: HasCallStack => Connection -> IO (Maybe Notification)
 selectOneNotification conn = withTransaction conn $ listToMaybe <$> (construct <<$>> selectResult) where
   selectResult = runSelect conn (qSelectMinNotification notificationTable)
-  construct :: NotificationHask -> (Uid, Notification)
-  construct Notification' {..} = (uid, Notification _type title body)
+  construct :: NotificationHask -> Notification
+  construct Notification' {..} = Notification _type title body (Just uid)
 
 deleteNotificationByUid :: HasCallStack => Connection -> Uid -> IO Bool
 deleteNotificationByUid conn uid = withTransaction conn $ checkSuccess <$> deleteResult where

@@ -28,6 +28,7 @@ dependencies:
   - containers
   - mime-mail
   - opaleye
+  - optparse-applicative
   - product-profunctors
   - polysemy
   - polysemy-plugin
