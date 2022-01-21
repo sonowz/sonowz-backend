@@ -1,4 +1,4 @@
-module Sonowz.Auth.Imports
+module Sonowz.NewsCombinator.Imports
   ( module Sonowz.Core.Imports
   , module Sonowz.Core.StdEff.Effect
   ) where
