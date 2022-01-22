@@ -26,6 +26,9 @@ dependencies:
   - base
   - bytestring
   - containers
+  - http-client
+  - http-client-tls
+  - opaleye
   - polysemy
   - polysemy-plugin
   - postgresql-simple
@@ -34,8 +37,10 @@ dependencies:
   - safe-exceptions
   - sonowz-core
   - sonowz-noti
+  - tagsoup
   - text
   - time
+  - uri-bytestring
   - vector
 
 default-extensions:
