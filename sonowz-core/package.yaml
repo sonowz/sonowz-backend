@@ -21,6 +21,7 @@ ghc-options:
 
 dependencies:
   - ansi-terminal
+  - aeson
   - async
   - base
   - bytestring
