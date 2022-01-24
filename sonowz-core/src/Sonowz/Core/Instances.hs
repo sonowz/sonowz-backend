@@ -1,12 +1,22 @@
 module Sonowz.Core.Instances where
 
+import Data.Profunctor.Product.Default (Default(def))
+import Data.Time (NominalDiffTime)
+import qualified Database.PostgreSQL.Simple.FromField as FF
+import Opaleye
+  ( Column
+  , Constant(..)
+  , QueryRunnerColumnDefault(defaultFromField)
+  , SqlFloat8
+  , ToFields
+  , fieldQueryRunnerColumn
+  , toFields
+  , toToFields
+  )
 import Servant (PlainText)
 import Servant.API (FromHttpApiData(..), MimeRender(..), ToHttpApiData(..))
-import URI.ByteString (URI, laxURIParserOptions, parseURI, serializeURIRef')
-
-import Data.Profunctor.Product.Default (Default(def))
-import Opaleye (Column, Constant(..))
 import Sonowz.Core.Imports
+import URI.ByteString (URI, laxURIParserOptions, parseURI, serializeURIRef')
 
 
 instance ToHttpApiData URI where
@@ -23,3 +33,10 @@ instance MimeRender PlainText URI where
 -- to indicate that the field is not used in writes.
 instance Default Constant a (Maybe (Column col)) where
   def = Constant (const Nothing)
+
+instance Default ToFields NominalDiffTime (Column SqlFloat8) where
+  def = toToFields (toFields . fromRational @Double . toRational)
+instance QueryRunnerColumnDefault SqlFloat8 NominalDiffTime where
+  defaultFromField = fieldQueryRunnerColumn
+instance FF.FromField NominalDiffTime where
+  fromField = fmap (fromRational . toRational) <<$>> (FF.fromField :: FF.FieldParser Double)
