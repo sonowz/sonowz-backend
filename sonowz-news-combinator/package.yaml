@@ -23,6 +23,7 @@ ghc-options:
 #  - -fforce-recomp
 
 dependencies:
+  - aeson
   - base
   - bytestring
   - containers
@@ -32,6 +33,7 @@ dependencies:
   - polysemy
   - polysemy-plugin
   - postgresql-simple
+  - product-profunctors
   - relude
   - resource-pool
   - safe-exceptions
@@ -58,6 +60,7 @@ default-extensions:
   - DeriveTraversable
   - DerivingVia
   - DoAndIfThenElse
+  - DuplicateRecordFields
   - EmptyDataDecls
   - ExistentialQuantification
   - ExplicitForAll

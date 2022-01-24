@@ -57,6 +57,7 @@ default-extensions:
   - DeriveTraversable
   - DerivingVia
   - DoAndIfThenElse
+  - DuplicateRecordFields
   - EmptyDataDecls
   - ExistentialQuantification
   - ExplicitForAll
