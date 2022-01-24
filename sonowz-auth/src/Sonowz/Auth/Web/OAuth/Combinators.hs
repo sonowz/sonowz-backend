@@ -7,27 +7,26 @@ module Sonowz.Auth.Web.OAuth.Combinators
   , authMaybe
   , authMaybe'
   , LoginRedirectURL(..)
-  )
-where
+  ) where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Servant
-import Servant.Auth.Server (Auth, JWT, Cookie, AuthResult(..), FromJWT, ToJWT)
+import Servant.Auth.Server (Auth, AuthResult(..), Cookie, FromJWT, JWT, ToJWT)
 import URI.ByteString (serializeURIRef')
 
 import Sonowz.Auth.Imports
-import Sonowz.Auth.DB.Types (UserInfo)
+import Sonowz.Auth.OAuth.DB.Types (UserInfo)
 import Sonowz.Auth.Web.OAuth.Types (LoginRedirectURL(..))
 
-type RequireAuth301 = Auth '[JWT, Cookie] (AuthUserInfo "301")
-type RequireAuth401 = Auth '[JWT, Cookie] (AuthUserInfo "401")
-type RequireAuthMaybe = Auth '[JWT, Cookie] (AuthUserInfo "maybe")
+type RequireAuth301 = Auth '[JWT , Cookie] (AuthUserInfo "301")
+type RequireAuth401 = Auth '[JWT , Cookie] (AuthUserInfo "401")
+type RequireAuthMaybe = Auth '[JWT , Cookie] (AuthUserInfo "maybe")
 
 -- Phantom type to distinguish between response types
 newtype AuthUserInfo a = AuthUserInfo { getUserInfo :: UserInfo } deriving (Show, FromJSON, ToJSON, FromJWT, ToJWT) via UserInfo
 
 auth301
-  :: Members '[Reader LoginRedirectURL, Error ServerError] r
+  :: Members '[Reader LoginRedirectURL , Error ServerError] r
   => AuthResult (AuthUserInfo "301")
   -> Sem r UserInfo
 auth301 authResult = do

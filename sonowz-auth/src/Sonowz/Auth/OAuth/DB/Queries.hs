@@ -1,5 +1,5 @@
 {-# LANGUAGE Arrows #-}
-module Sonowz.Auth.DB.Queries
+module Sonowz.Auth.OAuth.DB.Queries
   ( selectOrInsertOAuthUser
   , selectUser
   , selectTotalUserCount
@@ -10,7 +10,7 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 
-import Sonowz.Auth.DB.Types
+import Sonowz.Auth.OAuth.DB.Types
 import Sonowz.Auth.Imports hiding (null)
 import Sonowz.Auth.OAuth (OAuthUser(..))
 import Sonowz.Core.DB.CRUD

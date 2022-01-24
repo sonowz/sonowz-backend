@@ -1,6 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NoStrictData #-}
-module Sonowz.Noti.DB.Types where
+module Sonowz.Noti.Notification.DB.Types where
 
 import Data.Profunctor.Product.Default (Default(..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)

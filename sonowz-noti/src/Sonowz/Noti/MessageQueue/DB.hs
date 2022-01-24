@@ -5,8 +5,8 @@ module Sonowz.Noti.MessageQueue.DB
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.DB.Utils (maybeToException)
 import Sonowz.Core.MessageQueue.Effect (MessageQueue(..))
-import Sonowz.Noti.DB.Queries
 import Sonowz.Noti.Imports
+import Sonowz.Noti.Notification.DB.Queries (insertNotification, selectOneNotification)
 import Sonowz.Noti.Notification.Types (Notification)
 
 

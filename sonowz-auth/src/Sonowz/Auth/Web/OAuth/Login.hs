@@ -13,9 +13,9 @@ import Servant hiding (URI)
 import Servant.Auth.Server (acceptLogin)
 import URI.ByteString (URI, serializeURIRef')
 
-import Sonowz.Auth.DB.Queries (selectOrInsertOAuthUser)
 import Sonowz.Auth.Imports
 import Sonowz.Auth.OAuth (FetchOAuthUser(..), OAuthException(..), fetchUserInfoFromExchangeToken)
+import Sonowz.Auth.OAuth.DB.Queries (selectOrInsertOAuthUser)
 import Sonowz.Auth.Web.OAuth.Types (OAuthEnv)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))

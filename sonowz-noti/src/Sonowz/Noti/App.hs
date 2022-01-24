@@ -6,10 +6,10 @@ import Sonowz.Core.MessageQueue.Effect.Void (runMQueueVoid)
 import Sonowz.Core.MessageQueueThread.Effect
   (StreamHandler, StreamResult(HContinue), doStreamLoop, runMQueueStream)
 import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIO)
-import Sonowz.Noti.DB.Queries (deleteNotificationByUid)
 import Sonowz.Noti.Env (Env(..))
 import Sonowz.Noti.Imports
 import Sonowz.Noti.MessageQueue.DB (runMQueueDBNoti)
+import Sonowz.Noti.Notification.DB.Queries (deleteNotificationByUid)
 import Sonowz.Noti.Notification.Handler.Email (EmailConfig, generateEmailNotification)
 import Sonowz.Noti.Notification.Types (Notification(..), NotificationType(..))
 

@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.Auth.DB.Types where
+module Sonowz.Auth.OAuth.DB.Types where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Data.Profunctor.Product.Default (Default(..))

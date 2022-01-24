@@ -1,4 +1,4 @@
-module Sonowz.Noti.DB.Queries
+module Sonowz.Noti.Notification.DB.Queries
   ( insertNotification
   , selectOneNotification
   , deleteNotificationByUid
@@ -8,8 +8,8 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 import Sonowz.Core.DB.CRUD (CRUDQueries(crudCreate, crudDelete), getCRUDQueries)
-import Sonowz.Noti.DB.Types
 import Sonowz.Noti.Imports
+import Sonowz.Noti.Notification.DB.Types
 import Sonowz.Noti.Notification.Types (Notification(..), Uid)
 
 
