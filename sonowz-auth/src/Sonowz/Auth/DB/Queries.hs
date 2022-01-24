@@ -1,16 +1,19 @@
 {-# LANGUAGE Arrows #-}
-module Sonowz.Auth.DB.Queries where
+module Sonowz.Auth.DB.Queries
+  ( selectOrInsertOAuthUser
+  , selectUser
+  , selectTotalUserCount
+  ) where
 
 import Control.Arrow
 import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 
-
-import Sonowz.Auth.Imports hiding (null)
-
 import Sonowz.Auth.DB.Types
+import Sonowz.Auth.Imports hiding (null)
 import Sonowz.Auth.OAuth (OAuthUser(..))
+import Sonowz.Core.DB.CRUD
 import Sonowz.Core.DB.Utils (maybeToExceptionIO, nullify)
 
 
@@ -37,8 +40,8 @@ emptyAggUser = User
 
 -- Public Interfaces --
 
-insertOAuthUser :: HasCallStack => Connection -> OAuthUser -> IO UserInfo
-insertOAuthUser conn (oauthToWriteField -> writeFields) = withTransaction conn $ do
+selectOrInsertOAuthUser :: HasCallStack => Connection -> OAuthUser -> IO UserInfo
+selectOrInsertOAuthUser conn (oauthToHaskW -> writeFields) = withTransaction conn $ do
   maybeUser <- (<|>) <$> selectResult <*> insertResult
   maybeToExceptionIO "Insert/Select userInfo failed" maybeUser
  where
@@ -46,7 +49,7 @@ insertOAuthUser conn (oauthToWriteField -> writeFields) = withTransaction conn $
   insertResult = listToMaybe <$> runInsert_ conn (qInsertUser userTable writeFields)
 
 selectUser :: HasCallStack => Connection -> Uid -> IO (Maybe UserInfo)
-selectUser conn uid = listToMaybe <$> runSelect conn (qSelectUserByUid userTable uid)
+selectUser = crudRead crudSet
 
 selectTotalUserCount :: HasCallStack => Connection -> IO Int
 selectTotalUserCount conn = toInt <<$>> headOrError =<< runSelect conn (qSelectUserCount userTable) where
@@ -56,27 +59,21 @@ selectTotalUserCount conn = toInt <<$>> headOrError =<< runSelect conn (qSelectU
 
 -- Queries --
 
-qSelectUserByOAuth :: UserTable -> UserFieldW -> Select UserFieldR
+qSelectUserByOAuth :: UserTable -> UserInfoW -> Select UserFieldR
 qSelectUserByOAuth table user = proc () -> do
   selected <- selectTable table -< ()
-  restrict -< oauthProvider user .== oauthProvider selected
-  restrict -< oauthId user .== oauthId selected
-  returnA  -< selected
-
-qSelectUserByUid :: UserTable -> Uid -> Select UserFieldR
-qSelectUserByUid table _uid = proc () -> do
-  selected <- selectTable table -< ()
-  restrict -<  uid selected .== toFields _uid
+  restrict -< toFields (oauthProvider user) .== oauthProvider selected
+  restrict -< toFields (oauthId user) .== oauthId selected
   returnA  -< selected
 
 qSelectUserCount :: UserTable -> Select (Field SqlInt8)
-qSelectUserCount table = uid
-  <$> aggregate (pUser $ emptyAggUser { uid = count }) (selectTable table) where
+qSelectUserCount table =
+  uid <$> aggregate (pUser $ emptyAggUser { uid = count }) (selectTable table)
 
-qInsertUser :: UserTable -> UserFieldW -> Insert [UserInfo]
+qInsertUser :: UserTable -> UserInfoW -> Insert [UserInfo]
 qInsertUser table user = Insert
   { iTable      = table
-  , iRows       = [user]
+  , iRows       = [toFields user]
   , iReturning  = rReturning id
   , iOnConflict = Just DoNothing
   }
@@ -84,14 +81,14 @@ qInsertUser table user = Insert
 
 -- Private Functions --
 
-oauthToWriteField :: OAuthUser -> UserFieldW
-oauthToWriteField OAuthUser {..} = User
-  { uid            = Nothing
-  , oauthProvider  = toFields oauthUserProvider
-  , oauthId        = toFields oauthUserId
-  , representation = toFields oauthUserRep
-  , createdTime    = Nothing
-  }
+crudSet :: CRUDQueries UserInfo UserInfoW Uid
+crudSet = getCRUDQueries userTable uid
 
-insertIsSuccess :: Int64 -> Bool
-insertIsSuccess result = result > 0
+oauthToHaskW :: OAuthUser -> UserInfoW
+oauthToHaskW OAuthUser {..} = User
+  { uid            = error "Unexpected 'uid' access"
+  , oauthProvider  = oauthUserProvider
+  , oauthId        = oauthUserId
+  , representation = oauthUserRep
+  , createdTime    = error "Unexpected 'createdTime' access"
+  }

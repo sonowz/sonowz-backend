@@ -4,19 +4,18 @@ module Sonowz.Auth.Web.OAuth.Login
   , getOAuthRedirectURLHandler
   , LoginWithOAuth
   , loginWithOAuthHandlerRedirect
-  )
-where
+  ) where
 
+import Network.HTTP.Client (Manager)
+import qualified Network.HTTP.Types as HTTP
+import Network.OAuth.OAuth2 (ExchangeToken(..))
 import Servant hiding (URI)
 import Servant.Auth.Server (acceptLogin)
-import Network.HTTP.Client (Manager)
-import Network.OAuth.OAuth2 (ExchangeToken(..))
 import URI.ByteString (URI, serializeURIRef')
-import qualified Network.HTTP.Types as HTTP
 
+import Sonowz.Auth.DB.Queries (selectOrInsertOAuthUser)
 import Sonowz.Auth.Imports
-import Sonowz.Auth.DB.Queries (insertOAuthUser)
-import Sonowz.Auth.OAuth (FetchOAuthUser(..), fetchUserInfoFromExchangeToken, OAuthException(..))
+import Sonowz.Auth.OAuth (FetchOAuthUser(..), OAuthException(..), fetchUserInfoFromExchangeToken)
 import Sonowz.Auth.Web.OAuth.Types (OAuthEnv)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
@@ -26,7 +25,7 @@ type GetOAuthRedirectURL = Header "from" Referer :> Get '[PlainText] URI
 -- OAuth 2nd step
 type LoginWithOAuth = ReqParam "code" Text :> ReqParam "state" URI :> Get '[PlainText] URI
 
-type ReqParam = QueryParam' '[Required, Strict]
+type ReqParam = QueryParam' '[Required , Strict]
 newtype Referer = Referer Text deriving (Show, Eq) deriving (FromHttpApiData) via Text
 
 -- https://github.com/lspitzner/brittany/issues/271
@@ -87,7 +86,7 @@ loginWithOAuth fetch exchangeToken redirectURL = do
   oauthUser  <- liftIO
     $ fetchUserInfoFromExchangeToken tlsManager fetch (ExchangeToken exchangeToken)
   -- Insert to DB if new user, otherwise select from DB
-  user                          <- withDBConn (\conn -> liftIO $ insertOAuthUser conn oauthUser)
+  user <- withDBConn (\conn -> liftIO $ selectOrInsertOAuthUser conn oauthUser)
   -- Create new JWT 
   (cookieSettings, jwtSettings) <- ask
   mApplyCookies                 <- liftIO $ acceptLogin cookieSettings jwtSettings user

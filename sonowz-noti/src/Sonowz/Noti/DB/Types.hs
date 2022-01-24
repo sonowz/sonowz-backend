@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoStrictData #-}
 module Sonowz.Noti.DB.Types where
 
 import Data.Profunctor.Product.Default (Default(..))
@@ -20,6 +21,7 @@ data Notification' c1 c2 c3 c4 c5 = Notification'
   , createdTime :: c5
   }
 
+type NotificationHaskW = Notification' Void NotificationType Text NotificationBody Void
 type NotificationHask = Notification' Uid NotificationType Text NotificationBody UTCTime
 type NotificationFieldW
   = Notification' -- Write fields
