@@ -17,7 +17,7 @@ import Sonowz.Core.StdEff.Effect.Log
 type StdEff = '[Error SomeException , StdLog]
 
 -- Utility function for 'Polysemy.Error.throw'
-throw' :: (Member (Error SomeException) r, Exception e) => e -> Sem r a
+throw' :: forall e r a . (Member (Error SomeException) r, Exception e) => e -> Sem r a
 throw' = throw . toException
 
 -- This throws exceptions which are not thrown by 'Polysemy.Error.throw'

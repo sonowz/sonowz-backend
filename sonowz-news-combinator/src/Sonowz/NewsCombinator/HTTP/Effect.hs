@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.NewsCombinator.HTTP.Effects
+module Sonowz.NewsCombinator.HTTP.Effect
   ( HTTP
   , fetchURL
   , runHTTPIO

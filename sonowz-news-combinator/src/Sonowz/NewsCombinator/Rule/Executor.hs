@@ -5,7 +5,7 @@ module Sonowz.NewsCombinator.Rule.Executor
 import Control.Exception (AssertionFailed(..))
 import Data.Time (UTCTime, addUTCTime, zonedTimeToUTC)
 import Sonowz.Core.Time.Effect (Time, getTime)
-import Sonowz.NewsCombinator.HTTP.Effects (HTTP, fetchURL)
+import Sonowz.NewsCombinator.HTTP.Effect (HTTP, fetchURL)
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.News.Parser (ParseException, parseNewsItems)
 import Sonowz.NewsCombinator.News.Types (NewsItem(..), googleNewsRSSUrl)
