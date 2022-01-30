@@ -15,6 +15,7 @@ import Sonowz.NewsCombinator.News.Notification (createNotification)
 import Sonowz.NewsCombinator.News.Parser (ParseException)
 import Sonowz.NewsCombinator.Rule.DB.Queries (getNewsScrapRules, updateNewsScrapRule)
 import Sonowz.NewsCombinator.Rule.Executor (evalNewsScrapRule)
+import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule(..))
 
 
 runRuleWorker :: Env -> IO ()
@@ -47,9 +48,17 @@ runRuleWorker env = forever $ do
 type WorkerEffects = Final IO : Time : HTTP : DBEffects
 
 worker :: Members WorkerEffects r => Sem r ()
-worker = withDBConn (embed . getNewsScrapRules) >>= mapM_
-  (\rule -> try $ do -- Continues even when exception is thrown
-    (newsItems, rule') <- mapError (toException @ParseException) $ evalNewsScrapRule rule
-    whenJust newsItems (void . createNotification rule)
-    withDBConn (\conn -> fromException $ updateNewsScrapRule conn rule')
-  )
+worker = do
+  rules <- filter isEnabled <$> withDBConn (embed . getNewsScrapRules)
+  mapM_
+    (\rule -> flip (catch @SomeException) logExc $ do -- Continues even when exception is thrown
+      logDebug ("Evaluate \"" <> keyword rule <> "\"...")
+      (newsItems, rule') <- mapError (toException @ParseException) $ evalNewsScrapRule rule
+      case newsItems of
+        Just newsItems' -> logDebug "Success!" >> void (createNotification rule newsItems')
+        Nothing         -> pass
+      withDBConn (\conn -> fromException $ updateNewsScrapRule conn rule')
+    )
+    rules where
+  logExc :: Member StdLog r => SomeException -> Sem r ()
+  logExc e = logException e >> pass

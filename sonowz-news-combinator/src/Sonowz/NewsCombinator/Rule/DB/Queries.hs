@@ -19,7 +19,7 @@ import Sonowz.Noti.Notification.Types (Uid)
 -- Table declarations --
 
 newsScrapRuleTable :: NewsScrapRuleTable
-newsScrapRuleTable = table "news_scrap_rule_table" (pNewsScrapRule fields) where
+newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields) where
   fields = NewsScrapRule'
     { uid           = tableField "uid"
     , keyword       = tableField "keyword"
