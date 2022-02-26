@@ -1,23 +1,21 @@
-{-# LANGUAGE QuasiQuotes #-}
 module Main where
 
+import qualified Database.PostgreSQL.Simple as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
-import Options.Applicative
-import Servant (Proxy(..), (:<|>)(..))
-import Servant.Server (Handler, serveWithContext, hoistServerWithContext)
-import System.IO (hSetBuffering, BufferMode(LineBuffering))
-import URI.ByteString.QQ (uri)
-import qualified Database.PostgreSQL.Simple as PGS
 import qualified Network.Wai.Handler.Warp as Warp
+import Options.Applicative
+import Servant ((:<|>)(..), Proxy(..))
+import Servant.Server (Handler, hoistServerWithContext, serveWithContext)
+import System.IO (BufferMode(LineBuffering), hSetBuffering)
 
-import Sonowz.Auth.Imports hiding (Proxy)
-import qualified Sonowz.Auth.App.Web as Web
 import qualified Sonowz.Auth.App.Test as Test
+import qualified Sonowz.Auth.App.Web as Web
+import Sonowz.Auth.Imports hiding (Proxy)
 import Sonowz.Auth.OAuth (GoogleAppInfo(..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
 import Sonowz.Core.DB.Pool (createConnPool)
-import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
+import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..), defaultWebAppEnv)
 
 
 data Config = Config Port PGS.ConnectInfo GoogleAppInfo
@@ -56,7 +54,7 @@ main = do
   (Config warpPort pgConnectInfo gAppInfo) <- execParser opts
   dbPool                                   <- createConnPool pgConnectInfo
   tlsManager                               <- newTlsManager
-  let webappEnv = WebAppEnv [uri|https://sonowz.me|] "/api/"
+  let webappEnv = defaultWebAppEnv { eWebAPIRoot = "/api/", eWebPort = warpPort }
   oauthEnv <- generateOAuthEnv
 
   let

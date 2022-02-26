@@ -38,6 +38,7 @@ dependencies:
   - relude
   - resource-pool
   - safe-exceptions
+  - servant-server
   - sonowz-core
   - sonowz-noti
   - tagsoup

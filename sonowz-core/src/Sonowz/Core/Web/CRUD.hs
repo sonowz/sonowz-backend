@@ -8,10 +8,10 @@ module Sonowz.Core.Web.CRUD
 import Control.Exception (AssertionFailed(AssertionFailed))
 import qualified Control.Exception.Safe as E
 import Data.Aeson (FromJSON, ToJSON)
-import Database.PostgreSQL.Simple (Connection)
 import GHC.TypeLits (Symbol)
 import Servant
 import Sonowz.Core.DB.CRUD (CRUDQueries(..))
+import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Imports
 
 
@@ -43,7 +43,8 @@ crudHandlerFromHandlers CRUDHandlers {..} = list :<|> read :<|> create :<|> upda
 -- Throws 500 Internal Server Error when query fails
 crudHandlerFromDBQueries
   :: forall item citem uid (path :: Symbol) r
-   . ( Members '[Error ServerError , Embed IO , Reader Connection] r
+   . ( Member (Error ServerError) r
+     , Members DBEffects r
      , FromJSON citem
      , ToJSON item
      , FromHttpApiData uid
@@ -52,12 +53,13 @@ crudHandlerFromDBQueries
   -> ServerT (CRUDAPI item citem uid path) (Sem r)
 crudHandlerFromDBQueries queries = crudHandlerFromHandlers crudHandler where
   crudHandler = CRUDHandlers
-    { list   = ask >>= \conn -> ioWrapper (crudList queries conn)
-    , read   = \uid -> ask >>= \conn -> ioWrapper (maybeExc =<< crudRead queries conn uid)
-    , create = \citem -> ask >>= \conn -> ioWrapper (maybeExc =<< crudCreate queries conn citem)
+    { list   = withDBConn $ \conn -> ioWrapper (crudList queries conn)
+    , read   = \uid -> withDBConn $ \conn -> ioWrapper (maybeExc =<< crudRead queries conn uid)
+    , create = \citem ->
+      withDBConn $ \conn -> ioWrapper (maybeExc =<< crudCreate queries conn citem)
     , update = \uid citem ->
-      ask >>= \conn -> ioWrapper (maybeExc =<< crudUpdate queries conn uid citem)
-    , delete = \uid -> ask >>= \conn -> ioWrapper (boolExc =<< crudDelete queries conn uid)
+      withDBConn $ \conn -> ioWrapper (maybeExc =<< crudUpdate queries conn uid citem)
+    , delete = \uid -> withDBConn $ \conn -> ioWrapper (boolExc =<< crudDelete queries conn uid)
     }
   -- Convert SomeException into ServerError
   ioWrapper :: IO a -> Sem r a

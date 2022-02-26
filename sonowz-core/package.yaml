@@ -29,6 +29,7 @@ dependencies:
   - containers
   - cryptonite
   - deepseq
+  - http-types
   - opaleye
   - polysemy
   - polysemy-plugin
@@ -46,6 +47,8 @@ dependencies:
   - unordered-containers
   - uri-bytestring
   - vector
+  - wai
+  - warp
 
 default-extensions:
   - ApplicativeDo          # New syntax #
