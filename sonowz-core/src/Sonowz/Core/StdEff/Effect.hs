@@ -21,13 +21,15 @@ throw' :: forall e r a . (Member (Error SomeException) r, Exception e) => e -> S
 throw' = throw . toException
 
 -- This throws exceptions which are not thrown by 'Polysemy.Error.throw'
-stdEffToIO :: Member (Embed IO) r => Sem (Error SomeException : StdLog : r) a -> Sem r a
+stdEffToIO
+  :: (Member (Embed IO) r, HasCallStack) => Sem (Error SomeException : StdLog : r) a -> Sem r a
 stdEffToIO m = runStdLogIO $ runError m >>= printException where
   printException (Left  e) = error ("Caught in 'stdEffToIO' : " <> show e)
   printException (Right x) = return x
 
 -- This catches all kinds of synchronous exceptions
-stdEffToIOFinal :: Member (Final IO) r => Sem (Error SomeException : StdLog : r) a -> Sem r a
+stdEffToIOFinal
+  :: (Member (Final IO) r, HasCallStack) => Sem (Error SomeException : StdLog : r) a -> Sem r a
 stdEffToIOFinal m =
   (errorToIOFinal (fromExceptionSem m) >>= printException) & raiseUnder & runStdLogIO & embedToFinal
  where

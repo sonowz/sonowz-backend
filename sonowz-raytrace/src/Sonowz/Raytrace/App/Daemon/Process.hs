@@ -32,7 +32,7 @@ import Sonowz.Core.MessageQueueThread.Effect
 import Sonowz.Raytrace.RaytraceConfig (Config(..))
 
 
-forkRaytraceDaemon :: DBConnPool -> IO ()
+forkRaytraceDaemon :: HasCallStack => DBConnPool -> IO ()
 forkRaytraceDaemon pool = do
   runInfoQueue   <- newTVarIO ([] :: [RunInfo])
   currentRunInfo <- newTVarIO

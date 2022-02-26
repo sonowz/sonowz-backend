@@ -18,7 +18,7 @@ import Sonowz.NewsCombinator.Rule.Executor (evalNewsScrapRule)
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule(..))
 
 
-runRuleWorker :: Env -> IO ()
+runRuleWorker :: HasCallStack => Env -> IO ()
 runRuleWorker env = forever $ do
   E.catchAny (workerIO env) printException
   threadDelay' (fromIntegral (envWorkerIntervalSeconds env) * 10 ^ 6)
@@ -47,7 +47,7 @@ runRuleWorker env = forever $ do
 
 type WorkerEffects = Final IO : Time : HTTP : DBEffects
 
-worker :: Members WorkerEffects r => Sem r ()
+worker :: HasCallStack => Members WorkerEffects r => Sem r ()
 worker = do
   rules <- filter isEnabled <$> withDBConn (embed . getNewsScrapRules)
   mapM_

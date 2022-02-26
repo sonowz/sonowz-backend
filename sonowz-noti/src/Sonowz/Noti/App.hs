@@ -14,7 +14,7 @@ import Sonowz.Noti.Notification.Handler.Email (EmailConfig, generateEmailNotific
 import Sonowz.Noti.Notification.Types (Notification(..), NotificationType(..))
 
 
-runApp :: Env -> IO ()
+runApp :: HasCallStack => Env -> IO ()
 runApp Env {..} =
   forever (catch (fromExceptionSem doStreamLoop) handleError)
     & runMQueueStream notificationHandler
@@ -39,7 +39,8 @@ type HandlerEffects =
   : Embed IO
   : DBEffects
 
-notificationHandler :: Members HandlerEffects r => StreamHandler r Notification Void
+notificationHandler
+  :: (Members HandlerEffects r, HasCallStack) => StreamHandler r Notification Void
 notificationHandler noti =
   HContinue
     <$ (case notificationType noti of

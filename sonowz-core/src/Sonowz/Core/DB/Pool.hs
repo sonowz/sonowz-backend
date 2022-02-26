@@ -21,7 +21,7 @@ type DBEffects = Reader DBConnPool : Resource : Embed IO : StdEff
 maxDBConn :: Int
 maxDBConn = 10
 
-createConnPool :: MonadIO m => ConnectInfo -> m DBConnPool
+createConnPool :: (MonadIO m, HasCallStack) => ConnectInfo -> m DBConnPool
 createConnPool connInfo = liftIO $ do
   logDebugIO $ "DB connection pool was created. (Max connection: " <> show maxDBConn <> ")"
   DBConnPool <$> createPool (connect connInfo) close 1 10 maxDBConn
@@ -42,7 +42,7 @@ withDBConn action = do
   bracket takeAction putAction doAction
 
 -- Check connection with "SELECT 1", and try to reconnect
-getWorkingConnection :: Pool Connection -> IO (Connection, LocalPool Connection)
+getWorkingConnection :: HasCallStack => Pool Connection -> IO (Connection, LocalPool Connection)
 getWorkingConnection pool = do
   (conn, localpool) <- takeResource pool
   E.tryAny (checkPing conn) >>= \case
