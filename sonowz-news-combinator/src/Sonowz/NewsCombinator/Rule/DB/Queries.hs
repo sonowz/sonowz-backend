@@ -18,6 +18,20 @@ import Sonowz.Noti.Notification.Types (Uid)
 
 -- Table declarations --
 
+{-
+CREATE TABLE public.news_scrap_rule (
+    uid serial PRIMARY KEY NOT NULL,
+    keyword text NOT NULL,
+    success_count integer NOT NULL,
+    success_period double precision NOT NULL,
+    is_enabled boolean NOT NULL,
+    is_one_time_rule boolean NOT NULL,
+    created_time timestamp with time zone DEFAULT now() NOT NULL,
+    updated_time timestamp with time zone DEFAULT now() NOT NULL
+);
+CREATE TRIGGER news_scrap_rule_update AFTER UPDATE ON public.news_scrap_rule FOR EACH ROW EXECUTE PROCEDURE public.update_time();
+-}
+
 newsScrapRuleTable :: NewsScrapRuleTable
 newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields) where
   fields = NewsScrapRule'

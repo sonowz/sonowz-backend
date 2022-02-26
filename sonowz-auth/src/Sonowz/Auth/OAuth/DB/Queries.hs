@@ -10,14 +10,26 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 
-import Sonowz.Auth.OAuth.DB.Types
 import Sonowz.Auth.Imports hiding (null)
 import Sonowz.Auth.OAuth (OAuthUser(..))
+import Sonowz.Auth.OAuth.DB.Types
 import Sonowz.Core.DB.CRUD
 import Sonowz.Core.DB.Utils (maybeToExceptionIO, nullify)
 
 
 -- Table declarations --
+
+{-
+CREATE TABLE public.user_info (
+    uid serial PRIMARY KEY NOT NULL,
+    oauth_provider text NOT NULL,
+    oauth_id text NOT NULL,
+    representation text,
+    created_time timestamp with time zone DEFAULT now() NOT NULL
+);
+ALTER TABLE ONLY public.user_info
+    ADD CONSTRAINT unique_oauth UNIQUE (oauth_provider, oauth_id);
+-}
 
 userTable :: UserTable
 userTable = table "user_info" (pUser userFields)

@@ -15,6 +15,16 @@ import Sonowz.Noti.Notification.Types (Notification(..), Uid)
 
 -- Table declarations --
 
+{-
+CREATE TABLE public.notification (
+    uid serial PRIMARY KEY NOT NULL,
+    type text NOT NULL,
+    title text NOT NULL,
+    body text NOT NULL,
+    created_time timestamp with time zone DEFAULT now() NOT NULL
+); 
+-}
+
 notificationTable :: NotificationTable
 notificationTable = table "notification" (pNotification notificationFields)
 
