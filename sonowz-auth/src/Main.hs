@@ -1,5 +1,8 @@
 module Main where
 
+-- This module and runtime is used for OAuth test purpose
+-- This module is not used in production
+
 import qualified Database.PostgreSQL.Simple as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)

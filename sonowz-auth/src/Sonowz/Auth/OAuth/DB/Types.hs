@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoStrictData #-}
 module Sonowz.Auth.OAuth.DB.Types where
 
 import Data.Aeson (FromJSON, ToJSON)
