@@ -14,3 +14,6 @@ cradle:
 
     - path: "./sonowz-noti/src"
       component: "sonowz-noti:exe:sonowz-noti"
+
+    - path: "./sonowz-web/src"
+      component: "sonowz-web:exe:sonowz-web"

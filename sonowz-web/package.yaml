@@ -1,4 +1,4 @@
-name:                sonowz-auth
+name:                sonowz-web
 version:             0.1.0.0
 #synopsis:
 #description:
@@ -29,11 +29,6 @@ dependencies:
   - bytestring
   - containers
   - deepseq
-  - hoauth2
-  - http-client
-  - http-client-tls
-  - http-types
-  - mtl  # For 1 use case
   - opaleye
   - optparse-applicative
   - polysemy
@@ -44,17 +39,16 @@ dependencies:
   - relude
   - safe-exceptions
   - servant
-  - servant-auth-server
   - servant-server
+  - sonowz-auth
   - sonowz-core
-# - stm
   - text
   - time
   - unordered-containers
   - uri-bytestring
   - vector
-  - warp
   - wai
+  - warp
 
 default-extensions:
   - ApplicativeDo          # New syntax #
@@ -103,10 +97,12 @@ default-extensions:
   - ViewPatterns            # New syntax #
 
 
-library:
-  source-dirs:      src
+# library:
+#   ghc-options:
+#     - -W
+#     - -Werror
 
 executables:
-  sonowz-auth:
+  sonowz-web:
     source-dirs:      src
     main:             Main.hs
