@@ -5,8 +5,9 @@ module Sonowz.Noti.Notification.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
+import Sonowz.Core.DB.Utils (Uid)
 import Sonowz.Noti.Imports
-import Sonowz.Noti.Notification.Types (NotificationBody, NotificationType, Uid(..))
+import Sonowz.Noti.Notification.Types (NotificationBody, NotificationType)
 
 
 data Notification' c1 c2 c3 c4 c5 = Notification'
@@ -35,5 +36,4 @@ type NotificationFieldR
       (Field SqlTimestamptz)
 type NotificationTable = Table NotificationFieldW NotificationFieldR
 
--- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pNotification" ''Notification')

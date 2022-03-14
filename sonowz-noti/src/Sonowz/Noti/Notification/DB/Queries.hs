@@ -8,9 +8,10 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 import Sonowz.Core.DB.CRUD (CRUDQueries(crudCreate, crudDelete), getCRUDQueries)
+import Sonowz.Core.DB.Utils (Uid)
 import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.DB.Types
-import Sonowz.Noti.Notification.Types (Notification(..), Uid)
+import Sonowz.Noti.Notification.Types (Notification(..))
 
 
 -- Table declarations --

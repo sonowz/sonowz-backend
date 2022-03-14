@@ -3,17 +3,14 @@
 module Sonowz.Auth.OAuth.DB.Types where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Profunctor.Product.Default (Default(..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
 import Servant.Auth.Server (FromJWT, ToJWT)
+import Sonowz.Core.DB.Utils (Uid)
 
 import Sonowz.Auth.Imports
 
-
-newtype Uid = Uid Int
-  deriving (Eq, Show, Read) deriving (Num, ToJSON, FromJSON) via Int
 
 -- 'uid' must be unique
 -- ('oauthProvider', 'oauthId') must be unique
@@ -44,8 +41,4 @@ instance ToJWT UserInfo
 instance FromJSON UserInfo
 instance FromJWT UserInfo
 
--- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pUser" ''User)
-deriving via Int instance QueryRunnerColumnDefault SqlInt4 Uid
-instance Default Constant Uid (Column SqlInt4) where
-  def = coerce (def :: Constant Int (Column SqlInt4))

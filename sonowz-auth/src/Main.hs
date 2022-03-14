@@ -47,7 +47,9 @@ configP :: Parser Config
 configP = Config <$> warpPortP <*> connectInfoP <*> googleAppInfoP
 
 opts :: ParserInfo Config
-opts = info (helper <*> configP) (fullDesc <> progDesc "Authentication backend server")
+opts = info
+  (helper <*> configP)
+  (fullDesc <> progDesc "Authentication backend server (for development use!)")
 
 main :: IO ()
 main = do
