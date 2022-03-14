@@ -116,7 +116,7 @@ makeStdMessage
   :: (Members '[Time , Embed IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
 makeStdMessage stdMessageSeverity stdMessageText = withFrozenCallStack $ do
   let stdMessageCallStack = callStack
-  stdMessageThreadId <- liftIO myThreadId
+  stdMessageThreadId <- unsafeLiftIO myThreadId
   stdMessageTime     <- getTime
   return StdMessage { .. }
 

@@ -1,18 +1,17 @@
 module Sonowz.Raytrace.App.Web
   ( server
   , api
-  )
-where
+  ) where
 
 import Servant
 
-import Sonowz.Raytrace.Imports
-import Sonowz.Raytrace.Env (Env(..))
 import Sonowz.Raytrace.App.Web.Types (RaytraceWsAPI)
 import Sonowz.Raytrace.App.Web.Websocket (websocketHandler)
+import Sonowz.Raytrace.Env (Env(..))
+import Sonowz.Raytrace.Imports
 
 api :: Proxy RaytraceWsAPI
 api = Proxy
 
 server :: Env -> Server RaytraceWsAPI
-server Env {..} = liftIO . websocketHandler envPgConnection
+server Env {..} = unsafeLiftIO . websocketHandler envPgConnection

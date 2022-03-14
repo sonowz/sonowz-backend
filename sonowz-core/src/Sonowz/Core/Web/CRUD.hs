@@ -13,6 +13,7 @@ import Servant
 import Sonowz.Core.DB.CRUD (CRUDQueries(..))
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Imports
+import Sonowz.Core.StdEff.Effect (webLiftIO)
 
 
 type CRUDAPI item citem uid (path :: Symbol)
@@ -53,19 +54,14 @@ crudHandlerFromDBQueries
   -> ServerT (CRUDAPI item citem uid path) (Sem r)
 crudHandlerFromDBQueries queries = crudHandlerFromHandlers crudHandler where
   crudHandler = CRUDHandlers
-    { list   = withDBConn $ \conn -> ioWrapper (crudList queries conn)
-    , read   = \uid -> withDBConn $ \conn -> ioWrapper (maybeExc =<< crudRead queries conn uid)
+    { list   = withDBConn $ \conn -> webLiftIO (crudList queries conn)
+    , read   = \uid -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudRead queries conn uid)
     , create = \citem ->
-      withDBConn $ \conn -> ioWrapper (maybeExc =<< crudCreate queries conn citem)
+      withDBConn $ \conn -> webLiftIO (maybeExc =<< crudCreate queries conn citem)
     , update = \uid citem ->
-      withDBConn $ \conn -> ioWrapper (maybeExc =<< crudUpdate queries conn uid citem)
-    , delete = \uid -> withDBConn $ \conn -> ioWrapper (boolExc =<< crudDelete queries conn uid)
+      withDBConn $ \conn -> webLiftIO (maybeExc =<< crudUpdate queries conn uid citem)
+    , delete = \uid -> withDBConn $ \conn -> webLiftIO (boolExc =<< crudDelete queries conn uid)
     }
-  -- Convert SomeException into ServerError
-  ioWrapper :: IO a -> Sem r a
-  ioWrapper action = throw500 =<< embed (E.tryAny action)
-  throw500 :: Either SomeException a -> Sem r a
-  throw500 = either (const $ throw err500) return
   maybeExc :: Maybe a -> IO a
   maybeExc (Just x) = return x
   maybeExc Nothing  = E.throw (AssertionFailed "Invalid query result")

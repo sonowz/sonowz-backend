@@ -86,7 +86,7 @@ loginWithOAuth fetch exchangeToken redirectURL = do
   oauthUser  <- liftIO
     $ fetchUserInfoFromExchangeToken tlsManager fetch (ExchangeToken exchangeToken)
   -- Insert to DB if new user, otherwise select from DB
-  user <- withDBConn (\conn -> liftIO $ selectOrInsertOAuthUser conn oauthUser)
+  user <- withDBConn (\conn -> webLiftIO $ selectOrInsertOAuthUser conn oauthUser)
   -- Create new JWT 
   (cookieSettings, jwtSettings) <- ask
   mApplyCookies                 <- liftIO $ acceptLogin cookieSettings jwtSettings user

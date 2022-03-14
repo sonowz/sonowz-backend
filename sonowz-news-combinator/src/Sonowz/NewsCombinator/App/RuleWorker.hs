@@ -49,7 +49,7 @@ type WorkerEffects = Final IO : Time : HTTP : DBEffects
 
 worker :: HasCallStack => Members WorkerEffects r => Sem r ()
 worker = do
-  rules <- filter isEnabled <$> withDBConn (embed . getNewsScrapRules)
+  rules <- filter isEnabled <$> withDBConn (liftIO . getNewsScrapRules)
   mapM_
     (\rule -> flip (catch @SomeException) logExc $ do -- Continues even when exception is thrown
       logDebug ("Evaluate \"" <> keyword rule <> "\"...")
@@ -57,7 +57,7 @@ worker = do
       case newsItems of
         Just newsItems' -> logDebug "Success!" >> void (createNotification rule newsItems')
         Nothing         -> pass
-      withDBConn (\conn -> fromException $ updateNewsScrapRule conn rule')
+      withDBConn (\conn -> liftIO $ updateNewsScrapRule conn rule')
     )
     rules where
   logExc :: Member StdLog r => SomeException -> Sem r ()

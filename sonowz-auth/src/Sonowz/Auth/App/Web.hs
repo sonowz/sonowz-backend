@@ -56,15 +56,17 @@ runWithEffects env oauthEnv manager dbPool (action :: Members AuthHandlerEffects
     & stdEffToIO
     & resourceToIOFinal
     & errorToIOFinal
-    & embedToFinal                -- Embed IO
-    & (embed . liftIO . runFinal) -- Final IO
-    & runM                        -- Embed Handler
+    & embedToFinal                      -- Embed IO
+    & (embed . unsafeLiftIO . runFinal) -- Final IO
+    & runM                              -- Embed Handler
     & logAndThrow
  where
   logAndThrow :: (MonadError ServerError m, MonadIO m) => m (Either ServerError a) -> m a
   logAndThrow action =
     action
-      >>= either (\e -> (liftIO . logInfoIO . toText . displayException) e >> throwError e) return
+      >>= either
+            (\e -> (unsafeLiftIO . logInfoIO . toText . displayException) e >> throwError e)
+            return
 
 step1API :: Members AuthHandlerEffects r => FetchSetOAuthUser -> ServerT Step1API (Sem r)
 step1API FetchSetOAuthUser {..} = handlerDefault :<|> handlerGoogle where

@@ -14,7 +14,7 @@ import Sonowz.Noti.Notification.Types
 
 createNotification :: Members DBEffects r => NewsScrapRule -> [NewsItem] -> Sem r Notification
 createNotification rule newsItems = withDBConn $ \conn -> do
-  maybeCreated <- fromException $ insertNotification conn (makeNoti rule newsItems)
+  maybeCreated <- liftIO $ insertNotification conn (makeNoti rule newsItems)
   case maybeCreated of
     Just noti -> return noti
     Nothing   -> throw' (DatabaseException "Could not insert notification!")

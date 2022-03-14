@@ -7,17 +7,16 @@ module Sonowz.Core.Session.Effect
   , setSession
   , newSession
   , runSessionToIO
-  )
-where
+  ) where
 
 -- This code has no usages currently :( --
 
+import Crypto.Hash (Digest, SHA256, hash)
 import Data.Fixed (Fixed(MkFixed))
-import Data.Time.Clock (secondsToNominalDiffTime)
-import Data.Time.LocalTime (LocalTime, zonedTimeToLocalTime, addLocalTime)
 import Data.HashMap.Strict as H
 import Data.Text as T
-import Crypto.Hash (hash, Digest, SHA256)
+import Data.Time.Clock (secondsToNominalDiffTime)
+import Data.Time.LocalTime (LocalTime, addLocalTime, zonedTimeToLocalTime)
 import System.Random (randomIO)
 
 import Sonowz.Core.Imports
@@ -30,34 +29,31 @@ type SessionStore v = H.HashMap SessionKey (LocalTime, v)
 type SessionRef v = IORef (SessionStore v)
 
 data Session (v :: *) m a where
-  GetSession :: SessionKey -> Session v m (Maybe v)
-  SetSession :: SessionKey -> ExpirySec -> v -> Session v m ()
-  NewSession :: ExpirySec -> v -> Session v m SessionKey
+  GetSession ::SessionKey -> Session v m (Maybe v)
+  SetSession ::SessionKey -> ExpirySec -> v -> Session v m ()
+  NewSession ::ExpirySec -> v -> Session v m SessionKey
 
 makeSem ''Session
 
 
 runSessionToIO :: Member (Embed IO) r => Sem (Session v : r) a -> Sem r a
 runSessionToIO action = do
-  storeRef <- liftIO (newIORef mempty)
+  storeRef <- unsafeLiftIO (newIORef mempty)
   timeToIO . runReader storeRef . runSessionAsReaderIORef . raiseUnder2 $ action
 
-type ReaderIORefEffects v = '[Embed IO, Time, Reader (SessionRef v)]
+type ReaderIORefEffects v = '[Embed IO , Time , Reader (SessionRef v)]
 runSessionAsReaderIORef
-  :: forall v r a
-   . Members (ReaderIORefEffects v) r
-  => Sem (Session v : r) a
-  -> Sem r a
+  :: forall v r a . Members (ReaderIORefEffects v) r => Sem (Session v : r) a -> Sem r a
 runSessionAsReaderIORef = interpret $ \case
-  GetSession k   -> maybe (return Nothing) checkValid =<< (H.lookup k <$> askStore)
+  GetSession k     -> maybe (return Nothing) checkValid =<< (H.lookup k <$> askStore)
   SetSession k s v -> void $ H.insert k <$> withExpiry s v <*> askStore
-  NewSession s v -> do
+  NewSession s v   -> do
     k <- generateKey
     void $ H.insert k <$> withExpiry s v <*> askStore
     return k
  where
   askStore :: Member (Reader (SessionRef v)) r => Sem r (SessionStore v)
-  askStore = liftIO . readIORef =<< ask
+  askStore = unsafeLiftIO . readIORef =<< ask
   checkValid :: Member Time r => (LocalTime, v) -> Sem r (Maybe v)
   checkValid (expiry, v) = do
     time <- zonedTimeToLocalTime <$> getTime
@@ -69,7 +65,7 @@ runSessionAsReaderIORef = interpret $ \case
     return (expiryTime, v)
   -- Generate 64-character key using SHA256
   generateKey :: Member (Embed IO) r => Sem r SessionKey
-  generateKey = T.take 64 . show . sha256 . show <$> generateNumber where
-    sha256 = hash :: ByteString -> Digest SHA256
-    generateNumber = liftIO randomIO :: Member (Embed IO) r => Sem r Int64
+  generateKey = T.take 64 . show . sha256 . show <$> generateNumber   where
+    sha256         = hash :: ByteString -> Digest SHA256
+    generateNumber = unsafeLiftIO randomIO :: Member (Embed IO) r => Sem r Int64
   toFixed = MkFixed . fromIntegral

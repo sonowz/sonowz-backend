@@ -5,7 +5,6 @@ module Sonowz.NewsCombinator.HTTP.Effect
   , runHTTPIO
   ) where
 
-import qualified Control.Exception.Safe as E
 import Network.HTTP.Client (HttpException, httpLbs, parseRequest, responseBody)
 import Network.HTTP.Client.TLS (newTlsManager)
 import Sonowz.NewsCombinator.Imports
@@ -17,11 +16,10 @@ data HTTP m a where
 
 makeSem ''HTTP
 
+-- This might raise IO exceptions, though chances are low
 runHTTPIO :: Members '[Embed IO , Error HttpException] r => Sem (HTTP : r) a -> Sem r a
 runHTTPIO = interpret $ \case
-  FetchURL url -> embed ioAction >>= fromEither   where
-    ioAction :: IO (Either HttpException Text)
-    ioAction = E.try $ do
-      manager <- newTlsManager
-      request <- parseRequest (decodeUtf8 $ serializeURIRef' url)
-      decodeUtf8 . responseBody <$> httpLbs request manager
+  FetchURL url -> fromException $ do
+    manager <- newTlsManager
+    request <- parseRequest (decodeUtf8 $ serializeURIRef' url)
+    decodeUtf8 . responseBody <$> httpLbs request manager

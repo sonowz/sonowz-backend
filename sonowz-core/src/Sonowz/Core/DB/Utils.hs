@@ -9,6 +9,7 @@ import Data.Profunctor.Product.Default (Default(def))
 import qualified Database.PostgreSQL.Simple.FromField as FF
 import Opaleye
 import qualified Opaleye.Aggregate as Agg
+import Servant (ServerError(errBody), err500)
 import Sonowz.Core.Imports hiding (null)
 import Sonowz.Core.StdEff.Effect
 
@@ -28,12 +29,14 @@ nullify = dimap id (const null) Agg.count
 putArg :: SelectArr a b -> a -> Select b
 putArg f a = arr (const a) >>> f
 
+
 -- Use this when instantiating 'FromField' typeclass
 fromFieldSimple
   :: Typeable hasktype => (ByteString -> Either Text hasktype) -> FF.FieldParser hasktype
 fromFieldSimple parse field = \case
   Just bs -> either (FF.returnError FF.ConversionFailed field . toString) return (parse bs)
   Nothing -> FF.returnError FF.UnexpectedNull field "Unexpected null value"
+
 
 maybeToExceptionIO :: HasCallStack => Text -> Maybe a -> IO a
 maybeToExceptionIO msg = withFrozenCallStack $ maybe (E.throw $ DatabaseException msg) return

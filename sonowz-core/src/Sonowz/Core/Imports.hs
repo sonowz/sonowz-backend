@@ -21,16 +21,14 @@ module Sonowz.Core.Imports
   , module Relude.Numeric
   , module Relude.Print
   , module Relude.String
-
   , module Polysemy
   , module Polysemy.AtomicState
   , module Polysemy.Error
   , module Polysemy.Reader
   , module Polysemy.State
-
   , lengthText
-  )
-where
+  , unsafeLiftIO
+  ) where
 
 import Relude.Applicative
 import Relude.Base
@@ -48,26 +46,28 @@ import Relude.List
 import Relude.Monad (chainedTo)
 import Relude.Monad.Either
 import Relude.Monad.Maybe
-import Relude.Monad.Reexport hiding
-  ( ExceptT(..)
-  , asks
-  , MonadReader(..)
-  , ReaderT(..)
-  , Reader
-  , runReader
-  , withReader
-  , withReaderT
-  , gets
-  , modify'
-  , modify
-  , MonadState(..)
-  , StateT(..)
-  , State
-  , runState
-  , evalState
-  , execState
-  , withState
-  )
+import Relude.Monad.Reexport
+  hiding
+    ( ExceptT(..)
+    , MonadReader(..)
+    , MonadState(..)
+    , Reader
+    , ReaderT(..)
+    , State
+    , StateT(..)
+    , asks
+    , evalState
+    , execState
+    , gets
+    , liftIO -- This function is redefined in 'Sonowz.Core.StdEff.Effect'
+    , modify
+    , modify'
+    , runReader
+    , runState
+    , withReader
+    , withReaderT
+    , withState
+    )
 -- import Relude.Monad.Trans
 import Relude.Monoid
 import Relude.Nub
@@ -81,7 +81,12 @@ import Polysemy.Error
 import Polysemy.Reader
 import Polysemy.State
 
-import Data.Text as T
+import qualified Control.Monad.IO.Class as IO
+import qualified Data.Text as T
 
 lengthText :: Text -> Int
 lengthText = T.length
+
+-- The original 'liftIO' function
+unsafeLiftIO :: MonadIO m => IO a -> m a
+unsafeLiftIO = IO.liftIO

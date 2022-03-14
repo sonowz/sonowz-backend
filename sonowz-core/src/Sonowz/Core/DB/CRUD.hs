@@ -114,6 +114,7 @@ update table rowToUid conn uid item = withTransaction conn $ do
   oneListToMaybe <$> runUpdate_ conn query where
   query = Update
     { uTable      = table
+    -- TODO: bugfix: update overwrites field value e.g. 'createdTime' -> NOW()
     , uUpdateWith = const (toFields item)
     , uWhere      = \row -> rowToUid row .== toFields uid
     , uReturning  = rReturning id
