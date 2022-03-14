@@ -4,25 +4,29 @@ module Sonowz.Auth.Web.OAuth.Types
   , generateOAuthEnv
   , makeOAuthContext
   , LoginRedirectURL(..)
-  )
-where
+  ) where
 
 import Servant hiding (URI)
-import Servant.Auth.Server (CookieSettings(..), JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
+import Servant.Auth.Server
+  (CookieSettings(..), JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
 import URI.ByteString (URI)
 
 import Sonowz.Auth.Imports
 
-type OAuthContext = '[CookieSettings, JWTSettings]
+type OAuthContext = '[CookieSettings , JWTSettings]
 type OAuthEnv = (CookieSettings, JWTSettings)
 
 newtype LoginRedirectURL = LoginRedirectURL URI deriving (Show, Eq) via URI
 
 -- TODO: store JWK in persistence
+-- otherwise, all login sessions are invalidated when server restarts
 generateOAuthEnv :: IO OAuthEnv
 generateOAuthEnv = do
   jwk <- generateKey
-  return (defaultCookieSettings { cookieIsSecure = NotSecure, cookieXsrfSetting = Nothing }, defaultJWTSettings jwk)
+  return
+    ( defaultCookieSettings { cookieIsSecure = NotSecure, cookieXsrfSetting = Nothing }
+    , defaultJWTSettings jwk
+    )
 
 makeOAuthContext :: OAuthEnv -> Context OAuthContext
 makeOAuthContext (cookie, jwt) = cookie :. jwt :. EmptyContext

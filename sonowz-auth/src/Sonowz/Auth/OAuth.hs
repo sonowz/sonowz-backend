@@ -2,16 +2,15 @@ module Sonowz.Auth.OAuth
   ( module Sonowz.Auth.OAuth.Types
   , module Sonowz.Auth.OAuth.Google
   , fetchUserInfoFromExchangeToken
-  )
-where
+  ) where
 
+import qualified Control.Exception.Safe as E
 import Network.HTTP.Client (Manager)
 import Network.OAuth.OAuth2 (ExchangeToken, OAuth2Token(..), fetchAccessToken)
-import qualified Control.Exception.Safe as E
 
 import Sonowz.Auth.Imports
-import Sonowz.Auth.OAuth.Types
 import Sonowz.Auth.OAuth.Google
+import Sonowz.Auth.OAuth.Types
 
 -- This function throws 'OAuthException'
 fetchUserInfoFromExchangeToken :: Manager -> FetchOAuthUser -> ExchangeToken -> IO OAuthUser

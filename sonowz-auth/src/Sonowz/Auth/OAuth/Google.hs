@@ -3,29 +3,30 @@ module Sonowz.Auth.OAuth.Google
   ( GoogleAppInfo(..)
   , fetchOAuthUserGoogle
   , identifierGoogle
-  )
-where
+  ) where
 
 import Data.Aeson
-  (FromJSON(..), ToJSON(..), genericParseJSON, genericToJSON, Options(..), defaultOptions, camelTo2)
+  (FromJSON(..), Options(..), ToJSON(..), camelTo2, defaultOptions, genericParseJSON, genericToJSON)
 import Network.HTTP.Client (Manager)
-import Network.OAuth.OAuth2 (OAuth2(..), AccessToken, authGetJSON)
-import URI.ByteString (URI, Query(..), URIRef(..), serializeURIRef')
+import Network.OAuth.OAuth2 (AccessToken, OAuth2(..), authGetJSON)
+import URI.ByteString (Query(..), URI, URIRef(..), serializeURIRef')
 import URI.ByteString.QQ (uri)
 
 import Sonowz.Auth.Imports
 import Sonowz.Auth.OAuth.Types (FetchOAuthUser(..), OAuthUser(..))
 
 data GoogleAppInfo = GoogleAppInfo
-  { appId :: Text
+  { appId     :: Text
   , appSecret :: Text
-  } deriving (Eq, Show)
+  }
+  deriving (Eq, Show)
 
 data GoogleUserInfo = GoogleUserInfo
-  { id :: Text
-  , email :: Text
+  { id            :: Text
+  , email         :: Text
   , verifiedEmail :: Bool
-  } deriving (Generic, Eq, Show)
+  }
+  deriving (Generic, Eq, Show)
 
 instance FromJSON GoogleUserInfo where
   parseJSON = genericParseJSON defaultOptions { fieldLabelModifier = camelTo2 '_' }

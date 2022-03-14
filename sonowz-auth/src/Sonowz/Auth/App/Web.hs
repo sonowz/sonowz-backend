@@ -2,13 +2,12 @@ module Sonowz.Auth.App.Web
   ( AuthAPI
   , server
   , runWithEffects
-  )
-where
+  ) where
 
 import Control.Monad.Except (MonadError)  -- 'mtl' package is used here
-import Servant hiding (URI, uriPath)
 import Network.HTTP.Client (Manager)
 import Polysemy.Resource (resourceToIOFinal)
+import Servant hiding (URI, uriPath)
 import URI.ByteString (URIRef(uriPath))
 
 import Sonowz.Auth.Imports
@@ -21,7 +20,7 @@ import Sonowz.Auth.Web.OAuth.Login
   , loginWithOAuthHandlerRedirect
   )
 import Sonowz.Auth.Web.OAuth.Types (OAuthEnv)
-import Sonowz.Core.DB.Pool (DBEffects, DBConnPool)
+import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
 type AuthAPI = Step1API :<|> Step2API
@@ -78,8 +77,8 @@ step2API FetchSetOAuthUser {..} = handlerGoogle
 
 -- This would be "https://sonowz.me/api/login/google"
 loginRedirectURL :: WebAppEnv -> LoginRedirectURL
-loginRedirectURL WebAppEnv {..} =
-  LoginRedirectURL (eWebDomain { uriPath = encodeUtf8 (eWebAPIRoot <> "login/" <> identifierGoogle) })
+loginRedirectURL WebAppEnv {..} = LoginRedirectURL
+  (eWebDomain { uriPath = encodeUtf8 (eWebAPIRoot <> "login/" <> identifierGoogle) })
 
 
 data FetchSetOAuthUser = FetchSetOAuthUser
