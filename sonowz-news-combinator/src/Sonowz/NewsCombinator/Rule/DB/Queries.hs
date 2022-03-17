@@ -29,7 +29,7 @@ CREATE TABLE public.news_scrap_rule (
     created_time timestamp with time zone DEFAULT now() NOT NULL,
     updated_time timestamp with time zone DEFAULT now() NOT NULL
 );
-CREATE TRIGGER news_scrap_rule_update AFTER UPDATE ON public.news_scrap_rule FOR EACH ROW EXECUTE PROCEDURE public.update_time();
+CREATE TRIGGER news_scrap_rule_update BEFORE UPDATE ON public.news_scrap_rule FOR EACH ROW EXECUTE PROCEDURE public.update_time();
 -}
 
 newsScrapRuleTable :: NewsScrapRuleTable

@@ -29,6 +29,7 @@ dependencies:
   - bytestring
   - containers
   - deepseq
+  - http-client-tls
   - opaleye
   - optparse-applicative
   - polysemy
