@@ -18,6 +18,8 @@
         # TODO: remove hardcoded path
         binPath = /home/sonowz/sonowz-backend/bin;
         
+        # This app is an impure derivation for dev purpose
+        # Use 'flake.nix' inside each package for production packages
         # Build command : nix build --impure
         app = pkgs.stdenv.mkDerivation {
           inherit name;

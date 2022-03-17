@@ -18,7 +18,30 @@
       ];
       pkgs = import nixpkgs { inherit system overlays; };
       flake = pkgs.project.flake {};
+      app = flake.packages."sonowz-noti:exe:sonowz-noti";
     in flake // {
-      defaultPackage = flake.packages."sonowz-noti:exe:sonowz-noti";
+      defaultPackage = app;
+
+      nixosModules.sonowz-noti =
+        { config, lib, pkgs, ... }:
+        let cfg = config.services.sonowz-noti;
+        in
+        {
+          options.services.sonowz-noti = {
+            enable = lib.mkEnableOption "sonowz-noti";
+            options = lib.mkOption {
+              description = "Command line arguments. '--help' to print options.";
+              type = lib.types.str;
+            };
+          };
+
+          config = lib.mkIf cfg.enable {
+            systemd.services.sonowz-noti = {
+              enable = true;
+              path = [ app ];
+              script = "sonowz-noti ${cfg.options}";
+            };
+          };
+        };
     });
 }

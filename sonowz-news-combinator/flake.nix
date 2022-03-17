@@ -18,7 +18,30 @@
       ];
       pkgs = import nixpkgs { inherit system overlays; };
       flake = pkgs.project.flake {};
+      app = flake.packages."sonowz-news-combinator:exe:sonowz-news-combinator";
     in flake // {
-      defaultPackage = flake.packages."sonowz-news-combinator:exe:sonowz-news-combinator";
+      defaultPackage = app;
+
+      nixosModules.sonowz-news-combinator =
+        { config, lib, pkgs, ... }:
+        let cfg = config.services.sonowz-news-combinator;
+        in
+        {
+          options.services.sonowz-news-combinator = {
+            enable = lib.mkEnableOption "sonowz-news-combinator";
+            options = lib.mkOption {
+              description = "Command line arguments. '--help' to print options.";
+              type = lib.types.str;
+            };
+          };
+
+          config = lib.mkIf cfg.enable {
+            systemd.services.sonowz-news-combinator = {
+              enable = true;
+              path = [ app ];
+              script = "sonowz-news-combinator ${cfg.options}";
+            };
+          };
+        };
     });
 }
