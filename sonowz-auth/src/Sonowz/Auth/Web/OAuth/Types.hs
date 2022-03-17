@@ -8,7 +8,15 @@ module Sonowz.Auth.Web.OAuth.Types
 
 import Servant hiding (URI)
 import Servant.Auth.Server
-  (CookieSettings(..), JWTSettings, defaultCookieSettings, defaultJWTSettings, generateKey)
+  ( CookieSettings(..)
+  , JWTSettings
+  , SameSite(SameSiteStrict)
+  , XsrfCookieSettings(xsrfExcludeGet)
+  , defaultCookieSettings
+  , defaultJWTSettings
+  , defaultXsrfCookieSettings
+  , generateKey
+  )
 import URI.ByteString (URI)
 
 import Sonowz.Auth.Imports
@@ -24,9 +32,13 @@ generateOAuthEnv :: IO OAuthEnv
 generateOAuthEnv = do
   jwk <- generateKey
   return
-    ( defaultCookieSettings { cookieIsSecure = NotSecure, cookieXsrfSetting = Nothing }
+    ( defaultCookieSettings
+      { cookieSameSite    = SameSiteStrict
+      , cookieXsrfSetting = Just xsrfSetting
+      }
     , defaultJWTSettings jwk
     )
+  where xsrfSetting = defaultXsrfCookieSettings { xsrfExcludeGet = True }
 
 makeOAuthContext :: OAuthEnv -> Context OAuthContext
 makeOAuthContext (cookie, jwt) = cookie :. jwt :. EmptyContext

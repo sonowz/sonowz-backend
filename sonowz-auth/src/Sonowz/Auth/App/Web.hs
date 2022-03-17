@@ -1,5 +1,6 @@
 module Sonowz.Auth.App.Web
   ( AuthAPI
+  , AuthHandlerEffects
   , server
   , runWithEffects
   ) where
@@ -19,15 +20,18 @@ import Sonowz.Auth.Web.OAuth.Login
   , getOAuthRedirectURLHandlerRedirect
   , loginWithOAuthHandlerRedirect
   )
+import Sonowz.Auth.Web.OAuth.Logout (LogoutOAuth, logoutOAuthHandler)
 import Sonowz.Auth.Web.OAuth.Types (OAuthEnv)
 import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 
-type AuthAPI = Step1API :<|> Step2API
+type AuthAPI = Step1API :<|> Step2API :<|> LogoutAPI
 
 type Step1API = "auth" :> (DefaultGetOAuthRedirectURL :<|> "google" :> GetOAuthRedirectURL)
 
 type Step2API = "login" :> "google" :> LoginWithOAuth
+
+type LogoutAPI = "logout" :> LogoutOAuth
 
 type DefaultGetOAuthRedirectURL = GetOAuthRedirectURL
 
@@ -42,7 +46,7 @@ type AuthHandlerEffects
   : DBEffects
 
 server :: Members AuthHandlerEffects r => WebAppEnv -> GoogleAppInfo -> ServerT AuthAPI (Sem r)
-server env gAppInfo = step1API fetchSet' :<|> step2API fetchSet'
+server env gAppInfo = step1API fetchSet' :<|> step2API fetchSet' :<|> logoutOAuthHandler
   where fetchSet' = fetchSet env gAppInfo
 
 runWithEffects :: forall a . WebAppEnv -> OAuthEnv -> Manager -> DBConnPool -> Sem _ a -> Handler a
