@@ -10,10 +10,10 @@ import Opaleye
 import Relude (hoistMaybe)
 import Sonowz.Core.DB.CRUD (CRUDQueries(..), getCRUDQueries)
 import Sonowz.Core.DB.Utils (DatabaseException(DatabaseException))
+import Sonowz.Core.DB.Utils (Uid)
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.Rule.DB.Types
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule(..))
-import Sonowz.Noti.Notification.Types (Uid)
 
 
 -- Table declarations --

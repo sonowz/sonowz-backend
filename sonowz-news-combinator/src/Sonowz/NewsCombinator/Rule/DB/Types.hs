@@ -6,8 +6,8 @@ import Data.Aeson (FromJSON, ToJSON)
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (NominalDiffTime, UTCTime)
 import Opaleye
+import Sonowz.Core.DB.Utils (Uid)
 import Sonowz.NewsCombinator.Imports
-import Sonowz.Noti.Notification.Types (Uid)
 
 data NewsScrapRule' c1 c2 c3 c4 c5 c6 c7 c8 = NewsScrapRule'
   { uid           :: c1
@@ -44,7 +44,6 @@ type NewsScrapRuleR
       (Field SqlTimestamptz)
 type NewsScrapRuleTable = Table NewsScrapRuleW NewsScrapRuleR
 
-instance ToJSON Uid
 instance ToJSON NewsScrapRuleHask
 instance FromJSON NewsScrapRuleHaskW
 

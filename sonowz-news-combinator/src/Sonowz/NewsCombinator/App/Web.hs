@@ -6,14 +6,14 @@ import Polysemy.Resource (resourceToIOFinal)
 import Relude.Monad (ExceptT(ExceptT))
 import Servant
 import Sonowz.Core.DB.Pool (DBEffects)
+import Sonowz.Core.DB.Utils (Uid(..))
 import Sonowz.Core.Web.CRUD (CRUDAPI, crudHandlerFromDBQueries)
-import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 import Sonowz.Core.Web.Wai (runWithLog)
+import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..))
 import Sonowz.NewsCombinator.Env (Env(envPgConnection))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.Rule.DB.Queries (newsScrapRuleCRUD)
 import Sonowz.NewsCombinator.Rule.DB.Types (NewsScrapRuleHask, NewsScrapRuleHaskW)
-import Sonowz.Noti.Notification.Types (Uid(..))
 
 
 -- TODO: add auth

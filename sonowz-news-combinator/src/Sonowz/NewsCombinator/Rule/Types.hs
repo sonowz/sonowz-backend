@@ -5,8 +5,8 @@ module Sonowz.NewsCombinator.Rule.Types
   ) where
 
 import Data.Time (NominalDiffTime, nominalDay)
+import Sonowz.Core.DB.Utils (Uid)
 import Sonowz.NewsCombinator.Imports
-import Sonowz.Noti.Notification.Types (Uid)
 
 data NewsScrapRule = NewsScrapRule
   { uid           :: Maybe Uid
