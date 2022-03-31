@@ -58,49 +58,65 @@ dependencies:
   - websockets
 
 default-extensions:
-  - ApplicativeDo          # New syntax #
-  - BangPatterns           # New syntax #
+  # GHC2021 #
+  - BangPatterns
   - BinaryLiterals
+  - ConstrainedClassMethods
   - ConstraintKinds
-  - DataKinds
-  - DefaultSignatures      # New syntax #
-  - DeriveAnyClass
   - DeriveDataTypeable
   - DeriveFoldable
   - DeriveFunctor
   - DeriveGeneric
+  - DeriveLift
   - DeriveTraversable
-  - DerivingVia
   - DoAndIfThenElse
-  - DuplicateRecordFields
+  - EmptyCase
   - EmptyDataDecls
+  - EmptyDataDeriving
   - ExistentialQuantification
   - ExplicitForAll
   - FlexibleContexts
   - FlexibleInstances
+  - ForeignFunctionInterface
+  - HexFloatLiterals
+  # ImportQualifiedPost
+  - InstanceSigs
+  - KindSignatures
+  - MultiParamTypeClasses
+  - NamedFieldPuns
+  - NamedWildCards
+  - NumericUnderscores
+  - PolyKinds
+  - PostfixOperators
+  - RankNTypes
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  # StandaloneKindSignatures
+  - StarIsType
+  - TupleSections
+  - TypeApplications
+  - TypeOperators
+  - TypeSynonymInstances
+  
+  # extra #
+  - ApplicativeDo           # New syntax #
+  - DataKinds
+  - DefaultSignatures       # New syntax #
+  - DeriveAnyClass
+  - DerivingVia
+  - DuplicateRecordFields
   - FunctionalDependencies  # New syntax #
   - GADTs                   # New syntax #
-  - InstanceSigs
-  - KindSignatures          # New syntax #
   - LambdaCase              # New syntax #
   - MonadComprehensions     # New syntax #
-  - NamedFieldPuns          # New syntax #
   - NoImplicitPrelude
   - OverloadedLists
   - OverloadedStrings
   - ParallelListComp        # New syntax #
   - PartialTypeSignatures   # New syntax #
-  - PolyKinds
-  - RankNTypes
   - RecordWildCards         # New syntax #
-  - ScopedTypeVariables
-  - StandaloneDeriving
   - StrictData
-  - TupleSections           # New syntax #
-  - TypeApplications        # New syntax #
   - TypeFamilies
-  - TypeSynonymInstances
-  - TypeOperators
   - ViewPatterns            # New syntax #
 
 
