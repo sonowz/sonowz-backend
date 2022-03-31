@@ -9,7 +9,6 @@ import Data.Profunctor.Product.Default (Default(def))
 import qualified Database.PostgreSQL.Simple.FromField as FF
 import Opaleye
 import qualified Opaleye.Aggregate as Agg
-import Servant (ServerError(errBody), err500)
 import Sonowz.Core.Imports hiding (null)
 import Sonowz.Core.StdEff.Effect
 

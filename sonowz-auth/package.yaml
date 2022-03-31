@@ -17,6 +17,7 @@ ghc-options:
   - -fspecialise-aggressively
   - -fplugin=Polysemy.Plugin
   - -W
+  - -Wno-partial-type-signatures
 #  - -ddump-to-file
 #  - -ddump-tc-trace
 #  - -fprint-potential-instances

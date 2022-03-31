@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 module Sonowz.Auth.Web.OAuth.Combinators
   ( RequireAuth301
   , RequireAuth401
