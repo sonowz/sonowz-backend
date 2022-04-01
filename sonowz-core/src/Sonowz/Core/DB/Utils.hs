@@ -17,9 +17,9 @@ newtype DatabaseException = DatabaseException Text deriving (Show, Exception)
 
 newtype Uid = Uid Int
   deriving (Eq, Show, Read) deriving (Num, ToJSON, FromJSON) via Int
-deriving via Int instance QueryRunnerColumnDefault SqlInt4 Uid
-instance Default Constant Uid (Column SqlInt4) where
-  def = coerce (def :: Constant Int (Column SqlInt4))
+deriving via Int instance DefaultFromField SqlInt4 Uid
+instance Default ToFields Uid (Column SqlInt4) where
+  def = coerce (def :: ToFields Int (Column SqlInt4))
 
 -- Default null value in aggregate operations
 nullify :: Aggregator (Field a) (FieldNullable a)

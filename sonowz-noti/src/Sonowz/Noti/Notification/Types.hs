@@ -22,14 +22,14 @@ data Notification = Notification
   , notificationUid   :: Maybe Uid -- Unique ID used in DB
   }
 
-instance QueryRunnerColumnDefault SqlText NotificationType where
-  defaultFromField = fieldQueryRunnerColumn
-instance QueryRunnerColumnDefault SqlText NotificationBody where
-  defaultFromField = fieldQueryRunnerColumn
-instance Default Constant NotificationType (Column SqlText) where
-  def = Constant (sqlStrictText . show)
-instance Default Constant NotificationBody (Column SqlText) where
-  def = Constant (sqlStrictText . show)
+instance DefaultFromField SqlText NotificationType where
+  defaultFromField = fromPGSFromField
+instance DefaultFromField SqlText NotificationBody where
+  defaultFromField = fromPGSFromField
+instance Default ToFields NotificationType (Column SqlText) where
+  def = ToFields (sqlStrictText . show)
+instance Default ToFields NotificationBody (Column SqlText) where
+  def = ToFields (sqlStrictText . show)
 instance FF.FromField NotificationType where
   fromField = fromFieldSimple (readEither . decodeUtf8)
 instance FF.FromField NotificationBody where

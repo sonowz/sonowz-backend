@@ -142,13 +142,13 @@ selectServantMinQid table = proc servantIdEq -> do
   returnA -< qid row
 
 popMessage
-  :: QueryRunnerColumnDefault SqlText op => MessageTable op -> Qid -> Delete [MessageHask op]
+  :: DefaultFromField SqlText op => MessageTable op -> Qid -> Delete [MessageHask op]
 popMessage dTable qidEq = Delete { .. } where
   dWhere (qid -> rowQid) = rowQid .== toFields qidEq
   dReturning = rReturning id
 
 insertMessage
-  :: Default Constant op (Column SqlText) => MessageTable op -> ServantId -> op -> Insert Int64
+  :: Default ToFields op (Column SqlText) => MessageTable op -> ServantId -> op -> Insert Int64
 insertMessage table servantId' operation' = Insert
   { iTable      = table
   , iRows       = [message]

@@ -65,20 +65,20 @@ emptyMessage = Message
 
 -- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pMessage" ''Message)
-deriving via Int instance QueryRunnerColumnDefault SqlInt4 Qid
-deriving via Int instance QueryRunnerColumnDefault SqlInt4 ServantId
-instance QueryRunnerColumnDefault SqlText DaemonOp where
-  defaultFromField = fieldQueryRunnerColumn
-instance QueryRunnerColumnDefault SqlText ServantOp where
-  defaultFromField = fieldQueryRunnerColumn
-instance Default Constant Qid (Column SqlInt4) where
-  def = coerce (def :: Constant Int (Column SqlInt4))
-instance Default Constant ServantId (Column SqlInt4) where
-  def = coerce (def :: Constant Int (Column SqlInt4))
-instance Default Constant DaemonOp (Column SqlText) where
-  def = Constant (sqlStrictText . show)
-instance Default Constant ServantOp (Column SqlText) where
-  def = Constant (sqlStrictText . show)
+deriving via Int instance DefaultFromField SqlInt4 Qid
+deriving via Int instance DefaultFromField SqlInt4 ServantId
+instance DefaultFromField SqlText DaemonOp where
+  defaultFromField = fromPGSFromField
+instance DefaultFromField SqlText ServantOp where
+  defaultFromField = fromPGSFromField
+instance Default ToFields Qid (Column SqlInt4) where
+  def = coerce (def :: ToFields Int (Column SqlInt4))
+instance Default ToFields ServantId (Column SqlInt4) where
+  def = coerce (def :: ToFields Int (Column SqlInt4))
+instance Default ToFields DaemonOp (Column SqlText) where
+  def = ToFields (sqlStrictText . show)
+instance Default ToFields ServantOp (Column SqlText) where
+  def = ToFields (sqlStrictText . show)
 instance FF.FromField DaemonOp where
   fromField = ffByReadInstance "DaemonOp"
 instance FF.FromField ServantOp where

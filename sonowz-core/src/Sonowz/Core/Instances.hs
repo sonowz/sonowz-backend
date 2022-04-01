@@ -5,11 +5,10 @@ import Data.Time (NominalDiffTime)
 import qualified Database.PostgreSQL.Simple.FromField as FF
 import Opaleye
   ( Column
-  , Constant(..)
-  , QueryRunnerColumnDefault(defaultFromField)
+  , DefaultFromField(defaultFromField)
   , SqlFloat8
-  , ToFields
-  , fieldQueryRunnerColumn
+  , ToFields(..)
+  , fromPGSFromField
   , toFields
   , toToFields
   )
@@ -31,12 +30,12 @@ instance MimeRender PlainText URI where
 -- This instance is used in DB type declaration
 -- where type of 'write field' is 'Maybe (Column col)',
 -- to indicate that the field is not used in writes.
-instance Default Constant a (Maybe (Column col)) where
-  def = Constant (const Nothing)
+instance Default ToFields a (Maybe (Column col)) where
+  def = ToFields (const Nothing)
 
 instance Default ToFields NominalDiffTime (Column SqlFloat8) where
   def = toToFields (toFields . fromRational @Double . toRational)
-instance QueryRunnerColumnDefault SqlFloat8 NominalDiffTime where
-  defaultFromField = fieldQueryRunnerColumn
+instance DefaultFromField SqlFloat8 NominalDiffTime where
+  defaultFromField = fromPGSFromField
 instance FF.FromField NominalDiffTime where
   fromField = fmap (fromRational . toRational) <<$>> (FF.fromField :: FF.FieldParser Double)
