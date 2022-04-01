@@ -79,7 +79,7 @@ default-extensions:
   - FlexibleInstances
   - ForeignFunctionInterface
   - HexFloatLiterals
-  # ImportQualifiedPost
+  - ImportQualifiedPost
   - InstanceSigs
   - KindSignatures
   - MultiParamTypeClasses
@@ -91,7 +91,7 @@ default-extensions:
   - RankNTypes
   - ScopedTypeVariables
   - StandaloneDeriving
-  # StandaloneKindSignatures
+  - StandaloneKindSignatures
   - StarIsType
   - TupleSections
   - TypeApplications

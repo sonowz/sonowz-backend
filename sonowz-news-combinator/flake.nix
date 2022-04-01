@@ -12,7 +12,7 @@
         haskellNix.overlay (final: prev: {
           project = final.haskell-nix.stackProject' {
             src = ../.;
-            compiler-nix-name = "ghc884";
+            compiler-nix-name = "ghc8107";
           };
         })
       ];

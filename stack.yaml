@@ -18,8 +18,8 @@
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
 
-# GHC version: 8.8.4
-resolver: lts-16.31
+# GHC version: 8.10.7
+resolver: lts-18.28
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -46,8 +46,7 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps:
-  - polysemy-plugin-0.2.5.2
-  - smtp-mail-0.3.0.0
+  - servant-websockets-2.0.0
 
 
 # Override default flag values for local packages and extra-deps
