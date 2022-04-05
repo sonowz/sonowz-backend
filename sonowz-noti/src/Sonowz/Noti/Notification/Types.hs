@@ -10,6 +10,7 @@ import Opaleye
 import Sonowz.Core.DB.Utils (Uid, fromFieldSimple)
 import Sonowz.Noti.Imports
 
+
 data NotificationType = Email
   deriving (Read, Show)
 data NotificationBody = HTMLBody Text | TextBody Text
@@ -21,6 +22,16 @@ data Notification = Notification
   , notificationBody  :: NotificationBody
   , notificationUid   :: Maybe Uid -- Unique ID used in DB
   }
+
+
+instance Semigroup NotificationBody where
+  HTMLBody t1 <> HTMLBody t2 = HTMLBody (t1 <> t2)
+  HTMLBody t1 <> TextBody t2 = HTMLBody (t1 <> t2)
+  TextBody t1 <> HTMLBody t2 = HTMLBody (t1 <> t2)
+  TextBody t1 <> TextBody t2 = TextBody (t1 <> t2)
+
+instance Monoid NotificationBody where
+  mempty = TextBody ""
 
 instance DefaultFromField SqlText NotificationType where
   defaultFromField = fromPGSFromField

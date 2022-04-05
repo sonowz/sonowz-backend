@@ -24,7 +24,7 @@ makeNoti rule items = Notification Email title body Nothing where
   title = if isOneTimeRule rule
     then "[News Combinator] \"" <> keyword rule <> "\" appeared!"
     else "[News Combinator] \"" <> keyword rule <> "\" news!"
-  body = HTMLBody ("<ul>" <> fold (newsToBody <$> items) <> "</ul>")
-  newsToBody :: NewsItem -> Text
-  newsToBody news = "<li>" <> getTitle news <> " (" <> show (getDate news) <> ")</li>"
+  body = HTMLBody "<ul>" <> fold (newsToBody <$> items) <> HTMLBody "</ul>"
+  newsToBody :: NewsItem -> NotificationBody
+  newsToBody news = HTMLBody $ "<li>" <> getTitle news <> " (" <> show (getDate news) <> ")</li>"
 
