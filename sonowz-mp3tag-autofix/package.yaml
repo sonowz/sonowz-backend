@@ -1,0 +1,106 @@
+name:                sonowz-mp3tag-autofix
+version:             1.0.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/sonowz/sonowz-backend
+license:             BSD3
+author:              SoonHo Seo
+maintainer:          dnsdhrj123@gmail.com
+copyright:           MIT
+category:            audio
+extra-source-files:
+  - README.md
+
+ghc-options:
+  - -O2
+  - -flate-specialise
+  - -fspecialise-aggressively
+  - -fplugin=Polysemy.Plugin
+  - -W
+  - -Wno-partial-type-signatures
+#  - -fforce-recomp
+
+dependencies:
+  - ansi-terminal
+  - aeson
+  - async
+  - base
+  - bytestring
+  - containers
+  - deepseq
+  - polysemy
+  - polysemy-plugin
+  - random
+  - relude
+  - sonowz-core
+  - text
+  - time
+  - vector
+
+default-extensions:
+  # GHC2021 #
+  - BangPatterns
+  - BinaryLiterals
+  - ConstrainedClassMethods
+  - ConstraintKinds
+  - DeriveDataTypeable
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveGeneric
+  - DeriveLift
+  - DeriveTraversable
+  - DoAndIfThenElse
+  - EmptyCase
+  - EmptyDataDecls
+  - EmptyDataDeriving
+  - ExistentialQuantification
+  - ExplicitForAll
+  - FlexibleContexts
+  - FlexibleInstances
+  - ForeignFunctionInterface
+  - HexFloatLiterals
+  - ImportQualifiedPost
+  - InstanceSigs
+  - KindSignatures
+  - MultiParamTypeClasses
+  - NamedFieldPuns
+  - NamedWildCards
+  - NumericUnderscores
+  - PolyKinds
+  - PostfixOperators
+  - RankNTypes
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - StandaloneKindSignatures
+  - StarIsType
+  - TupleSections
+  - TypeApplications
+  - TypeOperators
+  - TypeSynonymInstances
+  
+  # extra #
+  - ApplicativeDo           # New syntax #
+  - DataKinds
+  - DefaultSignatures       # New syntax #
+  - DeriveAnyClass
+  - DerivingVia
+  - DuplicateRecordFields
+  - FunctionalDependencies  # New syntax #
+  - GADTs                   # New syntax #
+  - LambdaCase              # New syntax #
+  - MonadComprehensions     # New syntax #
+  - NoImplicitPrelude
+  - OverloadedLists
+  - OverloadedStrings
+  - ParallelListComp        # New syntax #
+  - PartialTypeSignatures   # New syntax #
+  - RecordWildCards         # New syntax #
+  - StrictData
+  - TypeFamilies
+  - ViewPatterns            # New syntax #
+
+
+executables:
+  sonowz-mp3tag-autofix:
+    source-dirs:      src
+    main:             Main.hs

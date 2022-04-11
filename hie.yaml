@@ -9,6 +9,9 @@ cradle:
     - path: "./sonowz-raytrace/src"
       component: "sonowz-raytrace:exe:sonowz-raytrace"
 
+    - path: "./sonowz-mp3tag-autofix/src"
+      component: "sonowz-mp3tag-autofix:exe:sonowz-mp3tag-autofix"
+
     - path: "./sonowz-news-combinator/src"
       component: "sonowz-news-combinator:exe:sonowz-news-combinator"
 

@@ -38,6 +38,7 @@ packages:
   - ./sonowz-core
   - ./sonowz-auth
   - ./sonowz-raytrace
+  - ./sonowz-mp3tag-autofix
   - ./sonowz-news-combinator
   - ./sonowz-noti
   - ./sonowz-web
