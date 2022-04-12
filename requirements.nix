@@ -1,2 +1,2 @@
-{ gmp, glibc, libffi, libpqxx, ncurses, postgresql, zlib }:
-[ gmp  glibc  libffi  libpqxx  ncurses  postgresql  zlib ]
+{ flac, gmp, glibc, libffi, libpqxx, ncurses, postgresql, taglib, zlib }:
+[ flac  gmp  glibc  libffi  libpqxx  ncurses  postgresql  taglib  zlib ]

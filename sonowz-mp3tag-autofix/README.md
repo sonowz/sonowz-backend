@@ -1,3 +1,3 @@
-# MP3 Tag Normalizer
+# MP3 Tag Autofix
 
 Unify artist names

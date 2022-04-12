@@ -28,6 +28,7 @@ dependencies:
   - bytestring
   - containers
   - deepseq
+  - htaglib
   - polysemy
   - polysemy-plugin
   - random
