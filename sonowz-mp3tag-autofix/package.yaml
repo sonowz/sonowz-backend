@@ -34,8 +34,10 @@ dependencies:
   - random
   - relude
   - sonowz-core
+  - tagsoup
   - text
   - time
+  - uri-bytestring
   - vector
 
 default-extensions:

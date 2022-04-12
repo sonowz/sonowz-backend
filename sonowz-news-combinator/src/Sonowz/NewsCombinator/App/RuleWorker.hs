@@ -7,9 +7,9 @@ import qualified Control.Exception.Safe as E
 import Network.HTTP.Client (HttpException)
 import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
+import Sonowz.Core.HTTP.Effect (HTTP, runHTTPIO)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
 import Sonowz.NewsCombinator.Env (Env(..))
-import Sonowz.NewsCombinator.HTTP.Effect (HTTP, runHTTPIO)
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.News.Notification (createNotification)
 import Sonowz.NewsCombinator.News.Parser (ParseException)

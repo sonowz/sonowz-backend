@@ -30,6 +30,8 @@ dependencies:
   - containers
   - cryptonite
   - deepseq
+  - http-client
+  - http-client-tls
   - http-types
   - opaleye
   - polysemy

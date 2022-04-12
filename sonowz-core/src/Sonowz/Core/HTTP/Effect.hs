@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.NewsCombinator.HTTP.Effect
+module Sonowz.Core.HTTP.Effect
   ( HTTP
   , fetchURL
   , runHTTPIO
@@ -7,7 +7,7 @@ module Sonowz.NewsCombinator.HTTP.Effect
 
 import Network.HTTP.Client (HttpException, httpLbs, parseRequest, responseBody)
 import Network.HTTP.Client.TLS (newTlsManager)
-import Sonowz.NewsCombinator.Imports
+import Sonowz.Core.Imports
 import URI.ByteString (URI, serializeURIRef')
 
 data HTTP m a where

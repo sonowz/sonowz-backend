@@ -6,10 +6,10 @@ module Sonowz.Mp3tagAutofix.AudioTagIO.Effect
   ) where
 
 import Sonowz.Mp3tagAutofix.Imports
+import Sound.HTagLib
 
 import qualified Data.Map.Strict as M
 import Sonowz.Mp3tagAutofix.AudioTag.Types (AudioTag(..))
-import Sound.HTagLib
 
 
 data AudioTagIO m a where
