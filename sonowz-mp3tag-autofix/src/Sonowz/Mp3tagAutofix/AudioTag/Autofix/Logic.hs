@@ -26,6 +26,7 @@ import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
   )
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), joinArtistList, unArtist, unTitle)
 import Sonowz.Mp3tagAutofix.Fix.Types (Fix, mkFix)
+import Text.Pretty.Simple (pShow)
 
 
 newtype LogicError = LogicError String deriving (Show, Exception)
@@ -33,31 +34,59 @@ type LogicM = Either LogicError
 
 
 makeArtistPool :: [AudioTag] -> ArtistPool
-makeArtistPool = fromList . fmapToFst artist
+makeArtistPool = groupByArtist . fmapToFst artist where
+  groupByArtist :: [(Artist, AudioTag)] -> Map Artist (NonEmpty AudioTag)
+  groupByArtist = foldr (\(k, v) -> M.insertWith (<>) k (one v)) mempty
 
 
 runSearches
   :: forall r
-   . Members '[Time , HTTP , Error ParseException] r
+   . (Members '[Time , HTTP , Error ParseException , StdLog] r, HasCallStack)
   => ArtistPool
   -> Sem r ArtistPoolWithSearchResult
--- First 'traverse': Map
--- Second 'traverseToSnd': Tuple
-runSearches = traverse $ traverseToSnd action where
-  action :: AudioTag -> Sem r SearchResult
-  action AudioTag {..} = do
-    artistSearchBody <- fetchURL . melonSearchUrl . unArtist $ artist
-    titleSearchBody  <- fetchURL . melonSearchUrl . unTitle $ title
-    threadDelay (10 ^ 6) -- Sleep for 1 second
-    fromEither
-      $   SearchResult
-      <$> parseSearchResultArtist artistSearchBody
-      <*> parseSearchResultSong titleSearchBody
+-- 'traverse': Map
+runSearches = M.traverseMaybeWithKey action where
+  action :: Artist -> NonEmpty AudioTag -> Sem r (Maybe (AudioTag, SearchResult))
+  action k (tag :| tags) = do
+    let
+      artistText        = unArtist (artist tag)
+      titleText         = unTitle (title tag)
+      titleKeyword      = titleText <> " " <> artistText
+      plainTitleKeyword = titleText
+      artistKeyword     = artistText
+
+    logDebug $ "Searching with keyword \"" <> plainTitleKeyword <> "\""
+    titleSearchBody'  <- fetchURL (melonSearchUrl plainTitleKeyword)
+    searchResultSong' <- fromEither $ parseSearchResultSong titleSearchBody'
+
+    if not $ null (un @[Song] searchResultSong')
+      then do
+        logDebug $ "Searching with keyword \"" <> titleKeyword <> "\""
+        titleSearchBody  <- fetchURL (melonSearchUrl titleKeyword)
+        searchResultSong <- fromEither $ parseSearchResultSong titleSearchBody
+
+        logDebug $ "Searching with keyword \"" <> artistKeyword <> "\""
+        artistSearchBody   <- fetchURL (melonSearchUrl artistKeyword)
+        searchResultArtist <- fromEither $ parseSearchResultArtist artistSearchBody
+
+        threadDelay (10 ^ 6) -- Sleep for 1 second
+        return $ Just (tag, SearchResult searchResultArtist (searchResultSong <> searchResultSong'))
+      else do
+        logWarning $ "No song named " <> titleText <> "."
+
+        case nonEmpty tags of
+          Nothing -> do
+            let
+              fileInfo =
+                artistText <> " - " <> titleText <> " (filename: " <> toText (filename tag) <> ")"
+            logWarning ("\"" <> fileInfo <> "\" will be skipped.")
+            return Nothing
+          Just tags' -> action k tags'
 
 
-makeArtistFixes :: ArtistPoolWithSearchResult -> LogicM (Fix Artist)
-makeArtistFixes = fmap concatFix . mapM elemMapFn where
-  elemMapFn :: (AudioTag, SearchResult) -> LogicM Artist
+makeArtistFixes :: ArtistPoolWithSearchResult -> Fix Artist
+makeArtistFixes = concatFix . fmap elemMapFn where
+  elemMapFn :: (AudioTag, SearchResult) -> Artist
   elemMapFn = uncurry calcBestMatchArtist
   concatFix :: Map Artist Artist -> Fix Artist
   concatFix = foldMap mkFix . M.assocs
@@ -71,7 +100,7 @@ data SongRank = SongRank
 
 
 -- Main Logic
-calcBestMatchArtist :: AudioTag -> SearchResult -> LogicM Artist
+calcBestMatchArtist :: HasCallStack => AudioTag -> SearchResult -> Artist
 calcBestMatchArtist tag search = picked where
   -- 1. Songs are ranked by using similarity score with original tag
   songs     = un $ songSection search
@@ -99,17 +128,18 @@ calcBestMatchArtist tag search = picked where
 
   -- 5. If the first is sufficiently higher than the second (> 0.3), pick it
   --    Otherwise, pick by similiarity of artist with original tag
-  returnArtist = Right . joinArtistList . getSongArtist . song :: SongRank -> LogicM Artist
+  returnArtist = joinArtistList . getSongArtist . song :: SongRank -> Artist
   picked       = case candidates of
-    []            -> Left $ LogicError "No best match!"
+    []            -> error "No best match!"
     [s1         ] -> returnArtist s1
     (s1 : s2 : _) -> returnArtist $ compareTwo s1 s2
   compareTwo s1 s2
     | score s1 > score s2 + 0.3 = s1
     | score s2 > score s1 + 0.3 = s2
     | similarityResult == LT    = s1
+    | similarityResult == EQ    = s1
     | similarityResult == GT    = s2
-    | otherwise                 = error "Same similarity between two candidates!"
+    | otherwise                 = error "Unexpected code flow!"
    where
     similarityResult = (compare `on` getSimilarity) s1 s2
     getSimilarity    = similarity tagArtist . unArtist . joinArtistList . getSongArtist . song

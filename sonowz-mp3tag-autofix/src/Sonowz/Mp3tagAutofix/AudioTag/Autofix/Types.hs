@@ -18,9 +18,8 @@ import URI.ByteString (URI, queryL, queryPairsL)
 import URI.ByteString.QQ (uri)
 
 
--- Concatenated tags
--- where artists are unique with representative tag
-type ArtistPool = Map Artist AudioTag
+-- Concatenated tags where artists are unique
+type ArtistPool = Map Artist (NonEmpty AudioTag)
 type ArtistPoolWithSearchResult = Map Artist (AudioTag, SearchResult)
 
 
@@ -30,19 +29,19 @@ data SearchResult = SearchResult
   }
   deriving Show
 newtype SearchResultArtist = SearchResultArtist [Artist]
-newtype SearchResultSong = SearchResultSong [Song]
+newtype SearchResultSong = SearchResultSong [Song] deriving (Semigroup, Monoid) via [Song]
 data Song = Song (NonEmpty Artist) Title
   deriving (Eq, Ord)
 
--- Override Show instances, since "show Text" escapes non-ASCII characters
+
 instance S.Show SearchResultArtist where
   show (SearchResultArtist artists) =
-    "[" <> intercalate ", " (toString . unArtist <$> toList artists) <> "]"
+    "[" <> intercalate ", " (show . unArtist <$> toList artists) <> "]"
 instance S.Show SearchResultSong where
   show (SearchResultSong songs) = "[" <> intercalate ", " (show <$> toList songs) <> "]"
 instance S.Show Song where
   show (Song artists title) =
-    "<" <> toString (unArtist $ joinArtistList artists) <> "> " <> toString (unTitle title)
+    "<" <> show (unArtist $ joinArtistList artists) <> "> " <> show (unTitle title)
 
 
 -- https://news.google.com/rss/search?cr=false&hl=en-US&gl=US&ceid=US:en&q=key+word

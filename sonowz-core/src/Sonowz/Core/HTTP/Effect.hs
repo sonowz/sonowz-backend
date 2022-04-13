@@ -1,6 +1,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Sonowz.Core.HTTP.Effect
   ( HTTP
+  , HttpException
   , fetchURL
   , runHTTPIO
   ) where

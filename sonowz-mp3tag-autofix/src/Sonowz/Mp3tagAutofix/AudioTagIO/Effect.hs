@@ -1,8 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Sonowz.Mp3tagAutofix.AudioTagIO.Effect
-  ( readAudioTag
+  ( AudioTagIO
+  , readAudioTag
   , writeAudioTag
   , runAudioTagIOIO
+  , HTagLibException
   ) where
 
 import Sonowz.Mp3tagAutofix.Imports

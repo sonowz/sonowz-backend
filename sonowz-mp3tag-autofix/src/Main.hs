@@ -1,18 +1,15 @@
 module Main where
 
-import Sonowz.Mp3tagAutofix.AudioTag.Types
-import Sonowz.Mp3tagAutofix.AudioTagIO.Effect
+import Sonowz.Mp3tagAutofix.App (runMainFn)
+import Sonowz.Mp3tagAutofix.Env (Env(..))
 import Sonowz.Mp3tagAutofix.Imports
-import Sound.HTagLib
+import System.IO (BufferMode(LineBuffering), hSetBuffering)
+
+
 
 main :: IO ()
-main =
-  (do
-      tag <- readAudioTag "./test.mp4"
-      let tag' = tag { title = mkTitle $ unTitle (title tag) <> "x" }
-      writeAudioTag tag'
-    )
-    & runAudioTagIOIO
-    & runError
-    & fmap (fromRight (error "asdf"))
-    & runM
+main = do
+  hSetBuffering stdout LineBuffering -- For debugging
+  hSetBuffering stderr LineBuffering
+
+  runMainFn $ Env "./test" False

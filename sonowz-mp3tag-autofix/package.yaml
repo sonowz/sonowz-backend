@@ -28,9 +28,12 @@ dependencies:
   - bytestring
   - containers
   - deepseq
+  - directory
+  - filepath
   - htaglib
   - polysemy
   - polysemy-plugin
+  - pretty-simple
   - random
   - relude
   - sonowz-core

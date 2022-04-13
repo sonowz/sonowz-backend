@@ -6,13 +6,15 @@ module Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser
 
 import Sonowz.Mp3tagAutofix.Imports
 
-import qualified Data.Set as Set
+import Data.List (nub)
+import qualified Data.Text as T
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, Title, mkArtist, mkTitle)
 import Text.HTML.TagSoup
 
 
-newtype ParseException = ParseException String deriving (Show, Exception)
+newtype ParseException = ParseException String deriving (Show, Typeable)
+instance Exception ParseException
 type HTMLParser a = [Tag Text] -> Either ParseException a
 
 parseSearchResultArtist :: Text -> Either ParseException SearchResultArtist
@@ -52,31 +54,60 @@ pSongSection html = songs >>= Right . SearchResultSong
     takeWhile (~/= s "<div class=section_album>")
       . dropWhile (~/= s "<div class=section_song>")
       $ html
+  totalSearchSection =
+    find (\tags -> isJustTrue $ T.isInfixOf "전체에서 검색" <$> pText tags)
+      . fmap (drop 1)
+      . sections (~== s "<h4 class=\"title arr\">")
+      $ sectionHtml
+  titleSearchSection = sectionHtml
   songHtmlList =
     partitions (~== s "<tr>")
-      . takeWhile (~/= s "</tbody>")
-      . dropWhile (~/= s "<tbody>")
-      $ sectionHtml
-  songs = traverse pSong songHtmlList
+      .  takeWhile (~/= s "</tbody>")
+      .  dropWhile (~/= s "<tbody>")
+      $  totalSearchSection
+      ?: titleSearchSection
+  songs = catMaybes <$> traverse pSong songHtmlList
+  isJustTrue (Just True) = True
+  isJustTrue _           = False
 
 
-pSong :: HTMLParser Song
-pSong html = Song <$> artists <*> title where
-  title :: Either ParseException Title
+pSong :: HTMLParser (Maybe Song)
+pSong html = case title of
+  Left  e        -> Left e
+  Right Nothing  -> Right Nothing
+  Right (Just t) -> Just . flip Song t <$> artists
+ where
+  title :: Either ParseException (Maybe Title)
   title =
-    maybeToExc "title"
+    Right
       .   fmap mkTitle
       .   pText
       .   drop 1
       .   dropWhile (~/= s "<a class=fc_gray>")
       =<< nth 3 (isTagOpenName "td") html
   artists :: Either ParseException (NonEmpty Artist)
-  artists =
-    checkNonEmpty "artist"
-      .   mapMaybe (fmap mkArtist . pText . drop 1)
+  artists = do
+    linked  <- linkedArtists
+    artists <- if null linked then plainArtists else pure linked
+    checkNonEmpty "artist" artists
+  linkedArtists :: Either ParseException [Artist]
+  linkedArtists =
+    Right
+      .   ordNub
+      .   mapMaybe (fmap (mkArtist . T.strip) . pText . drop 1)
       .   sections (~== s "<a class=fc_mgray>")
       .   takeWhile (not . isTagCloseName "td")
       =<< nth 4 (isTagOpenName "td") html
+  plainArtists :: Either ParseException [Artist]
+  plainArtists =
+    Right
+      .   ordNub
+      .   mapMaybe (fmap (mkArtist . T.strip) . pText . drop 1)
+      .   sections plainTextArtist
+      .   takeWhile (not . isTagCloseName "td")
+      =<< nth 4 (isTagOpenName "td") html
+  plainTextArtist (TagOpen "div" (("id", "artistName") : _)) = True
+  plainTextArtist _ = False
   nth :: Int -> (Tag Text -> Bool) -> HTMLParser [Tag Text]
   nth n selector = maybeToRight msg . (!!? (n - 1)) . sections selector
     where msg = ParseException $ "No " <> show n <> "th selector exist!"
@@ -88,9 +119,12 @@ pSong html = Song <$> artists <*> title where
 -- Extract head tag as innerText
 -- handle cases where sometimes '<b>' exists
 pText :: [Tag Text] -> Maybe Text
-pText (TagOpen "b" [] : TagText text : TagClose "b" : TagText text2 : _) = Just (text <> text2)
-pText (TagOpen "b" [] : TagText text : TagClose "b" : _) = Just text
-pText (TagText text : _) = Just text
-pText _                  = Nothing
+pText (TagOpen "b" [] : TagText text : TagClose "b" : tags) = case pText tags of
+  Just text2 -> Just (text <> text2)
+  Nothing    -> Just text
+pText (TagText text : tags) = case pText tags of
+  Just text2 -> Just (text <> text2)
+  Nothing    -> Just text
+pText _ = Nothing
 
 
