@@ -11,6 +11,13 @@ packages:
       sha256: 085c6620bff7671bef1d969652a349271c3703fbf10dd753cb63ee1cd700bca5
   original:
     hackage: servant-websockets-2.0.0
+- completed:
+    hackage: text-icu-0.8.0.1@sha256:22d21c91e7a81f1ee5766b3406f4fe9df0ff8cc426581a861de3f6f2fa413449,4624
+    pantry-tree:
+      size: 3223
+      sha256: 71ed32ecdce71adba6df6220e717b8ec4bd252cc403714c5c4ba70cf6d1aa1e4
+  original:
+    hackage: text-icu-0.8.0.1
 snapshots:
 - completed:
     size: 590100

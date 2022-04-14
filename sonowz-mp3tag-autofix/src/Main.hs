@@ -1,5 +1,6 @@
 module Main where
 
+import Colog.Core.Severity (Severity(..))
 import Sonowz.Mp3tagAutofix.App (runMainFn)
 import Sonowz.Mp3tagAutofix.Env (Env(..))
 import Sonowz.Mp3tagAutofix.Imports
@@ -12,4 +13,5 @@ main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  runMainFn $ Env "./test" False
+  --setStdLogActionLevel (if debug then Debug else Info)
+  runMainFn $ Env "./test" False False

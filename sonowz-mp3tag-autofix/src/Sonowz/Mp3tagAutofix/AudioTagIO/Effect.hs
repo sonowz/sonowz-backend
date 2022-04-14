@@ -8,10 +8,11 @@ module Sonowz.Mp3tagAutofix.AudioTagIO.Effect
   ) where
 
 import Sonowz.Mp3tagAutofix.Imports
-import Sound.HTagLib
 
 import qualified Data.Map.Strict as M
 import Sonowz.Mp3tagAutofix.AudioTag.Types (AudioTag(..))
+import Sonowz.Mp3tagAutofix.AudioTagIO.Internal (audioTagGetter, audioTagSetter)
+import Sound.HTagLib (HTagLibException, ID3v2Encoding(ID3v2UTF8), getTags, setTags)
 
 
 data AudioTagIO m a where
@@ -53,29 +54,3 @@ _writeAudioTag audioTag = do
       fromException $ setTags path (Just ID3v2UTF8) (audioTagSetter originalTag audioTag)
       modify' (M.insert path audioTag)
 
-
-audioTagGetter :: FilePath -> TagGetter AudioTag
-audioTagGetter filename =
-  AudioTag filename
-    <$> titleGetter
-    <*> artistGetter
-    <*> albumGetter
-    <*> commentGetter
-    <*> genreGetter
-    <*> yearGetter
-    <*> trackNumberGetter
-
--- Only set fields which has been changed from original tag
-audioTagSetter :: AudioTag -> AudioTag -> TagSetter
-audioTagSetter orig target =
-  setterIfChanged title titleSetter
-    <> setterIfChanged artist      artistSetter
-    <> setterIfChanged album       albumSetter
-    <> setterIfChanged comment     commentSetter
-    <> setterIfChanged genre       genreSetter
-    <> setterIfChanged year        yearSetter
-    <> setterIfChanged trackNumber trackNumberSetter
- where
-  setterIfChanged :: Eq a => (AudioTag -> a) -> (a -> TagSetter) -> TagSetter
-  setterIfChanged field setter =
-    if field orig /= field target then setter (field target) else mempty

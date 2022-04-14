@@ -7,7 +7,8 @@ module Sonowz.Mp3tagAutofix.AudioTag.Autofix.Logic
 import Sonowz.Mp3tagAutofix.Imports
 
 import qualified Data.List as L
-import qualified Data.Map as M
+import qualified Data.Map.Strict as M
+import qualified Data.Text as T
 import Relude.Extra.Newtype (un)
 import Relude.Extra.Tuple (fmapToFst, traverseToSnd)
 import qualified Relude.Unsafe as Unsafe
@@ -49,11 +50,14 @@ runSearches = M.traverseMaybeWithKey action where
   action :: Artist -> NonEmpty AudioTag -> Sem r (Maybe (AudioTag, SearchResult))
   action k (tag :| tags) = do
     let
-      artistText        = unArtist (artist tag)
-      titleText         = unTitle (title tag)
-      titleKeyword      = titleText <> " " <> artistText
-      plainTitleKeyword = titleText
-      artistKeyword     = artistText
+      artistText = unArtist (artist tag)
+      titleText  = unTitle (title tag)
+      -- These characters seems to corrupt title search results
+      removeSpecialChars :: Text -> Text
+      removeSpecialChars = T.replace "," "" . T.replace "." " "
+      titleKeyword       = removeSpecialChars titleText <> " " <> artistText
+      plainTitleKeyword  = removeSpecialChars titleText
+      artistKeyword      = artistText
 
     logDebug $ "Searching with keyword \"" <> plainTitleKeyword <> "\""
     titleSearchBody'  <- fetchURL (melonSearchUrl plainTitleKeyword)

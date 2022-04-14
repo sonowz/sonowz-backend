@@ -27,6 +27,7 @@ dependencies:
   - base
   - bytestring
   - containers
+  - co-log-core
   - deepseq
   - directory
   - filepath
@@ -39,6 +40,7 @@ dependencies:
   - sonowz-core
   - tagsoup
   - text
+  - text-icu
   - time
   - uri-bytestring
   - vector
