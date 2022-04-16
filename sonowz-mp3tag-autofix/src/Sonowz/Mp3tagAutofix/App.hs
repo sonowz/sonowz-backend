@@ -9,7 +9,7 @@ import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Logic (makeArtistFixes, makeArtistPool, runSearches)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser (ParseException)
-import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), unArtist, unTitle)
+import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), unArtist)
 import Sonowz.Mp3tagAutofix.AudioTagIO.Effect
   (AudioTagIO, HTagLibException, readAudioTag, runAudioTagIOIO, writeAudioTag)
 import Sonowz.Mp3tagAutofix.Env (Env(..))
@@ -17,7 +17,6 @@ import Sonowz.Mp3tagAutofix.Fix.Interactive (interactiveFilterFix)
 import Sonowz.Mp3tagAutofix.Fix.Types
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
-import Text.Pretty.Simple (OutputOptions(..), defaultOutputOptionsNoColor, pShow, pShowOpt)
 
 
 newtype MainException = MainException String deriving (Show, Exception)

@@ -8,10 +8,9 @@ import Sonowz.Mp3tagAutofix.Imports
 
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
-import qualified Data.Set as Set
 import qualified Data.Text as T
 import Relude.Extra.Newtype (un)
-import Relude.Extra.Tuple (fmapToFst, traverseToSnd)
+import Relude.Extra.Tuple (fmapToFst)
 import qualified Relude.Unsafe as Unsafe
 import Sonowz.Core.HTTP.Effect (HTTP, fetchURL)
 import Sonowz.Core.Time.Effect (Time, threadDelay)
@@ -30,11 +29,6 @@ import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
 import Sonowz.Mp3tagAutofix.AudioTag.Types
   (Artist, AudioTag(..), artistList, joinArtistList, mkArtist, unArtist, unTitle)
 import Sonowz.Mp3tagAutofix.Fix.Types (Fix, mkFix)
-import Text.Pretty.Simple (pShow)
-
-
-newtype LogicError = LogicError String deriving (Show, Exception)
-type LogicM = Either LogicError
 
 
 makeArtistPool :: [AudioTag] -> ArtistPool

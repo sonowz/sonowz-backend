@@ -6,12 +6,10 @@ module Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser
 
 import Sonowz.Mp3tagAutofix.Imports
 
-import Data.List (nub)
 import qualified Data.Text as T
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, Title, mkArtist, mkTitle)
 import Text.HTML.TagSoup
-import Text.Pretty.Simple (pShow, pString)
 
 
 newtype ParseException = ParseException String deriving (Show, Typeable)
