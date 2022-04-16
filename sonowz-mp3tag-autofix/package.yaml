@@ -32,6 +32,7 @@ dependencies:
   - directory
   - filepath
   - htaglib
+  - optparse-applicative
   - polysemy
   - polysemy-plugin
   - pretty-simple

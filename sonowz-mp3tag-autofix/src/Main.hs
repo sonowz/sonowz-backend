@@ -1,17 +1,33 @@
 module Main where
 
+import Options.Applicative
+import Sonowz.Mp3tagAutofix.Imports
+
 import Colog.Core.Severity (Severity(..))
 import Sonowz.Mp3tagAutofix.App (runMainFn)
 import Sonowz.Mp3tagAutofix.Env (Env(..))
-import Sonowz.Mp3tagAutofix.Imports
 import System.IO (BufferMode(LineBuffering), hSetBuffering)
 
 
+envP :: Parser Env
+envP = do
+  targetDir <- strArgument (metavar "dir")
+  let
+    niHelpMsg =
+      "Run as noninteractive mode. WARNING: this will automatically update tags in the file!"
+  nonInteractive <- switch (long "noninteractive" <> help niHelpMsg)
+  let debugHelpMsg = "Print debug logs"
+  debug <- switch (long "debug" <> help debugHelpMsg)
+  return Env { .. }
+
+opts :: ParserInfo Env
+opts = info (helper <*> envP) (fullDesc <> progDesc "Mp3 tag autofix")
 
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  --setStdLogActionLevel (if debug then Debug else Info)
-  runMainFn $ Env "./test" False False
+  env <- execParser opts
+  setStdLogActionLevel (if debug env then Debug else Info)
+  runMainFn env

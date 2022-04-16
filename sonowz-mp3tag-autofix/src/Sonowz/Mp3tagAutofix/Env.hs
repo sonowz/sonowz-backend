@@ -6,7 +6,7 @@ import Sonowz.Mp3tagAutofix.Imports
 
 
 data Env = Env
-  { targetDir :: FilePath
-  , updateTag :: Bool
-  , debug     :: Bool
+  { targetDir      :: FilePath
+  , nonInteractive :: Bool
+  , debug          :: Bool
   }

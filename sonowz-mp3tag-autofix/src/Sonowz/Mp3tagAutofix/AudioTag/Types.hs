@@ -42,7 +42,7 @@ data AudioTag = AudioTag
   , year        :: Maybe Year
   , trackNumber :: Maybe TrackNumber
   }
-  deriving Show
+  deriving (Show, Eq)
 
 -- Handles "A, B" or "A & B" cases
 artistList :: Artist -> NonEmpty Artist

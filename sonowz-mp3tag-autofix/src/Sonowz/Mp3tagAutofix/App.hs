@@ -9,15 +9,18 @@ import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Logic (makeArtistFixes, makeArtistPool, runSearches)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser (ParseException)
-import Sonowz.Mp3tagAutofix.AudioTag.Types (AudioTag(..), unArtist, unTitle)
+import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), unArtist, unTitle)
 import Sonowz.Mp3tagAutofix.AudioTagIO.Effect
   (AudioTagIO, HTagLibException, readAudioTag, runAudioTagIOIO, writeAudioTag)
 import Sonowz.Mp3tagAutofix.Env (Env(..))
-import Sonowz.Mp3tagAutofix.Fix.Apply (manualFilterFix)
+import Sonowz.Mp3tagAutofix.Fix.Interactive (interactiveFilterFix)
+import Sonowz.Mp3tagAutofix.Fix.Types
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
 import Text.Pretty.Simple (OutputOptions(..), defaultOutputOptionsNoColor, pShow, pShowOpt)
 
+
+newtype MainException = MainException String deriving (Show, Exception)
 
 -- TODO: override 'Polysemy.Error' interpreters to have catch functions
 
@@ -49,6 +52,8 @@ mainFn :: (Members MainEfffects r, HasCallStack) => Sem r ()
 mainFn = do
   env         <- ask
   targetFiles <- getTargetFileList (targetDir env)
+  if nonInteractive env then logWarning "This will automatically update tags in the file!" else pass
+
   logInfo $ "Found " <> show (length targetFiles) <> " files in " <> toText (targetDir env) <> "."
   logInfo "Extracting ID3 tags..."
   audioTags <- catMaybes <$> mapM readAudioTagWrapped targetFiles
@@ -59,17 +64,30 @@ mainFn = do
     ac         = show (length artistPool)
   logInfo $ "Run search for " <> ac <> " unique artist names... (ETA: " <> ac <> " seconds)"
   artistPool' <- runSearches artistPool
-  let dropped = show (length artistPool - length artistPool')
-  logInfo $ "Search done. " <> dropped <> " artists were dropped."
+  let dropped = length artistPool - length artistPool'
+  logInfo
+    $  "Search done. "
+    <> (if dropped == 0 then mempty else show dropped <> " artists were dropped.")
 
   let fixes = makeArtistFixes artistPool'
-  manualFilterFix fixes unArtist
+  fixes <- if nonInteractive env then return fixes else interactiveFilterFix fixes unArtist
 
-  pass
+  logInfo "Update tags in the files? (yes or no):"
+  whenM getYesOrNo (applyArtistFixes audioTags fixes)
+  logInfo "All done."
+ where
+  getYesOrNo :: Members (Embed IO : StdEff) r => Sem r Bool
+  getYesOrNo = do
+    liftIO getLine >>= \case
+      "yes" -> return True
+      "no"  -> return False
+      _     -> logInfo "Please type either \"yes\" or \"no\":" >> getYesOrNo
 
+
+type AudioTagIOEffects = '[AudioTagIO , Error HTagLibException , StdLog]
 
 readAudioTagWrapped
-  :: Members '[AudioTagIO , Error HTagLibException , StdLog] r => FilePath -> Sem r (Maybe AudioTag)
+  :: (Members AudioTagIOEffects r, HasCallStack) => FilePath -> Sem r (Maybe AudioTag)
 readAudioTagWrapped file = catch
   (Just <$> readAudioTag file)
   (\_ -> do
@@ -77,14 +95,34 @@ readAudioTagWrapped file = catch
     return Nothing
   )
 
+writeAudioTagWrapped :: (Members AudioTagIOEffects r, HasCallStack) => AudioTag -> Sem r ()
+writeAudioTagWrapped tag = catch
+  (writeAudioTag tag)
+  (\_ -> logError $ "Write ID3 tag for " <> toText (filename tag) <> " failed.")
 
-getTargetFileList :: Members '[Embed IO , Error SomeException] r => FilePath -> Sem r [FilePath]
+
+applyArtistFixes
+  :: (Members AudioTagIOEffects r, HasCallStack) => [AudioTag] -> Fix Artist -> Sem r ()
+applyArtistFixes audioTags fixes = do
+  let
+    fixed   = (\tag -> tag { artist = applyFix fixes (artist tag) }) <$> audioTags
+    changed = catMaybes
+      $ zipWith (\orig fixed -> if orig /= fixed then Just fixed else Nothing) audioTags fixed
+  logInfo $ show (length changed) <> " files will be written."
+  mapM_ writeAudioTagWrapped changed
+  logInfo "All tags were updated."
+
+
+getTargetFileList :: Members (Embed IO : StdEff) r => FilePath -> Sem r [FilePath]
 getTargetFileList dir = do
-  liftIO $ ifM (doesDirectoryExist dir) pass (fail $ "No directory named " <> dir)
+  unlessM
+    (liftIO (doesDirectoryExist dir))
+    (let errorMsg = "No directory named " <> toText dir
+     in logError errorMsg >> throw' (MainException $ toString errorMsg)
+    )
   dirContents         <- liftIO $ (dir </>) <<$>> listDirectory dir
   (subdirs, dirFiles) <- liftIO $ partitionM doesDirectoryExist dirContents
   subdirFiles         <- join <$> mapM getTargetFileList subdirs
   return (dirFiles <> subdirFiles) where
   partitionM f l = makePartition l <$> filterM f l
   makePartition l trues = (trues, l \\ trues)
-

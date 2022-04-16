@@ -1,5 +1,5 @@
-module Sonowz.Mp3tagAutofix.Fix.Apply
-  ( manualFilterFix
+module Sonowz.Mp3tagAutofix.Fix.Interactive
+  ( interactiveFilterFix
   ) where
 
 import qualified Data.Text as T
@@ -7,13 +7,14 @@ import Sonowz.Mp3tagAutofix.Fix.Types (Fix, listFixes, mkFix)
 import Sonowz.Mp3tagAutofix.Imports
 
 
-manualFilterFix
+-- Note: this function includes interactive 'getLine' function
+interactiveFilterFix
   :: forall a r
    . (Ord a, Members (Embed IO : StdEff) r, HasCallStack)
   => Fix a
   -> (a -> Text)
   -> Sem r (Fix a)
-manualFilterFix fixes showFn = constructFix <$> go (listFixes fixes) where
+interactiveFilterFix fixes showFn = constructFix <$> go (listFixes fixes) where
   go :: [(a, a)] -> Sem r [(a, a)]
   go fixesList = do
     logInfo "List of fixes:"
