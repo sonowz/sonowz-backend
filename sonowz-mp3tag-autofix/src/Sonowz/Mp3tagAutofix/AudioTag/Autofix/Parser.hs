@@ -11,6 +11,7 @@ import qualified Data.Text as T
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, Title, mkArtist, mkTitle)
 import Text.HTML.TagSoup
+import Text.Pretty.Simple (pShow, pString)
 
 
 newtype ParseException = ParseException String deriving (Show, Typeable)
@@ -31,44 +32,29 @@ s = id
 pArtistSection :: HTMLParser SearchResultArtist
 pArtistSection html = Right (SearchResultArtist artists)
  where
-  sectionHtml =
-    takeWhile (~/= s "<div class=section_song>")
-      . dropWhile (~/= s "<div class=section_atist>") -- 'atist' is not a typo
-      $ html
-  exactMatch :: Maybe Artist
-  exactMatch =
-    fmap mkArtist . pText . drop 1 . dropWhile (~/= s "<strong class=fc_serch>") $ sectionHtml
-  possibleMatches :: [Artist]
-  possibleMatches =
-    mapMaybe (fmap mkArtist . pText . drop 1 . dropWhile (~/= s "<a>") . dropWhile (~/= s "<dt>"))
+  sectionHtml = dropWhile (~/= s "<div id=pageList>") html -- 'atist' is not a typo
+  artists :: [Artist]
+  artists =
+    take 4 -- Too many artists are useless
+      . mapMaybe
+          (fmap mkArtist . pText . drop 1 . dropWhile (~/= s "<a>") . dropWhile (~/= s "<dt>"))
       . partitions (~== s "<li>")
-      . dropWhile (~/= s "<div class=dongname>")
+      . takeWhile (~/= s "</ul>")
+      . dropWhile (~/= s "<ul>")
       $ sectionHtml
-  artists = maybeToList exactMatch <> possibleMatches
 
 
 pSongSection :: HTMLParser SearchResultSong
 pSongSection html = songs >>= Right . SearchResultSong
  where
-  sectionHtml =
-    takeWhile (~/= s "<div class=section_album>")
-      . dropWhile (~/= s "<div class=section_song>")
-      $ html
-  totalSearchSection =
-    find (\tags -> isJustTrue $ T.isInfixOf "전체에서 검색" <$> pText tags)
-      . fmap (drop 1)
-      . sections (~== s "<h4 class=\"title arr\">")
-      $ sectionHtml
-  titleSearchSection = sectionHtml
+  sectionHtml = takeWhile (not . isTagCloseName "table") . dropWhile (isTagOpenName "table") $ html
   songHtmlList =
     partitions (~== s "<tr>")
-      .  takeWhile (~/= s "</tbody>")
-      .  dropWhile (~/= s "<tbody>")
-      $  totalSearchSection
-      ?: titleSearchSection
-  songs = catMaybes <$> traverse pSong songHtmlList
-  isJustTrue (Just True) = True
-  isJustTrue _           = False
+      . takeWhile (~/= s "</tbody>")
+      . dropWhile (~/= s "<tbody>")
+      $ sectionHtml
+  -- 10 entries are sufficient
+  songs = take 10 . catMaybes <$> traverse pSong songHtmlList
 
 
 pSong :: HTMLParser (Maybe Song)

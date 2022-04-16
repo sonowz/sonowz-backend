@@ -56,21 +56,21 @@ mainFn = do
 
   logInfo $ "Found " <> show (length targetFiles) <> " files in " <> toText (targetDir env) <> "."
   logInfo "Extracting ID3 tags..."
-  audioTags <- catMaybes <$> mapM readAudioTagWrapped targetFiles
+  !audioTags <- catMaybes <$> mapM readAudioTagWrapped targetFiles
   logInfo $ "Extracted " <> show (length audioTags) <> " ID3 tags."
 
   let
     artistPool = makeArtistPool audioTags
     ac         = show (length artistPool)
   logInfo $ "Run search for " <> ac <> " unique artist names... (ETA: " <> ac <> " seconds)"
-  artistPool' <- runSearches artistPool
+  !artistPool' <- runSearches artistPool
   let dropped = length artistPool - length artistPool'
   logInfo
     $  "Search done. "
     <> (if dropped == 0 then mempty else show dropped <> " artists were dropped.")
 
   let fixes = makeArtistFixes artistPool'
-  fixes <- if nonInteractive env then return fixes else interactiveFilterFix fixes unArtist
+  !fixes <- if nonInteractive env then return fixes else interactiveFilterFix fixes unArtist
 
   logInfo "Update tags in the files? (yes or no):"
   whenM getYesOrNo (applyArtistFixes audioTags fixes)
@@ -109,7 +109,12 @@ applyArtistFixes audioTags fixes = do
     changed = catMaybes
       $ zipWith (\orig fixed -> if orig /= fixed then Just fixed else Nothing) audioTags fixed
   logInfo $ show (length changed) <> " files will be written."
-  mapM_ writeAudioTagWrapped changed
+  mapM_
+    (\tag -> do
+      logDebug $ "Writing tag to " <> toText (filename tag) <> "..."
+      writeAudioTagWrapped tag
+    )
+    changed
   logInfo "All tags were updated."
 
 

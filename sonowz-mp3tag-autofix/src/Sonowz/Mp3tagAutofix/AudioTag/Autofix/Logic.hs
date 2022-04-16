@@ -8,6 +8,7 @@ import Sonowz.Mp3tagAutofix.Imports
 
 import qualified Data.List as L
 import qualified Data.Map.Strict as M
+import qualified Data.Set as Set
 import qualified Data.Text as T
 import Relude.Extra.Newtype (un)
 import Relude.Extra.Tuple (fmapToFst, traverseToSnd)
@@ -19,13 +20,15 @@ import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
   ( ArtistPool
   , ArtistPoolWithSearchResult
+  , MelonSearchType(..)
   , SearchResult(..)
   , SearchResultArtist(..)
   , SearchResultSong(..)
   , Song(..)
   , melonSearchUrl
   )
-import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), joinArtistList, unArtist, unTitle)
+import Sonowz.Mp3tagAutofix.AudioTag.Types
+  (Artist, AudioTag(..), artistList, joinArtistList, mkArtist, unArtist, unTitle)
 import Sonowz.Mp3tagAutofix.Fix.Types (Fix, mkFix)
 import Text.Pretty.Simple (pShow)
 
@@ -60,17 +63,17 @@ runSearches = M.traverseMaybeWithKey action where
       artistKeyword      = artistText
 
     logDebug $ "Searching with keyword \"" <> plainTitleKeyword <> "\""
-    titleSearchBody'  <- fetchURL (melonSearchUrl plainTitleKeyword)
+    titleSearchBody'  <- fetchURL (melonSearchUrl MelonTitle plainTitleKeyword)
     searchResultSong' <- fromEither $ parseSearchResultSong titleSearchBody'
 
     if not $ null (un @[Song] searchResultSong')
       then do
         logDebug $ "Searching with keyword \"" <> titleKeyword <> "\""
-        titleSearchBody  <- fetchURL (melonSearchUrl titleKeyword)
+        titleSearchBody  <- fetchURL (melonSearchUrl MelonAll titleKeyword)
         searchResultSong <- fromEither $ parseSearchResultSong titleSearchBody
 
         logDebug $ "Searching with keyword \"" <> artistKeyword <> "\""
-        artistSearchBody   <- fetchURL (melonSearchUrl artistKeyword)
+        artistSearchBody   <- fetchURL (melonSearchUrl MelonArtist artistKeyword)
         searchResultArtist <- fromEither $ parseSearchResultArtist artistSearchBody
 
         threadDelay (10 ^ 6) -- Sleep for 1 second
@@ -83,7 +86,7 @@ runSearches = M.traverseMaybeWithKey action where
             let
               fileInfo =
                 artistText <> " - " <> titleText <> " (filename: " <> toText (filename tag) <> ")"
-            logWarning ("\"" <> fileInfo <> "\" will be skipped.")
+            logError ("\"" <> fileInfo <> "\" will be skipped.")
             return Nothing
           Just tags' -> action k tags'
 
@@ -106,11 +109,11 @@ data SongRank = SongRank
 -- Main Logic
 calcBestMatchArtist :: HasCallStack => AudioTag -> SearchResult -> Artist
 calcBestMatchArtist tag search = picked where
-  -- 1. Songs are ranked by using similarity score with original tag
+  -- 1. Song titles are ranked by using similarity score with original tag
   songs     = un $ songSection search
   artists   = un $ artistSection search :: [Artist]
   tagTitle  = unTitle $ title tag :: Text
-  tagArtist = unArtist $ artist tag :: Text
+  tagArtist = artistList $ artist tag :: NonEmpty Artist
   getSongTitle (Song _ t) = unTitle t :: Text
   songRanks :: [SongRank]
   songRanks = (\song -> SongRank (similarity tagTitle $ getSongTitle song) song) <$> songs
@@ -120,20 +123,29 @@ calcBestMatchArtist tag search = picked where
   magSongFn  = [ \sr -> sr { score = score sr * m } | m <- (\x -> 1 - 0.02 * x) <$> [0 ..] ]
   songRanks' = zipWith ($) magSongFn songRanks
 
-  -- 3. If a song's artist is in 'SearchResultArtist', double the score
+  -- 3. "Various Artists" artist is discouraged (score = 0.1)
+  filterFn sr =
+    if getSongArtist (song sr) == [mkArtist "Various Artists"] then sr { score = 0.1 } else sr
+  songRanks'' = filterFn <$> songRanks'
+
+  -- 4. Song artists are ranked by using similarity score with original tag
   getSongArtist (Song a _) = a
+  plusFn sr = sr { score = score sr + artistSimilarity tagArtist (getSongArtist $ song sr) }
+  songRanks''' = plusFn <$> songRanks''
+
+  -- 5. If a song's artist is in 'SearchResultArtist', double the score
   doubleFn sr = if not (null artistIntersection) then sr { score = 2 * score sr } else sr
     where artistIntersection = artists `L.intersect` toList (getSongArtist $ song sr)
-  songRanks''  = doubleFn <$> songRanks'
+  songRanks'''' = doubleFn <$> songRanks'''
 
-  -- 4. Sort by score, and narrow down to 2 candidates
-  sortDesc     = sortBy (flip compare)
-  candidates   = take 2 $ sortDesc songRanks'' :: [SongRank]
+  -- 6. Sort by score, and narrow down to 2 candidates
+  sortDesc      = sortBy (flip compare)
+  candidates    = take 2 $ sortDesc songRanks'''' :: [SongRank]
 
-  -- 5. If the first is sufficiently higher than the second (> 0.3), pick it
+  -- 7. If the first is sufficiently higher than the second (> 0.3), pick it
   --    Otherwise, pick by similiarity of artist with original tag
-  returnArtist = joinArtistList . getSongArtist . song :: SongRank -> Artist
-  picked       = case candidates of
+  returnArtist  = joinArtistList . getSongArtist . song :: SongRank -> Artist
+  picked        = case candidates of
     []            -> error "No best match!"
     [s1         ] -> returnArtist s1
     (s1 : s2 : _) -> returnArtist $ compareTwo s1 s2
@@ -146,7 +158,18 @@ calcBestMatchArtist tag search = picked where
     | otherwise                 = error "Unexpected code flow!"
    where
     similarityResult = (compare `on` getSimilarity) s1 s2
-    getSimilarity    = similarity tagArtist . unArtist . joinArtistList . getSongArtist . song
+    getSimilarity    = artistSimilarity tagArtist . getSongArtist . song
+
+
+-- TODO: use max flow algorithm
+-- Domain: [0.0, inf) (mostly [0.0, 1.0])
+artistSimilarity :: NonEmpty Artist -> NonEmpty Artist -> Double
+artistSimilarity l1 l2 = sum scores / fromIntegral (max (length l1) (length l2)) where
+  scores = [ scoreFn a1 a2 | a1 <- toList l1, a2 <- toList l2 ]
+  scoreFn (unArtist -> a1) (unArtist -> a2) = substrScore + similarityScore   where
+    -- Substring weighs cases like "A" ~= "A (feat. B)"
+    substrScore     = if T.isInfixOf a1 a2 || T.isInfixOf a2 a1 then 0.5 else 0
+    similarityScore = 0.5 * similarity a1 a2
 
 
 -- String similarity, domain: [0.0, 1.0]

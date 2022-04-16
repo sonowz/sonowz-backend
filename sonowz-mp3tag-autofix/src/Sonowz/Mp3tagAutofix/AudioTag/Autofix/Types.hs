@@ -6,6 +6,7 @@ module Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
   , SearchResultArtist(..)
   , SearchResultSong(..)
   , Song(..)
+  , MelonSearchType(..)
   , melonSearchUrl
   ) where
 
@@ -44,10 +45,18 @@ instance S.Show Song where
     "<" <> show (unArtist $ joinArtistList artists) <> "> " <> show (unTitle title)
 
 
+data MelonSearchType = MelonAll | MelonArtist | MelonTitle
+
 -- https://news.google.com/rss/search?cr=false&hl=en-US&gl=US&ceid=US:en&q=key+word
-melonSearchUrl :: Text -> URI
-melonSearchUrl keyword = addQueryParam ("q", encodeUtf8 $ encodeQueryParam keyword) baseURL where
-  baseURL = [uri|https://www.melon.com/search/total/index.htm|]
+melonSearchUrl :: MelonSearchType -> Text -> URI
+melonSearchUrl searchType keyword = addQueryParam
+  ("q", encodeUtf8 $ encodeQueryParam keyword)
+  baseURL
+ where
+  baseURL = case searchType of
+    MelonAll    -> [uri|https://www.melon.com/search/song/index.htm?section=all|]
+    MelonArtist -> [uri|https://www.melon.com/search/artist/index.htm|]
+    MelonTitle  -> [uri|https://www.melon.com/search/song/index.htm?section=song|]
   encodeQueryParam :: Text -> Text
   encodeQueryParam (toString -> param) = toText $ map (\c -> if c == ' ' then '+' else c) param
   addQueryParam :: (ByteString, ByteString) -> URI -> URI
