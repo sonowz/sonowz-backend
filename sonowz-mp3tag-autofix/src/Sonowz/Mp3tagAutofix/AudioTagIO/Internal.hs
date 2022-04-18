@@ -10,45 +10,74 @@ import qualified Data.Text as T
 import Data.Text.ICU.CharsetDetection (detect, getConfidence, getName)
 import Data.Text.ICU.Convert (fromUnicode, open, toUnicode)
 import Relude.Extra.Tuple (dup)
-import Sonowz.Mp3tagAutofix.AudioTag.Types (AudioTag(..))
+import Sonowz.Mp3tagAutofix.AudioTag.Types (AudioTag(..), Encoding(..))
 import System.IO.Unsafe (unsafePerformIO)
+
+
+data WithEncoding a = WithUtf8 a | WithOther a deriving (Functor, Foldable, Traversable)
+instance Applicative WithEncoding where
+  -- If 'Other' encoding exists, it is priortized
+  pure = WithUtf8
+  (<*>) (WithUtf8 f) (WithUtf8 a) = WithUtf8 (f a)
+  (<*>) (WithUtf8 f) (WithOther a) = WithOther (f a)
+  (<*>) (WithOther f) (WithUtf8 a) = WithOther (f a)
+  (<*>) (WithOther f) (WithOther a) = WithOther (f a)
 
 
 audioTagGetter :: FilePath -> TagGetter AudioTag
 audioTagGetter filename =
-  AudioTag filename
-    <$> (mkTitle . autofixEncoding . unTitle <$> titleGetter)
-    <*> (mkArtist . autofixEncoding . unArtist <$> artistGetter)
-    <*> (mkAlbum . autofixEncoding . unAlbum <$> albumGetter)
-    <*> (mkComment . autofixEncoding . unComment <$> commentGetter)
-    <*> (mkGenre . autofixEncoding . unGenre <$> genreGetter)
-    <*> yearGetter
-    <*> trackNumberGetter
+  fmap setEncoding
+    $  AudioTag EncodingUtf8 filename
+    <<$>> withEncoding mkTitle   (autofixEncoding . unTitle <$> titleGetter)
+    <<*>> withEncoding mkArtist  (autofixEncoding . unArtist <$> artistGetter)
+    <<*>> withEncoding mkAlbum   (autofixEncoding . unAlbum <$> albumGetter)
+    <<*>> withEncoding mkComment (autofixEncoding . unComment <$> commentGetter)
+    <<*>> withEncoding mkGenre   (autofixEncoding . unGenre <$> genreGetter)
+    <<*>> fmap pure yearGetter
+    <<*>> fmap pure trackNumberGetter
+ where
+  infixl 4 <<*>>
+  (<<*>>) :: (Applicative f, Applicative g) => f (g (a -> b)) -> f (g a) -> f (g b)
+  (<<*>>) f = (<*>) (fmap (<*>) f)
+  withEncoding :: (a -> b) -> TagGetter (Encoding, a) -> TagGetter (WithEncoding b)
+  withEncoding f = fmap $ \(enc, a) -> case enc of
+    EncodingUtf8  -> WithUtf8 (f a)
+    EncodingOther -> WithOther (f a)
+  setEncoding :: WithEncoding AudioTag -> AudioTag
+  setEncoding (WithUtf8 tag) = tag
+  setEncoding (WithOther tag) = tag { encoding = EncodingOther }
+
 
 -- Only set fields which has been changed from original tag
+-- Or if original encoding is not UTF-8, set all tags to UTF-8
+type SetterFn = forall a. Eq a => (AudioTag -> a) -> (a -> TagSetter) -> TagSetter
 audioTagSetter :: AudioTag -> AudioTag -> TagSetter
 audioTagSetter orig target =
-  setterIfChanged title titleSetter
-    <> setterIfChanged artist      artistSetter
-    <> setterIfChanged album       albumSetter
-    <> setterIfChanged comment     commentSetter
-    <> setterIfChanged genre       genreSetter
-    <> setterIfChanged year        yearSetter
-    <> setterIfChanged trackNumber trackNumberSetter
+  setterFn title titleSetter
+    <> setterFn artist      artistSetter
+    <> setterFn album       albumSetter
+    <> setterFn comment     commentSetter
+    <> setterFn genre       genreSetter
+    <> setterFn year        yearSetter
+    <> setterFn trackNumber trackNumberSetter
  where
-  setterIfChanged :: Eq a => (AudioTag -> a) -> (a -> TagSetter) -> TagSetter
+  setterFn :: SetterFn
+  setterFn = if encoding target == EncodingUtf8 then setterIfChanged else setterAlways
+  setterAlways :: SetterFn
+  setterAlways field setter = setter (field target)
+  setterIfChanged :: SetterFn
   setterIfChanged field setter =
     if field orig /= field target then setter (field target) else mempty
 
 
 -- Fix encodings where 'htaglib' fails to detect, especially 'CP949'
-autofixEncoding :: HasCallStack => Text -> Text
+autofixEncoding :: HasCallStack => Text -> (Encoding, Text)
 autofixEncoding text
-  | isProperText text                 = text
-  | isProperText (latin1ToCP949 text) = latin1ToCP949 text
-  | isProperText (utf8ToCP949 text)   = utf8ToCP949 text
-  | isProperText (utf8ToLatin1 text)  = utf8ToLatin1 text
-  | otherwise                         = autoDetect text where
+  | isProperText text                 = (EncodingUtf8, text)
+  | isProperText (latin1ToCP949 text) = (EncodingOther, latin1ToCP949 text)
+  | isProperText (utf8ToCP949 text)   = (EncodingOther, utf8ToCP949 text)
+  | isProperText (utf8ToLatin1 text)  = (EncodingOther, utf8ToLatin1 text)
+  | otherwise                         = (EncodingOther, autoDetect text) where
   -- Tag words must start with [A-Za-z0-9가-힣]
   isProperText :: Text -> Bool
   isProperText = all go . words . T.filter (/= '(') . T.strip   where

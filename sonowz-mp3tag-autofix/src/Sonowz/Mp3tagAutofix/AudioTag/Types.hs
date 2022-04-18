@@ -1,5 +1,8 @@
 module Sonowz.Mp3tagAutofix.AudioTag.Types
   ( AudioTag(..)
+  , Encoding(..)
+  , artistList
+  , joinArtistList
   -- Reexport "Sound.HTagLib"
   , Title
   , Artist
@@ -22,8 +25,6 @@ module Sonowz.Mp3tagAutofix.AudioTag.Types
   , unGenre
   , unYear
   , unTrackNumber
-  , artistList
-  , joinArtistList
   ) where
 
 import Sonowz.Mp3tagAutofix.Imports
@@ -33,7 +34,8 @@ import qualified Data.Text as T
 
 
 data AudioTag = AudioTag
-  { filename    :: FilePath
+  { encoding    :: Encoding
+  , filename    :: FilePath
   , title       :: Title
   , artist      :: Artist
   , album       :: Album
@@ -43,6 +45,10 @@ data AudioTag = AudioTag
   , trackNumber :: Maybe TrackNumber
   }
   deriving (Show, Eq)
+
+data Encoding = EncodingUtf8 | EncodingOther deriving (Show, Eq)
+
+
 
 -- Handles "A, B" or "A & B" cases
 artistList :: Artist -> NonEmpty Artist

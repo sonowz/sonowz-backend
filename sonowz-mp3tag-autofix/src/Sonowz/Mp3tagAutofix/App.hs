@@ -9,7 +9,7 @@ import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Logic (makeArtistFixes, makeArtistPool, runSearches)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser (ParseException)
-import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), unArtist)
+import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag(..), Encoding(EncodingUtf8), unArtist)
 import Sonowz.Mp3tagAutofix.AudioTagIO.Effect
   (AudioTagIO, HTagLibException, readAudioTag, runAudioTagIOIO, writeAudioTag)
 import Sonowz.Mp3tagAutofix.Env (Env(..))
@@ -58,6 +58,11 @@ mainFn = do
   !audioTags <- catMaybes <$> mapM readAudioTagWrapped targetFiles
   logInfo $ "Extracted " <> show (length audioTags) <> " ID3 tags."
 
+  logInfo
+    $  "Set encoding of tags to UTF-8 in the files? "
+    <> "This might result in some broken encoding in files! (yes or no):"
+  whenM getYesOrNo (applyEncodingFixes audioTags)
+
   let
     artistPool = makeArtistPool audioTags
     ac         = show (length artistPool)
@@ -75,12 +80,15 @@ mainFn = do
   whenM getYesOrNo (applyArtistFixes audioTags fixes)
   logInfo "All done."
  where
-  getYesOrNo :: Members (Embed IO : StdEff) r => Sem r Bool
+  getYesOrNo :: Members (Reader Env : Embed IO : StdEff) r => Sem r Bool
   getYesOrNo = do
-    liftIO getLine >>= \case
-      "yes" -> return True
-      "no"  -> return False
-      _     -> logInfo "Please type either \"yes\" or \"no\":" >> getYesOrNo
+    env <- ask
+    if nonInteractive env
+      then return True  -- noninteractive mode always returns True
+      else liftIO getLine >>= \case
+        "yes" -> return True
+        "no"  -> return False
+        _     -> logInfo "Please type either \"yes\" or \"no\":" >> getYesOrNo
 
 
 type AudioTagIOEffects = '[AudioTagIO , Error HTagLibException , StdLog]
@@ -107,6 +115,21 @@ applyArtistFixes audioTags fixes = do
     fixed   = (\tag -> tag { artist = applyFix fixes (artist tag) }) <$> audioTags
     changed = catMaybes
       $ zipWith (\orig fixed -> if orig /= fixed then Just fixed else Nothing) audioTags fixed
+  logInfo $ show (length changed) <> " files will be written."
+  mapM_
+    (\tag -> do
+      logDebug $ "Writing tag to " <> toText (filename tag) <> "..."
+      writeAudioTagWrapped tag
+    )
+    changed
+  logInfo "All tags were updated."
+
+
+applyEncodingFixes :: (Members AudioTagIOEffects r, HasCallStack) => [AudioTag] -> Sem r ()
+applyEncodingFixes audioTags = do
+  let
+    changed =
+      mapMaybe (\tag -> if encoding tag /= EncodingUtf8 then Just tag else Nothing) audioTags
   logInfo $ show (length changed) <> " files will be written."
   mapM_
     (\tag -> do
