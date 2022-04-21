@@ -33,24 +33,25 @@ pArtistSection html = Right (SearchResultArtist artists)
   sectionHtml = dropWhile (~/= s "<div id=pageList>") html -- 'atist' is not a typo
   artists :: [Artist]
   artists =
-    take 4 -- Too many artists are useless
-      . mapMaybe
-          (fmap mkArtist . pText . drop 1 . dropWhile (~/= s "<a>") . dropWhile (~/= s "<dt>"))
-      . partitions (~== s "<li>")
-      . takeWhile (~/= s "</ul>")
-      . dropWhile (~/= s "<ul>")
-      $ sectionHtml
+    dropWhile (~/= s "<ul>")
+      >>> takeWhile (~/= s "</ul>")
+      >>> partitions (~== s "<li>")
+      >>> mapMaybe
+            (fmap mkArtist . pText . drop 1 . dropWhile (~/= s "<a>") . dropWhile (~/= s "<dt>"))
+      >>> take 4 -- Too many artists are useless
+      $   sectionHtml
 
 
 pSongSection :: HTMLParser SearchResultSong
 pSongSection html = songs >>= Right . SearchResultSong
  where
-  sectionHtml = takeWhile (not . isTagCloseName "table") . dropWhile (isTagOpenName "table") $ html
+  sectionHtml =
+    dropWhile (isTagOpenName "table") >>> takeWhile (not . isTagCloseName "table") $ html
   songHtmlList =
-    partitions (~== s "<tr>")
-      . takeWhile (~/= s "</tbody>")
-      . dropWhile (~/= s "<tbody>")
-      $ sectionHtml
+    dropWhile (~/= s "<tbody>")
+      >>> takeWhile (~/= s "</tbody>")
+      >>> partitions (~== s "<tr>")
+      $   sectionHtml
   -- 10 entries are sufficient
   songs = take 10 . catMaybes <$> traverse pSong songHtmlList
 
@@ -63,12 +64,8 @@ pSong html = case title of
  where
   title :: Either ParseException (Maybe Title)
   title =
-    Right
-      .   fmap mkTitle
-      .   pText
-      .   drop 1
-      .   dropWhile (~/= s "<a class=fc_gray>")
-      =<< nth 3 (isTagOpenName "td") html
+    nth 3 (isTagOpenName "td") html
+      >>= (dropWhile (~/= s "<a class=fc_gray>") >>> drop 1 >>> pText >>> fmap mkTitle >>> Right)
   artists :: Either ParseException (NonEmpty Artist)
   artists = do
     linked  <- linkedArtists
@@ -76,20 +73,22 @@ pSong html = case title of
     checkNonEmpty "artist" artists
   linkedArtists :: Either ParseException [Artist]
   linkedArtists =
-    Right
-      .   ordNub
-      .   mapMaybe (fmap (mkArtist . T.strip) . pText . drop 1)
-      .   sections (~== s "<a class=fc_mgray>")
-      .   takeWhile (not . isTagCloseName "td")
-      =<< nth 4 (isTagOpenName "td") html
+    nth 4 (isTagOpenName "td") html
+      >>= (   takeWhile (not . isTagCloseName "td")
+          >>> sections (~== s "<a class=fc_mgray>")
+          >>> mapMaybe (fmap (mkArtist . T.strip) . pText . drop 1)
+          >>> ordNub
+          >>> Right
+          )
   plainArtists :: Either ParseException [Artist]
   plainArtists =
-    Right
-      .   ordNub
-      .   mapMaybe (fmap (mkArtist . T.strip) . pText . drop 1)
-      .   sections plainTextArtist
-      .   takeWhile (not . isTagCloseName "td")
-      =<< nth 4 (isTagOpenName "td") html
+    nth 4 (isTagOpenName "td") html
+      >>= (   takeWhile (not . isTagCloseName "td")
+          >>> sections plainTextArtist
+          >>> mapMaybe (fmap (mkArtist . T.strip) . pText . drop 1)
+          >>> ordNub
+          >>> Right
+          )
   plainTextArtist (TagOpen "div" (("id", "artistName") : _)) = True
   plainTextArtist _ = False
   nth :: Int -> (Tag Text -> Bool) -> HTMLParser [Tag Text]
