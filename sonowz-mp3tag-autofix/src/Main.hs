@@ -9,8 +9,8 @@ import Sonowz.Mp3tagAutofix.Env (Env(..))
 import System.IO (BufferMode(LineBuffering), hSetBuffering)
 
 
-envP :: Parser Env
-envP = do
+pEnv :: Parser Env
+pEnv = do
   targetDir <- strArgument (metavar "dir")
   let
     niHelpMsg =
@@ -21,7 +21,7 @@ envP = do
   return Env { .. }
 
 opts :: ParserInfo Env
-opts = info (helper <*> envP) (fullDesc <> progDesc "Mp3 tag autofix")
+opts = info (helper <*> pEnv) (fullDesc <> progDesc "Mp3 tag autofix")
 
 main :: IO ()
 main = do

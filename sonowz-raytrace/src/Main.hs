@@ -1,41 +1,28 @@
 module Main where
 
+import qualified Database.PostgreSQL.Simple as PGS
 import Network.Wai.Handler.Warp (Port)
+import qualified Network.Wai.Handler.Warp as Warp
 import Options.Applicative
 import Servant.Server (serve)
-import System.IO (hSetBuffering, BufferMode(LineBuffering))
-import qualified Database.PostgreSQL.Simple as PGS
-import qualified Network.Wai.Handler.Warp as Warp
+import System.IO (BufferMode(LineBuffering), hSetBuffering)
 
 import Sonowz.Raytrace.Imports
 
-import Sonowz.Raytrace.Env (Env(..))
 import Sonowz.Core.DB.Pool (createConnPool)
+import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Raytrace.App.Daemon (forkDaemon)
 import Sonowz.Raytrace.App.Web (api, server)
+import Sonowz.Raytrace.Env (Env(..))
 
 
 data Config = Config Port PGS.ConnectInfo
 
-warpPortP :: Parser Port
-warpPortP = option (auto >>= checkPort) (long "port" <> short 'p' <> value 80)
-  where checkPort port = if 0 < port && port < 90000 then return port else empty
-
-connectInfoP :: Parser PGS.ConnectInfo
-connectInfoP = do
-  let def = PGS.defaultConnectInfo
-  connectHost     <- strOption (long "pghost" <> short 'h' <> value (PGS.connectHost def))
-  connectPort     <- option auto (long "pgport" <> short 'P' <> value (PGS.connectPort def))
-  connectUser     <- strOption (long "pguser" <> short 'u' <> value (PGS.connectUser def))
-  connectPassword <- strOption (long "pgpasswd" <> short 'w')
-  connectDatabase <- strOption (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def))
-  return PGS.ConnectInfo { .. }
-
-configP :: Parser Config
-configP = Config <$> warpPortP <*> connectInfoP
+pConfig :: Parser Config
+pConfig = Config <$> pWarpPort <*> pPGSConnectInfo
 
 opts :: ParserInfo Config
-opts = info (helper <*> configP) (fullDesc <> progDesc "Raytrace backend server")
+opts = info (helper <*> pConfig) (fullDesc <> progDesc "Raytrace backend server")
 
 
 main :: IO ()

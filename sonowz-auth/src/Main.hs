@@ -18,37 +18,24 @@ import Sonowz.Auth.Imports hiding (Proxy)
 import Sonowz.Auth.OAuth (GoogleAppInfo(..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
 import Sonowz.Core.DB.Pool (createConnPool)
+import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv(..), defaultWebAppEnv)
 
 
 data Config = Config Port PGS.ConnectInfo GoogleAppInfo
 
-warpPortP :: Parser Port
-warpPortP = option (auto >>= checkPort) (long "port" <> short 'p' <> value 80)
-  where checkPort port = if 0 < port && port < 90000 then return port else empty
-
-connectInfoP :: Parser PGS.ConnectInfo
-connectInfoP = do
-  let def = PGS.defaultConnectInfo
-  connectHost     <- strOption (long "pghost" <> short 'h' <> value (PGS.connectHost def))
-  connectPort     <- option auto (long "pgport" <> short 'P' <> value (PGS.connectPort def))
-  connectUser     <- strOption (long "pguser" <> short 'u' <> value (PGS.connectUser def))
-  connectPassword <- strOption (long "pgpasswd" <> short 'w')
-  connectDatabase <- strOption (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def))
-  return PGS.ConnectInfo { .. }
-
-googleAppInfoP :: Parser GoogleAppInfo
-googleAppInfoP = do
+pGoogleAppInfo :: Parser GoogleAppInfo
+pGoogleAppInfo = do
   appId     <- strOption (long "gappid")
   appSecret <- strOption (long "gappsecret")
   return GoogleAppInfo { .. }
 
-configP :: Parser Config
-configP = Config <$> warpPortP <*> connectInfoP <*> googleAppInfoP
+pConfig :: Parser Config
+pConfig = Config <$> pWarpPort <*> pPGSConnectInfo <*> pGoogleAppInfo
 
 opts :: ParserInfo Config
 opts = info
-  (helper <*> configP)
+  (helper <*> pConfig)
   (fullDesc <> progDesc "Authentication backend server (for development use!)")
 
 main :: IO ()
