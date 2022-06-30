@@ -8,7 +8,6 @@ where
 import Control.Exception.Safe qualified as E
 import Database.PostgreSQL.Simple (Connection)
 import Opaleye
-import Relude (hoistMaybe)
 import Sonowz.Core.DB.CRUD (CRUDQueries (..), getCRUDQueries)
 import Sonowz.Core.DB.Utils (DatabaseException (DatabaseException), Uid)
 import Sonowz.NewsCombinator.Imports

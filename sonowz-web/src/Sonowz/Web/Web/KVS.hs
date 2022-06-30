@@ -41,9 +41,9 @@ kvsAPIHandler auth key = handlerGet :<|> handlerPost :<|> handlerDelete
       case maybeValue of
         Just value -> return (ValueBody value)
         Nothing -> throw err400
-    handlerPost = \(value -> value) -> do
+    handlerPost (value -> valueText) = do
       userId <- getUserId
-      withDBConn $ \conn -> webLiftIO (setKeyValue conn userId key value)
+      withDBConn $ \conn -> webLiftIO (setKeyValue conn userId key valueText)
       return $ Response $ "'" <> key <> "' successfully set."
     handlerDelete = do
       userId <- getUserId

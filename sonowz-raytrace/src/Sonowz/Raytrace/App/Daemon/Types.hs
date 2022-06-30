@@ -8,6 +8,6 @@ import Sonowz.Raytrace.RaytraceConfig (Config)
 
 data RunInfo = RunInfo ServantId Config deriving (Show, Read)
 
-data RunnerProcess = RunnerProcess (Async Script.ShellResult)
+newtype RunnerProcess = RunnerProcess (Async Script.ShellResult)
 
 newtype CurrentRunInfo = CurrentRunInfo (RunInfo, RunnerProcess)

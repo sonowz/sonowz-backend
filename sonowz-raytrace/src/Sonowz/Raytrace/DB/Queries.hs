@@ -73,11 +73,8 @@ emptyAggMessageQueue =
 
 enqueueDaemon :: HasCallStack => Connection -> ServantId -> DaemonOp -> IO Bool
 enqueueDaemon conn servantId' message =
-  logCheckBool =<< insertIsSuccess
-    <$> runInsert_
-      conn
-      (insertMessage daemonMessageQueue servantId' message) ::
-    IO Bool
+  logCheckBool . insertIsSuccess
+    =<< runInsert_ conn (insertMessage daemonMessageQueue servantId' message)
 
 -- This function sets 'servantId' same as 'qid'
 enqueueDaemonNew :: HasCallStack => Connection -> DaemonOp -> IO (Maybe ServantId)
@@ -93,17 +90,14 @@ enqueueDaemonNew conn message = withTransaction conn $ do
 
 enqueueServant :: HasCallStack => Connection -> ServantId -> ServantOp -> IO Bool
 enqueueServant conn servantId' message =
-  logCheckBool =<< insertIsSuccess
-    <$> runInsert_
-      conn
-      (insertMessage servantMessageQueue servantId' message) ::
-    IO Bool
+  logCheckBool . insertIsSuccess
+    =<< runInsert_ conn (insertMessage servantMessageQueue servantId' message)
 
 dequeueDaemon :: HasCallStack => Connection -> IO (Maybe DaemonMessage)
 dequeueDaemon conn = withTransaction conn $
   runMaybeT $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-    MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe
+    MaybeT $ deleteResult conn targetQid >>= logCheckMaybe . listToMaybe
   where
     selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
     deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
@@ -112,7 +106,7 @@ dequeueServant :: HasCallStack => Connection -> ServantId -> IO (Maybe ServantMe
 dequeueServant conn sid = withTransaction conn $
   runMaybeT $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-    MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe
+    MaybeT $ deleteResult conn targetQid >>= logCheckMaybe . listToMaybe
   where
     selectResult conn =
       Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]

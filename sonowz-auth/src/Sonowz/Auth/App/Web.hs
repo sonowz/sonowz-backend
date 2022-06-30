@@ -89,7 +89,7 @@ loginRedirectURL WebAppEnv {..} =
   LoginRedirectURL
     (eWebDomain {uriPath = encodeUtf8 (eWebAPIRoot <> "login/" <> identifierGoogle)})
 
-data FetchSetOAuthUser = FetchSetOAuthUser
+newtype FetchSetOAuthUser = FetchSetOAuthUser
   { fetchGoogle :: FetchOAuthUser
   }
 

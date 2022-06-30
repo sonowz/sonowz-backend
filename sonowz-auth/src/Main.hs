@@ -48,7 +48,7 @@ main = do
   let webappEnv = defaultWebAppEnv {eWebAPIRoot = "/api/", eWebPort = warpPort}
   oauthEnv <- generateOAuthEnv
 
-  let waiApp = serveWithContext api context (hoistServerWithContext api contextProxy nt server) where
+  let waiApp = serveWithContext api context (hoistServerWithContext api contextProxy nt server)
       api = Proxy :: Proxy (Web.AuthAPI :<|> Test.TestGetAPI)
       contextProxy = Proxy :: Proxy OAuthContext
       context = makeOAuthContext oauthEnv

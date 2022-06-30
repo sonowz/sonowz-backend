@@ -48,7 +48,7 @@ type ReaderIORefEffects v = '[Embed IO, Time, Reader (SessionRef v)]
 runSessionAsReaderIORef ::
   forall v r a. Members (ReaderIORefEffects v) r => Sem (Session v : r) a -> Sem r a
 runSessionAsReaderIORef = interpret $ \case
-  GetSession k -> maybe (return Nothing) checkValid =<< (H.lookup k <$> askStore)
+  GetSession k -> maybe (return Nothing) checkValid . H.lookup k =<< askStore
   SetSession k s v -> void $ H.insert k <$> withExpiry s v <*> askStore
   NewSession s v -> do
     k <- generateKey

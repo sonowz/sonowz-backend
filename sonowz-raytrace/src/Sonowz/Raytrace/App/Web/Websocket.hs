@@ -43,7 +43,7 @@ import Sonowz.Raytrace.Websocket.Effect
     sendCloseSignal,
   )
 
-data WSException = WSException Text
+newtype WSException = WSException Text
   deriving (Show, Exception)
 
 websocketHandler :: DBConnPool -> WS.Connection -> IO ()
