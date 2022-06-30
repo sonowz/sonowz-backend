@@ -1,8 +1,9 @@
 {-# LANGUAGE TemplateHaskell #-}
+
 module Sonowz.Core.MessageQueue.Effect
-  ( MessageQueue(..)
-  , enqueue
-  , dequeue
+  ( MessageQueue (..),
+    enqueue,
+    dequeue,
   )
 where
 

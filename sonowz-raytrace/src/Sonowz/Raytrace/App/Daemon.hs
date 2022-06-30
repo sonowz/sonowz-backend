@@ -1,11 +1,11 @@
 module Sonowz.Raytrace.App.Daemon
-  ( forkDaemon
+  ( forkDaemon,
   )
 where
 
-import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.App.Daemon.Process (forkRaytraceDaemon)
-import Sonowz.Raytrace.Env (Env(..))
+import Sonowz.Raytrace.Env (Env (..))
+import Sonowz.Raytrace.Imports
 
 forkDaemon :: Env -> IO ()
 forkDaemon Env {..} = forkRaytraceDaemon envPgConnection

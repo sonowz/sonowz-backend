@@ -1,12 +1,12 @@
 module Sonowz.Mp3tagAutofix.Env
-  ( Env(..)
-  ) where
+  ( Env (..),
+  )
+where
 
 import Sonowz.Mp3tagAutofix.Imports
 
-
 data Env = Env
-  { targetDir      :: FilePath
-  , nonInteractive :: Bool
-  , debug          :: Bool
+  { targetDir :: FilePath,
+    nonInteractive :: Bool,
+    debug :: Bool
   }

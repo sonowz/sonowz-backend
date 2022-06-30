@@ -1,8 +1,9 @@
 module Sonowz.Raytrace.MessageQueue.Effect.Websocket
-  ( runMQueueWebsocket
-  ) where
+  ( runMQueueWebsocket,
+  )
+where
 
-import Sonowz.Core.MessageQueue.Effect (MessageQueue(..))
+import Sonowz.Core.MessageQueue.Effect (MessageQueue (..))
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.Websocket.Effect (WSMessage, Websocket, getWSMessage, putWSMessage)
 
@@ -10,4 +11,4 @@ import Sonowz.Raytrace.Websocket.Effect (WSMessage, Websocket, getWSMessage, put
 runMQueueWebsocket :: Member Websocket r => Sem (MessageQueue WSMessage : r) a -> Sem r a
 runMQueueWebsocket = interpret $ \case
   Enqueue msg -> putWSMessage msg
-  Dequeue     -> Just <$> getWSMessage
+  Dequeue -> Just <$> getWSMessage

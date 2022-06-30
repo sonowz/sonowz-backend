@@ -1,16 +1,16 @@
 module Sonowz.Core.DB.Pool
-  ( DBConnPool
-  , DBEffects
-  , createConnPool
-  , withDBConn
-  , withDBConnIO
-  ) where
+  ( DBConnPool,
+    DBEffects,
+    createConnPool,
+    withDBConn,
+    withDBConnIO,
+  )
+where
 
-import qualified Control.Exception.Safe as E
-import Data.Pool (LocalPool, Pool(..), createPool, destroyResource, putResource, takeResource)
+import Control.Exception.Safe qualified as E
+import Data.Pool (LocalPool, Pool (..), createPool, destroyResource, putResource, takeResource)
 import Database.PostgreSQL.Simple (ConnectInfo, Connection, close, connect, query_)
 import Polysemy.Resource (Resource, bracket)
-
 import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect
 
@@ -27,18 +27,18 @@ createConnPool connInfo = unsafeLiftIO $ do
   DBConnPool <$> createPool (connect connInfo) close 1 10 maxDBConn
 
 withDBConnIO :: DBConnPool -> (Connection -> IO a) -> IO a
-withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction where
-  takeAction = unsafeLiftIO (getWorkingConnection pool)
-  putAction  = unsafeLiftIO . uncurry (flip putResource)
-  doAction   = action . fst
+withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction
+  where
+    takeAction = unsafeLiftIO (getWorkingConnection pool)
+    putAction = unsafeLiftIO . uncurry (flip putResource)
+    doAction = action . fst
 
 withDBConn :: Members DBEffects r => (Connection -> Sem r a) -> Sem r a
 withDBConn action = do
   DBConnPool pool <- ask
-  let
-    !takeAction = liftIO (getWorkingConnection pool)
-    !putAction  = liftIO . uncurry (flip putResource)
-    !doAction   = action . fst
+  let !takeAction = liftIO (getWorkingConnection pool)
+      !putAction = liftIO . uncurry (flip putResource)
+      !doAction = action . fst
   bracket takeAction putAction doAction
 
 -- Check connection with "SELECT 1", and try to reconnect
@@ -51,8 +51,8 @@ getWorkingConnection pool = do
         >> logInfoIO "DB connection closed. Reconnecting..."
         >> getWorkingConnection pool
     Right _ -> return (conn, localpool)
- where
-  checkPing conn = query_ conn "SELECT 1" >>= checkResult
-  checkResult l = case viaNonEmpty head (join l) of
-    Just (1 :: Int) -> pass
-    _               -> error "did not return 1"
+  where
+    checkPing conn = query_ conn "SELECT 1" >>= checkResult
+    checkResult l = case viaNonEmpty head (join l) of
+      Just (1 :: Int) -> pass
+      _ -> error "did not return 1"

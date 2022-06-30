@@ -1,27 +1,26 @@
 module Sonowz.Mp3tagAutofix.Fix.Types
-  ( Fix
-  , mkFix
-  , applyFix
-  , normalize
-  , listFixes
-  ) where
+  ( Fix,
+    mkFix,
+    applyFix,
+    normalize,
+    listFixes,
+  )
+where
 
-import Sonowz.Mp3tagAutofix.Imports
-
-import qualified Data.Map.Strict as M
+import Data.Map.Strict qualified as M
 import Relude.Extra.Newtype (un)
-import qualified Text.Show as S
-
+import Sonowz.Mp3tagAutofix.Imports
+import Text.Show qualified as S
 
 newtype Fix a = Fix (Map a a)
   deriving (Eq)
   deriving (Semigroup, Monoid) via (Map a a)
 
 instance (Ord a, Show a) => S.Show (Fix a) where
-  show (Fix m) = "[" <> intercalate "\n," (showPair <$> sortFixPair (M.assocs m)) <> "]"   where
-
-    showPair :: (a, a) -> String
-    showPair (src, dst) = show src <> " → " <> show dst
+  show (Fix m) = "[" <> intercalate "\n," (showPair <$> sortFixPair (M.assocs m)) <> "]"
+    where
+      showPair :: (a, a) -> String
+      showPair (src, dst) = show src <> " → " <> show dst
 
 -- Constructor
 mkFix :: Ord a => (a, a) -> Fix a

@@ -1,20 +1,19 @@
 {-# LANGUAGE TemplateHaskell #-}
+
 module Sonowz.Raytrace.Websocket.Effect
-  ( Websocket(..)
-  , getWSMessage
-  , putWSMessage
-  , sendCloseSignal
-  , receiveAny
-  , WSMessage(..)
-  , runWebsocketToIO
+  ( Websocket (..),
+    getWSMessage,
+    putWSMessage,
+    sendCloseSignal,
+    receiveAny,
+    WSMessage (..),
+    runWebsocketToIO,
   )
-  where
+where
 
+import Network.WebSockets qualified as WS
 import Polysemy.Resource (onException, resourceToIO)
-import qualified Network.WebSockets as WS
-
 import Sonowz.Raytrace.Imports
-
 
 newtype WSMessage = WSMessage Text deriving (Show) via Text
 
@@ -25,7 +24,6 @@ data Websocket m a where
   ReceiveAny :: Websocket m ()
 
 makeSem ''Websocket
-
 
 runWebsocketToIO :: (Member (Embed IO) r, Members StdEff r, HasCallStack) => WS.Connection -> Sem (Websocket : r) a -> Sem r a
 runWebsocketToIO conn = interpret $ \case

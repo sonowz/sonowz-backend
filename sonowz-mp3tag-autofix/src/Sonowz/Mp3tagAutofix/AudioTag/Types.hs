@@ -1,54 +1,51 @@
 module Sonowz.Mp3tagAutofix.AudioTag.Types
-  ( AudioTag(..)
-  , Encoding(..)
-  , artistList
-  , joinArtistList
-  -- Reexport "Sound.HTagLib"
-  , Title
-  , Artist
-  , Album
-  , Comment
-  , Genre
-  , Year
-  , TrackNumber
-  , mkTitle
-  , mkArtist
-  , mkAlbum
-  , mkComment
-  , mkGenre
-  , mkYear
-  , mkTrackNumber
-  , unTitle
-  , unArtist
-  , unAlbum
-  , unComment
-  , unGenre
-  , unYear
-  , unTrackNumber
-  ) where
+  ( AudioTag (..),
+    Encoding (..),
+    artistList,
+    joinArtistList,
+    -- Reexport "Sound.HTagLib"
+    Title,
+    Artist,
+    Album,
+    Comment,
+    Genre,
+    Year,
+    TrackNumber,
+    mkTitle,
+    mkArtist,
+    mkAlbum,
+    mkComment,
+    mkGenre,
+    mkYear,
+    mkTrackNumber,
+    unTitle,
+    unArtist,
+    unAlbum,
+    unComment,
+    unGenre,
+    unYear,
+    unTrackNumber,
+  )
+where
 
+import Data.Text qualified as T
 import Sonowz.Mp3tagAutofix.Imports
 import Sound.HTagLib
 
-import qualified Data.Text as T
-
-
 data AudioTag = AudioTag
-  { encoding    :: Encoding
-  , filename    :: FilePath
-  , title       :: Title
-  , artist      :: Artist
-  , album       :: Album
-  , comment     :: Comment
-  , genre       :: Genre
-  , year        :: Maybe Year
-  , trackNumber :: Maybe TrackNumber
+  { encoding :: Encoding,
+    filename :: FilePath,
+    title :: Title,
+    artist :: Artist,
+    album :: Album,
+    comment :: Comment,
+    genre :: Genre,
+    year :: Maybe Year,
+    trackNumber :: Maybe TrackNumber
   }
   deriving (Show, Eq)
 
 data Encoding = EncodingUtf8 | EncodingOther deriving (Show, Eq)
-
-
 
 -- Handles "A, B" or "A & B" cases
 artistList :: Artist -> NonEmpty Artist

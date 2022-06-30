@@ -1,13 +1,13 @@
 module Sonowz.Auth.OAuth
-  ( module Sonowz.Auth.OAuth.Types
-  , module Sonowz.Auth.OAuth.Google
-  , fetchUserInfoFromExchangeToken
-  ) where
+  ( module Sonowz.Auth.OAuth.Types,
+    module Sonowz.Auth.OAuth.Google,
+    fetchUserInfoFromExchangeToken,
+  )
+where
 
-import qualified Control.Exception.Safe as E
+import Control.Exception.Safe qualified as E
 import Network.HTTP.Client (Manager)
-import Network.OAuth.OAuth2 (ExchangeToken, OAuth2Token(..), fetchAccessToken)
-
+import Network.OAuth.OAuth2 (ExchangeToken, OAuth2Token (..), fetchAccessToken)
 import Sonowz.Auth.Imports
 import Sonowz.Auth.OAuth.Google
 import Sonowz.Auth.OAuth.Types
@@ -18,6 +18,6 @@ fetchUserInfoFromExchangeToken tlsManager FetchOAuthUser {..} exchangeToken = do
   oauthResult <- throwOAuthError =<< fetchAccessToken tlsManager fetcherOAuthInfo exchangeToken
   let accessToken' = accessToken oauthResult
   throwGetUserError =<< fetcherGetOAuthUser tlsManager accessToken'
- where
-  throwOAuthError   = either (E.throw . OAuthException . show) return
-  throwGetUserError = either (E.throw . OAuthException) return
+  where
+    throwOAuthError = either (E.throw . OAuthException . show) return
+    throwGetUserError = either (E.throw . OAuthException) return

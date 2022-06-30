@@ -1,4 +1,5 @@
 {-# LANGUAGE Arrows #-}
+
 module Sonowz.Raytrace.DB.Queries where
 
 import Control.Arrow
@@ -8,18 +9,15 @@ import Data.Profunctor.Product.Default (Default)
 import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
-import qualified Opaleye.Aggregate as Agg
-
-import Sonowz.Raytrace.Imports hiding (null)
-
+import Opaleye.Aggregate qualified as Agg
 import Sonowz.Raytrace.DB.Types
+import Sonowz.Raytrace.Imports hiding (null)
 
 -- Message queue is implemented with PostgreSQL, for studying.
 -- Queries are written in a way that they just look like plain code (not SQL),
 -- so they are quite inefficient in terms of performance.
 -- http://haskell.vacationlabs.com/en/latest/docs/opaleye/advanced-db-mapping.html
 -- https://gitlab.com/williamyaoh/haskell-orm-comparison/-/blob/master/opaleye-impl/src/Lib.hs
-
 
 -- Table declarations --
 
@@ -44,14 +42,15 @@ daemonMessageQueue = table "daemon_message_queue" (pMessage messageQueueFields)
 servantMessageQueue :: ServantMessageTable
 servantMessageQueue = table "servant_message_queue" (pMessage messageQueueFields)
 
-type SeqTable
-  = Table
-      (Field SqlInt4, Field SqlInt4, Field SqlBool)
-      (Field SqlInt4, Field SqlInt4, Field SqlBool)
+type SeqTable =
+  Table
+    (Field SqlInt4, Field SqlInt4, Field SqlBool)
+    (Field SqlInt4, Field SqlInt4, Field SqlBool)
 
 seqTableTemplate :: String -> SeqTable
 seqTableTemplate seqName = table seqName (p3 fields)
-  where fields = (tableField "last_value", tableField "log_cnt", tableField "is_called")
+  where
+    fields = (tableField "last_value", tableField "log_cnt", tableField "is_called")
 
 daemonMessageSeq :: SeqTable
 daemonMessageSeq = seqTableTemplate "daemon_message_queue_qid_seq"
@@ -59,24 +58,26 @@ daemonMessageSeq = seqTableTemplate "daemon_message_queue_qid_seq"
 servantMessageSeq :: SeqTable
 servantMessageSeq = seqTableTemplate "servant_message_queue_qid_seq"
 
-messageQueueFields = Message
-  { qid         = tableField "qid"
-  , servantId   = tableField "servant_id"
-  , operation   = tableField "operation"
-  , createdTime = tableField "created_time"
-  }
+messageQueueFields =
+  Message
+    { qid = tableField "qid",
+      servantId = tableField "servant_id",
+      operation = tableField "operation",
+      createdTime = tableField "created_time"
+    }
 
 emptyAggMessageQueue =
-  Message { qid = nullify, servantId = nullify, operation = nullify, createdTime = nullify }
-
+  Message {qid = nullify, servantId = nullify, operation = nullify, createdTime = nullify}
 
 -- Public Interfaces --
 
 enqueueDaemon :: HasCallStack => Connection -> ServantId -> DaemonOp -> IO Bool
 enqueueDaemon conn servantId' message =
-  logCheckBool =<< insertIsSuccess <$> runInsert_
-    conn
-    (insertMessage daemonMessageQueue servantId' message) :: IO Bool
+  logCheckBool =<< insertIsSuccess
+    <$> runInsert_
+      conn
+      (insertMessage daemonMessageQueue servantId' message) ::
+    IO Bool
 
 -- This function sets 'servantId' same as 'qid'
 enqueueDaemonNew :: HasCallStack => Connection -> DaemonOp -> IO (Maybe ServantId)
@@ -85,42 +86,47 @@ enqueueDaemonNew conn message = withTransaction conn $ do
   let newServantId = ServantId (coerce maxQid)
   insertResult conn newServantId message >>= logCheckBool >>= \success ->
     if success then return (Just newServantId) else return Nothing
- where
-  selectResult conn = Qid <<$>> runSelect conn (selectMaxSeq daemonMessageSeq) :: IO [Qid]
-  insertResult conn sid msg =
-    insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
+  where
+    selectResult conn = Qid <<$>> runSelect conn (selectMaxSeq daemonMessageSeq) :: IO [Qid]
+    insertResult conn sid msg =
+      insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
 enqueueServant :: HasCallStack => Connection -> ServantId -> ServantOp -> IO Bool
 enqueueServant conn servantId' message =
-  logCheckBool =<< insertIsSuccess <$> runInsert_
-    conn
-    (insertMessage servantMessageQueue servantId' message) :: IO Bool
+  logCheckBool =<< insertIsSuccess
+    <$> runInsert_
+      conn
+      (insertMessage servantMessageQueue servantId' message) ::
+    IO Bool
 
 dequeueDaemon :: HasCallStack => Connection -> IO (Maybe DaemonMessage)
-dequeueDaemon conn = withTransaction conn $ runMaybeT $ do
-  targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-  MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe where
-  selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
-  deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
+dequeueDaemon conn = withTransaction conn $
+  runMaybeT $ do
+    targetQid <- MaybeT $ listToMaybe <$> selectResult conn
+    MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe
+  where
+    selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
+    deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
 
 dequeueServant :: HasCallStack => Connection -> ServantId -> IO (Maybe ServantMessage)
-dequeueServant conn sid = withTransaction conn $ runMaybeT $ do
-  targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-  MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe
- where
-  selectResult conn =
-    Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
-  deleteResult conn qid =
-    runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
+dequeueServant conn sid = withTransaction conn $
+  runMaybeT $ do
+    targetQid <- MaybeT $ listToMaybe <$> selectResult conn
+    MaybeT $ listToMaybe <$> deleteResult conn targetQid >>= logCheckMaybe
+  where
+    selectResult conn =
+      Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
+    deleteResult conn qid =
+      runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
 
 -- Queries --
 
 selectMinQid :: MessageTable op -> Select (Field SqlInt4)
 selectMinQid table =
-  qid <$> Agg.aggregate (pMessage $ emptyAggMessageQueue { qid = Agg.min }) (selectTable table)
+  qid <$> Agg.aggregate (pMessage $ emptyAggMessageQueue {qid = Agg.min}) (selectTable table)
 
 -- You may not want to use this! Use 'selectMaxSeq' instead.
-{- 
+{-
 selectMaxQid :: MessageTable op -> Select (Field SqlInt4)
 selectMaxQid table = qid <$> Agg.aggregate
   (pMessageQueue $ emptyAggMessageQueue { qid = Agg.max })
@@ -134,33 +140,39 @@ selectMaxSeq seqTable = proc () -> do
 
 selectServantMinQid :: MessageTable op -> SelectArr ServantId (Field SqlInt4)
 selectServantMinQid table = proc servantIdEq -> do
-  row <- Agg.aggregate
-    (pMessage $ emptyAggMessageQueue { qid = Agg.min, servantId = Agg.groupBy })
-    (selectTable table)
-    -< ()
+  row <-
+    Agg.aggregate
+      (pMessage $ emptyAggMessageQueue {qid = Agg.min, servantId = Agg.groupBy})
+      (selectTable table)
+      -<
+        ()
   restrict -< servantId row .== toFields servantIdEq
   returnA -< qid row
 
-popMessage
-  :: DefaultFromField SqlText op => MessageTable op -> Qid -> Delete [MessageHask op]
-popMessage dTable qidEq = Delete { .. } where
-  dWhere (qid -> rowQid) = rowQid .== toFields qidEq
-  dReturning = rReturning id
+popMessage ::
+  DefaultFromField SqlText op => MessageTable op -> Qid -> Delete [MessageHask op]
+popMessage dTable qidEq = Delete {..}
+  where
+    dWhere (qid -> rowQid) = rowQid .== toFields qidEq
+    dReturning = rReturning id
 
-insertMessage
-  :: Default ToFields op (Column SqlText) => MessageTable op -> ServantId -> op -> Insert Int64
-insertMessage table servantId' operation' = Insert
-  { iTable      = table
-  , iRows       = [message]
-  , iReturning  = rCount
-  , iOnConflict = Just DoNothing
-  } where
-  message = Message
-    { qid         = Nothing
-    , servantId   = toFields servantId'
-    , operation   = toFields operation'
-    , createdTime = Nothing
+insertMessage ::
+  Default ToFields op (Column SqlText) => MessageTable op -> ServantId -> op -> Insert Int64
+insertMessage table servantId' operation' =
+  Insert
+    { iTable = table,
+      iRows = [message],
+      iReturning = rCount,
+      iOnConflict = Just DoNothing
     }
+  where
+    message =
+      Message
+        { qid = Nothing,
+          servantId = toFields servantId',
+          operation = toFields operation',
+          createdTime = Nothing
+        }
 
 -- Opaleye helper functions --
 
@@ -181,8 +193,8 @@ logWarnDB = withFrozenCallStack $ logWarningIO "Query result might be wrong!"
 
 logCheckBool :: HasCallStack => Bool -> IO Bool
 logCheckBool False = withFrozenCallStack $ logWarnDB >> return False
-logCheckBool True  = withFrozenCallStack $ return True
+logCheckBool True = withFrozenCallStack $ return True
 
 logCheckMaybe :: HasCallStack => Maybe a -> IO (Maybe a)
 logCheckMaybe Nothing = withFrozenCallStack $ logWarnDB >> return Nothing
-logCheckMaybe x       = withFrozenCallStack $ return x
+logCheckMaybe x = withFrozenCallStack $ return x

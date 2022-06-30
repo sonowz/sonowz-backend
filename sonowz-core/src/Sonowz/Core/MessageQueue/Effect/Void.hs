@@ -1,9 +1,10 @@
 module Sonowz.Core.MessageQueue.Effect.Void
-  ( runMQueueVoid
-  ) where
+  ( runMQueueVoid,
+  )
+where
 
 import Sonowz.Core.Imports
-import Sonowz.Core.MessageQueue.Effect (MessageQueue(..))
+import Sonowz.Core.MessageQueue.Effect (MessageQueue (..))
 
 runMQueueVoid :: Sem (MessageQueue Void : r) a -> Sem r a
 runMQueueVoid = interpret $ \case

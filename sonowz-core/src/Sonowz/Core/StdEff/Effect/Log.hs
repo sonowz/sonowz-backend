@@ -1,64 +1,70 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Sonowz.Core.StdEff.Effect.Log
-  ( StdLog
-  , logDebug
-  , logInfo
-  , logWarning
-  , logError
-  , logException
-  , logDebugIO
-  , logInfoIO
-  , logWarningIO
-  , logErrorIO
-  , logExceptionIO
-  , setStdLogActionLevel
-  , runStdLogIO
-  , ignoreStdLog
-  ) where
 
-import Colog.Core.Action (LogAction(..), hoistLogAction)
-import Colog.Core.Severity (Severity(..), filterBySeverity)
+module Sonowz.Core.StdEff.Effect.Log
+  ( StdLog,
+    logDebug,
+    logInfo,
+    logWarning,
+    logError,
+    logException,
+    logDebugIO,
+    logInfoIO,
+    logWarningIO,
+    logErrorIO,
+    logExceptionIO,
+    setStdLogActionLevel,
+    runStdLogIO,
+    ignoreStdLog,
+  )
+where
+
+import Colog.Core.Action (LogAction (..), hoistLogAction)
+import Colog.Core.Severity (Severity (..), filterBySeverity)
 import Control.Concurrent (ThreadId, myThreadId)
 import Data.Time.LocalTime (ZonedTime)
 import GHC.IO (unsafePerformIO)
-import GHC.Stack (SrcLoc(..))
-import System.Console.ANSI
-  (Color(..), ColorIntensity(Vivid), ConsoleLayer(Foreground), SGR(..), setSGRCode)
-
+import GHC.Stack (SrcLoc (..))
 import Sonowz.Core.Imports
 import Sonowz.Core.Time.Effect (Time, getTime, timeToIO)
-
+import System.Console.ANSI
+  ( Color (..),
+    ColorIntensity (Vivid),
+    ConsoleLayer (Foreground),
+    SGR (..),
+    setSGRCode,
+  )
 
 -- StdLog Effect --
 
 data StdLog m a where
-  LogDebug ::HasCallStack => Text -> StdLog m ()
-  LogInfo ::HasCallStack => Text -> StdLog m ()
-  LogWarning ::HasCallStack => Text -> StdLog m ()
-  LogError ::HasCallStack => Text -> StdLog m ()
-  LogException ::(HasCallStack, Exception e) => e -> StdLog m ()
+  LogDebug :: HasCallStack => Text -> StdLog m ()
+  LogInfo :: HasCallStack => Text -> StdLog m ()
+  LogWarning :: HasCallStack => Text -> StdLog m ()
+  LogError :: HasCallStack => Text -> StdLog m ()
+  LogException :: (HasCallStack, Exception e) => e -> StdLog m ()
 
 makeSem ''StdLog
 
 runStdLogIO :: Member (Embed IO) r => Sem (StdLog : r) a -> Sem r a
-runStdLogIO = interpret $ timeToIO <$> \case
-  LogDebug     text -> withFrozenCallStack $ log Debug text
-  LogInfo      text -> withFrozenCallStack $ log Info text
-  LogWarning   text -> withFrozenCallStack $ log Warning text
-  LogError     text -> withFrozenCallStack $ log Error text
-  LogException e    -> withFrozenCallStack $ log Error (show $ displayException e)
+runStdLogIO =
+  interpret $
+    timeToIO <$> \case
+      LogDebug text -> withFrozenCallStack $ log Debug text
+      LogInfo text -> withFrozenCallStack $ log Info text
+      LogWarning text -> withFrozenCallStack $ log Warning text
+      LogError text -> withFrozenCallStack $ log Error text
+      LogException e -> withFrozenCallStack $ log Error (show $ displayException e)
 
 ignoreStdLog :: Sem (StdLog : r) a -> Sem r a
 ignoreStdLog = interpret $ \case
-  LogDebug     _ -> pass
-  LogInfo      _ -> pass
-  LogWarning   _ -> pass
-  LogError     _ -> pass
+  LogDebug _ -> pass
+  LogInfo _ -> pass
+  LogWarning _ -> pass
+  LogError _ -> pass
   LogException _ -> pass
 
-log :: (Members '[Time , Embed IO] r, HasCallStack) => Severity -> Text -> Sem r ()
+log :: (Members '[Time, Embed IO] r, HasCallStack) => Severity -> Text -> Sem r ()
 log sev text = withFrozenCallStack $ makeStdMessage sev text >>= unLogAction stdLogAction
-
 
 -- IO Logging --
 
@@ -80,7 +86,6 @@ logErrorIO = withFrozenCallStack . logIO Error
 logExceptionIO :: HasCallStack => Exception e => e -> IO ()
 logExceptionIO e = withFrozenCallStack $ logIO Error (show $ displayException e)
 
-
 -- LogAction Type --
 
 stdLogActionLevelRef :: IORef Severity
@@ -93,32 +98,32 @@ setStdLogActionLevel = writeIORef stdLogActionLevelRef
 
 -- This function has 'unsafePerformIO' inside..
 stdLogAction :: Member (Embed IO) r => LogAction (Sem r) StdMessage
-stdLogAction = filterBySeverity logLevel stdMessageSeverity logAction where
-  logLevel  = unsafePerformIO $ readIORef stdLogActionLevelRef
-  logAction = fmtStdMessage >$< LogAction putTextLn
+stdLogAction = filterBySeverity logLevel stdMessageSeverity logAction
+  where
+    logLevel = unsafePerformIO $ readIORef stdLogActionLevelRef
+    logAction = fmtStdMessage >$< LogAction putTextLn
 {-# NOINLINE stdLogAction #-}
 
 stdLogActionIO :: LogAction IO StdMessage
 stdLogActionIO = hoistLogAction runM stdLogAction
 
-
 -- Message Type --
 
 data StdMessage = StdMessage
-  { stdMessageText      :: Text
-  , stdMessageSeverity  :: Severity
-  , stdMessageCallStack :: CallStack
-  , stdMessageThreadId  :: ThreadId
-  , stdMessageTime      :: ZonedTime
+  { stdMessageText :: Text,
+    stdMessageSeverity :: Severity,
+    stdMessageCallStack :: CallStack,
+    stdMessageThreadId :: ThreadId,
+    stdMessageTime :: ZonedTime
   }
 
-makeStdMessage
-  :: (Members '[Time , Embed IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
+makeStdMessage ::
+  (Members '[Time, Embed IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
 makeStdMessage stdMessageSeverity stdMessageText = withFrozenCallStack $ do
   let stdMessageCallStack = callStack
   stdMessageThreadId <- unsafeLiftIO myThreadId
-  stdMessageTime     <- getTime
-  return StdMessage { .. }
+  stdMessageTime <- getTime
+  return StdMessage {..}
 
 makeStdMessageIO :: HasCallStack => Severity -> Text -> IO StdMessage
 makeStdMessageIO sev text = withFrozenCallStack (makeStdMessage sev text & timeToIO & runM)
@@ -145,31 +150,31 @@ sourcePaddingCount = 65
 
 showSeverity :: Severity -> Text
 showSeverity = \case
-  Debug   -> color Green "DEBUG   "
-  Info    -> color Blue "INFO    "
+  Debug -> color Green "DEBUG   "
+  Info -> color Blue "INFO    "
   Warning -> color Yellow "WARNING "
-  Error   -> color Red "ERROR   "
- where
-  color :: Color -> Text -> Text
-  color c txt =
-    toText (setSGRCode [SetColor Foreground Vivid c]) <> txt <> toText (setSGRCode [Reset])
+  Error -> color Red "ERROR   "
+  where
+    color :: Color -> Text -> Text
+    color c txt =
+      toText (setSGRCode [SetColor Foreground Vivid c]) <> txt <> toText (setSGRCode [Reset])
 
 showSourceLoc :: CallStack -> Text
 showSourceLoc cs = braceWithPadding sourcePaddingCount showCallStack
- where
-  showCallStack :: Text
-  showCallStack = case getCallStack cs of
-    {-
-    [] -> "<unknown loc>"
-    [(name, loc)] -> showLoc name loc
-    _ : [(name, loc)] -> showLoc name loc
-    -}
-    _ : (_, loc) : (callerName, _) : _ -> showLoc callerName loc
-    _ -> "<unknown loc>"
+  where
+    showCallStack :: Text
+    showCallStack = case getCallStack cs of
+      {-
+      [] -> "<unknown loc>"
+      [(name, loc)] -> showLoc name loc
+      _ : [(name, loc)] -> showLoc name loc
+      -}
+      _ : (_, loc) : (callerName, _) : _ -> showLoc callerName loc
+      _ -> "<unknown loc>"
 
-  showLoc :: String -> SrcLoc -> Text
-  showLoc name SrcLoc {..} =
-    toText srcLocModule <> "." <> toText name <> "#" <> show srcLocStartLine
+    showLoc :: String -> SrcLoc -> Text
+    showLoc name SrcLoc {..} =
+      toText srcLocModule <> "." <> toText name <> "#" <> show srcLocStartLine
 
 showThreadId :: ThreadId -> Text
 showThreadId = braceWithPadding 14 . show
