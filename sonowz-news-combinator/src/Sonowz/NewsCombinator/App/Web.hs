@@ -27,9 +27,7 @@ runServer webEnv env = runWithLog (eWebPort webEnv) app
   where
     app = serve api $ hoistServer api (runWithEffects env) server
 
-type ServerEffects =
-  Error ServerError
-    : DBEffects
+type ServerEffects = Error ServerError : DBEffects
 
 server :: Members ServerEffects r => ServerT NewsScrapRuleAPI (Sem r)
 server = crudHandlerFromDBQueries newsScrapRuleCRUD

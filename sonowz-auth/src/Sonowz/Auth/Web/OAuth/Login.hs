@@ -28,11 +28,10 @@ type LoginWithOAuth = ReqParam "code" Text :> ReqParam "state" URI :> Get '[Plai
 
 type ReqParam = QueryParam' '[Required, Strict]
 
-newtype Referer = Referer Text deriving (Show, Eq)
+newtype Referer = Referer Text
+  deriving (Show, Eq)
   deriving (FromHttpApiData) via Text
 
--- https://github.com/lspitzner/brittany/issues/271
--- brittany-disable-next-binding
 type GetOAuthRedirectURLHandler =
   forall r.
   Members '[Reader WebAppEnv, Error ServerError] r =>
@@ -53,14 +52,13 @@ getOAuthRedirectURLHandler FetchOAuthUser {..} referer = do
   let redirectURL = fetcherOAuthClientURL fetcherOAuthRegisterURL callbackURL
   return redirectURL
 
--- https://github.com/lspitzner/brittany/issues/271
--- brittany-disable-next-binding
 type LoginWithOAuthEffects =
-  Embed IO
-    : Reader OAuthEnv
-      : Reader Manager
-        : Error ServerError
-          : DBEffects
+  [ Embed IO,
+    Reader OAuthEnv,
+    Reader Manager,
+    Error ServerError
+  ]
+    <> DBEffects
 
 type LoginWithOAuthHandler =
   forall r. Members LoginWithOAuthEffects r => FetchOAuthUser -> ServerT LoginWithOAuth (Sem r)
@@ -88,9 +86,7 @@ loginWithOAuth ::
 loginWithOAuth fetch exchangeToken redirectURL = do
   tlsManager <- ask
   -- Do HTTP request to auth server
-  oauthUser <-
-    liftIO $
-      fetchUserInfoFromExchangeToken tlsManager fetch (ExchangeToken exchangeToken)
+  oauthUser <- liftIO $ fetchUserInfoFromExchangeToken tlsManager fetch (ExchangeToken exchangeToken)
   -- Insert to DB if new user, otherwise select from DB
   user <- withDBConn (\conn -> webLiftIO $ selectOrInsertOAuthUser conn oauthUser)
   -- Create new JWT

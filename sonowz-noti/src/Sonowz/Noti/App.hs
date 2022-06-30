@@ -37,10 +37,7 @@ runApp Env {..} =
       logException e
       threadDelay (60 * 10 ^ 6)
 
-type HandlerEffects =
-  Reader EmailConfig
-    : Embed IO
-      : DBEffects
+type HandlerEffects = Reader EmailConfig : Embed IO : DBEffects
 
 notificationHandler ::
   (Members HandlerEffects r, HasCallStack) => StreamHandler r Notification Void

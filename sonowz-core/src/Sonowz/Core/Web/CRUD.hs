@@ -55,10 +55,8 @@ crudHandlerFromDBQueries queries = crudHandlerFromHandlers crudHandler
       CRUDHandlers
         { list = withDBConn $ \conn -> webLiftIO (crudList queries conn),
           read = \uid -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudRead queries conn uid),
-          create = \citem ->
-            withDBConn $ \conn -> webLiftIO (maybeExc =<< crudCreate queries conn citem),
-          update = \uid citem ->
-            withDBConn $ \conn -> webLiftIO (maybeExc =<< crudUpdate queries conn uid citem),
+          create = \citem -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudCreate queries conn citem),
+          update = \uid citem -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudUpdate queries conn uid citem),
           delete = \uid -> withDBConn $ \conn -> webLiftIO (boolExc =<< crudDelete queries conn uid)
         }
     maybeExc :: Maybe a -> IO a

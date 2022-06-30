@@ -117,14 +117,13 @@ dequeueRaytrace servantId' = do
   where
     dequeueMessage = emptyMessage {servantId = servantId', operation = Dequeue} :: DaemonMessage
 
--- https://github.com/lspitzner/brittany/issues/271
--- brittany-disable-next-binding
 type RaytraceProgressEffects =
-  Websocket
-    : Time
-      : MessageQueue ServantMessage
-        : Reader ServantId
-          : StdEff
+  [ Websocket,
+    Time,
+    MessageQueue ServantMessage,
+    Reader ServantId
+  ]
+    <> StdEff
 
 raytraceProgressThread :: Members RaytraceProgressEffects r => Sem r ()
 raytraceProgressThread =

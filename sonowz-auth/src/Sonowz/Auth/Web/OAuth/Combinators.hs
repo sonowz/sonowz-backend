@@ -37,14 +37,7 @@ auth301 authResult = do
   loginRedirectURL <- coerce <$> ask
   authEither
     (return . getUserInfo)
-    ( \a ->
-        throw
-          ( err301
-              { errBody = "Authentication failed with: " <> show a,
-                errHeaders = [("Location", serializeURIRef' loginRedirectURL)]
-              }
-          )
-    )
+    (\a -> throw (err301 {errBody = "Authentication failed with: " <> show a, errHeaders = [("Location", serializeURIRef' loginRedirectURL)]}))
     authResult
 
 auth401 :: Member (Error ServerError) r => AuthResult (AuthUserInfo "401") -> Sem r UserInfo

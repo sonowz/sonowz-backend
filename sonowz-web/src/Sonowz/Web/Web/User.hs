@@ -19,9 +19,7 @@ newtype UserResponse = UserResponse {username :: Text} deriving (Generic)
 
 instance ToJSON UserResponse
 
-type UserAPIEffects =
-  Error ServerError
-    : DBEffects
+type UserAPIEffects = Error ServerError : DBEffects
 
 userAPIHandler :: forall r. Members UserAPIEffects r => ServerT UserAPI (Sem r)
 userAPIHandler auth = echoHandler

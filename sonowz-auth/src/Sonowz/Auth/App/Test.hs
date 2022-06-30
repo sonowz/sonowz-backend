@@ -16,8 +16,6 @@ import Sonowz.Auth.Web.OAuth.Combinators
     authMaybe,
   )
 
--- https://github.com/lspitzner/brittany/issues/271
--- brittany-disable-next-binding
 type TestGetAPI =
   "test"
     :> ( ("301" :> RequireAuth301 :> Get '[PlainText] Text)

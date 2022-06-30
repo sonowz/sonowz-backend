@@ -18,9 +18,7 @@ runWithLog port = runSettings settings
     logger :: Request -> Status -> Maybe Integer -> IO ()
     logger req status fileSize =
       logInfoIO $
-        toText (setSGRCode [SetColor Foreground Dull Green]) <> text
-          <> toText
-            (setSGRCode [Reset])
+        toText (setSGRCode [SetColor Foreground Dull Green]) <> text <> toText (setSGRCode [Reset])
       where
         text =
           T.intercalate " " $

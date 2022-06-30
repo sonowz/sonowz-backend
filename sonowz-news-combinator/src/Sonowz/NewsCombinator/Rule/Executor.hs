@@ -38,6 +38,6 @@ evalNewsScrapRule rule = do
 checkNewsRule :: [NewsItem] -> NewsScrapRule -> UTCTime -> Maybe [NewsItem]
 checkNewsRule items rule now = do
   let recentItems = filter (\item -> getDate item > baseTime) items
-      baseTime = addUTCTime (-(successPeriod rule)) now
+      baseTime = addUTCTime (- (successPeriod rule)) now
   guard (length recentItems >= successCount rule)
   return recentItems

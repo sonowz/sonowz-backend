@@ -107,12 +107,7 @@ update ::
   IO (Maybe hask)
 update table rowToUid conn uid item = withTransaction conn $ do
   (targetCount :: Int64) <-
-    unsafeHead <<$>> runSelect conn $
-      countRows $
-        qSelectByUid
-          table
-          rowToUid
-          uid
+    unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table rowToUid uid
   guard (targetCount == 1) -- Raises exception when update target is not one row
   oneListToMaybe <$> runUpdate_ conn query
   where
@@ -134,12 +129,7 @@ delete ::
   IO Bool
 delete table rowToUid conn uid = withTransaction conn $ do
   (targetCount :: Int64) <-
-    unsafeHead <<$>> runSelect conn $
-      countRows $
-        qSelectByUid
-          table
-          rowToUid
-          uid
+    unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table rowToUid uid
   guard (targetCount == 1) -- Raises exception when delete target is not one row
   (== 1) <$> runDelete_ conn query
   where

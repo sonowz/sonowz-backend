@@ -17,18 +17,9 @@ pWarpPort = option (auto >>= checkPort) (long "port" <> short 'p' <> value 80 <>
 pPGSConnectInfo :: Parser PGS.ConnectInfo
 pPGSConnectInfo = do
   let def = PGS.defaultConnectInfo
-  connectHost <-
-    strOption
-      (long "pghost" <> short 'h' <> value (PGS.connectHost def) <> showDefault)
-  connectPort <-
-    option
-      auto
-      (long "pgport" <> short 'P' <> value (PGS.connectPort def) <> showDefault)
-  connectUser <-
-    strOption
-      (long "pguser" <> short 'u' <> value (PGS.connectUser def) <> showDefault)
+  connectHost <- strOption (long "pghost" <> short 'h' <> value (PGS.connectHost def) <> showDefault)
+  connectPort <- option auto (long "pgport" <> short 'P' <> value (PGS.connectPort def) <> showDefault)
+  connectUser <- strOption (long "pguser" <> short 'u' <> value (PGS.connectUser def) <> showDefault)
   connectPassword <- strOption (long "pgpasswd" <> short 'w')
-  connectDatabase <-
-    strOption
-      (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def) <> showDefault)
+  connectDatabase <- strOption (long "pgdatabase" <> short 'd' <> value (PGS.connectDatabase def) <> showDefault)
   return PGS.ConnectInfo {..}

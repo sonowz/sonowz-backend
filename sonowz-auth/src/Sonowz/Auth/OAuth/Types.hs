@@ -11,7 +11,7 @@ import Sonowz.Auth.Imports
 import Text.Show qualified as S
 import URI.ByteString (URI)
 
-data OAuthException = OAuthException Text
+newtype OAuthException = OAuthException Text
   deriving (Show, Exception)
 
 data FetchOAuthUser = FetchOAuthUser

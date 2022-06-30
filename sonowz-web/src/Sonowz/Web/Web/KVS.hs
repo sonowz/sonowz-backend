@@ -29,9 +29,7 @@ newtype Response = Response {message :: Text} deriving (Generic)
 
 instance ToJSON Response
 
-type KVSAPIEffects =
-  Error ServerError
-    : DBEffects
+type KVSAPIEffects = Error ServerError : DBEffects
 
 kvsAPIHandler :: forall r. Members KVSAPIEffects r => ServerT KVSAPI (Sem r)
 kvsAPIHandler auth key = handlerGet :<|> handlerPost :<|> handlerDelete

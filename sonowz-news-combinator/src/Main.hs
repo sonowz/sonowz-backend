@@ -15,10 +15,7 @@ import System.IO (BufferMode (LineBuffering), hSetBuffering)
 data Config = Config WebAppEnv PGS.ConnectInfo Int
 
 pWorkerInterval :: Parser Int
-pWorkerInterval =
-  option
-    auto
-    (long "worker-interval" <> short 't' <> metavar "SECONDS" <> value 3600 <> help helpMsg)
+pWorkerInterval = option auto (long "worker-interval" <> short 't' <> metavar "SECONDS" <> value 3600 <> help helpMsg)
   where
     helpMsg = "Time interval between worker runs (in seconds)"
 

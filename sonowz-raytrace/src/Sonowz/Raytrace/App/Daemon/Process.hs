@@ -71,13 +71,12 @@ forkRaytraceDaemon pool = do
 
 -- Actual Runner Thread --
 
--- https://github.com/lspitzner/brittany/issues/271
--- brittany-disable-next-binding
 type RunnerEffects =
-  Time
-    : MessageQueue RunInfo
-      : AtomicState CurrentRunInfo
-        : DBEffects
+  [ Time,
+    MessageQueue RunInfo,
+    AtomicState CurrentRunInfo
+  ]
+    <> DBEffects
 
 runnerThread :: Members RunnerEffects r => Sem r ()
 runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid
@@ -124,14 +123,14 @@ runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid
 
 -- Runner Control Thread --
 
--- brittany-disable-next-binding
 type RunnerControlEffects =
-  Time
-    : MessageQueue DaemonMessage
-      : MessageQueue RunInfo
-        : AtomicState [RunInfo]
-          : AtomicState CurrentRunInfo
-            : DBEffects
+  [ Time,
+    MessageQueue DaemonMessage,
+    MessageQueue RunInfo,
+    AtomicState [RunInfo],
+    AtomicState CurrentRunInfo
+  ]
+    <> DBEffects
 
 runnerControlThread :: Members RunnerControlEffects r => Sem r ()
 runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread'

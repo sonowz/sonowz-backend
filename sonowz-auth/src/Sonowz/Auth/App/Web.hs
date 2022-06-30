@@ -35,15 +35,14 @@ type LogoutAPI = "logout" :> LogoutOAuth
 
 type DefaultGetOAuthRedirectURL = GetOAuthRedirectURL
 
--- https://github.com/lspitzner/brittany/issues/271
--- brittany-disable-next-binding
 type AuthHandlerEffects =
-  Reader WebAppEnv
-    : Reader LoginRedirectURL
-      : Reader OAuthEnv
-        : Reader Manager
-          : Error ServerError
-            : DBEffects
+  [ Reader WebAppEnv,
+    Reader LoginRedirectURL,
+    Reader OAuthEnv,
+    Reader Manager,
+    Error ServerError
+  ]
+    <> DBEffects
 
 server :: Members AuthHandlerEffects r => WebAppEnv -> GoogleAppInfo -> ServerT AuthAPI (Sem r)
 server env gAppInfo = step1API fetchSet' :<|> step2API fetchSet' :<|> logoutOAuthHandler
