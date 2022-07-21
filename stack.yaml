@@ -37,6 +37,7 @@ resolver: lts-18.28
 packages:
   - ./sonowz-core
   - ./sonowz-auth
+  - ./sonowz-discord
   - ./sonowz-raytrace
   - ./sonowz-mp3tag-autofix
   - ./sonowz-news-combinator

@@ -1,0 +1,122 @@
+name:                sonowz-discord
+version:             0.1.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/sonowz/sonowz-backend
+license:             BSD3
+author:              SoonHo Seo
+maintainer:          dnsdhrj123@gmail.com
+copyright:           MIT
+category:            Application
+extra-source-files:
+  - README.md
+
+ghc-options:
+  - -O2
+  - -flate-specialise
+  - -fspecialise-aggressively
+  - -fplugin=Polysemy.Plugin
+  - -W
+  - -Wno-partial-type-signatures
+#  - -ddump-to-file
+#  - -ddump-tc-trace
+#  - -fprint-potential-instances
+#  - -fforce-recomp
+
+dependencies:
+  - aeson
+  - async
+  - base
+  - bytestring
+  - containers
+  - deepseq
+  - discord-haskell
+  - http-client-tls
+  - optparse-applicative
+  - polysemy
+  - polysemy-plugin
+  - relude
+  - safe-exceptions
+  - servant
+  - servant-server
+  - sonowz-core
+  - text
+  - time
+  - unordered-containers
+  - uri-bytestring
+  - vector
+  - wai
+  - warp
+
+default-extensions:
+  # GHC2021 #
+  - BangPatterns
+  - BinaryLiterals
+  - ConstrainedClassMethods
+  - ConstraintKinds
+  - DeriveDataTypeable
+  - DeriveFoldable
+  - DeriveFunctor
+  - DeriveGeneric
+  - DeriveLift
+  - DeriveTraversable
+  - DoAndIfThenElse
+  - EmptyCase
+  - EmptyDataDecls
+  - EmptyDataDeriving
+  - ExistentialQuantification
+  - ExplicitForAll
+  - FlexibleContexts
+  - FlexibleInstances
+  - ForeignFunctionInterface
+  - HexFloatLiterals
+  - ImportQualifiedPost
+  - InstanceSigs
+  - KindSignatures
+  - MultiParamTypeClasses
+  - NamedFieldPuns
+  - NamedWildCards
+  - NumericUnderscores
+  - PolyKinds
+  - PostfixOperators
+  - RankNTypes
+  - ScopedTypeVariables
+  - StandaloneDeriving
+  - StandaloneKindSignatures
+  - StarIsType
+  - TupleSections
+  - TypeApplications
+  - TypeOperators
+  - TypeSynonymInstances
+  
+  # extra #
+  - ApplicativeDo           # New syntax #
+  - DataKinds
+  - DefaultSignatures       # New syntax #
+  - DeriveAnyClass
+  - DerivingVia
+  - DuplicateRecordFields
+  - FunctionalDependencies  # New syntax #
+  - GADTs                   # New syntax #
+  - LambdaCase              # New syntax #
+  - MonadComprehensions     # New syntax #
+  - NoImplicitPrelude
+  - OverloadedLists
+  - OverloadedStrings
+  - ParallelListComp        # New syntax #
+  - PartialTypeSignatures   # New syntax #
+  - RecordWildCards         # New syntax #
+  - StrictData
+  - TypeFamilies
+  - ViewPatterns            # New syntax #
+
+
+# library:
+#   ghc-options:
+#     - -W
+#     - -Werror
+
+executables:
+  sonowz-discord:
+    source-dirs:      src
+    main:             Main.hs
