@@ -46,7 +46,3 @@ runWithEffects env (action :: Members ServerEffects r => Sem r a) =
   where
     logServerError :: IO (Either ServerError a) -> IO (Either ServerError a)
     logServerError action = action >>= bitraverse (\e -> logInfoIO (show e) >> return e) return
-
--- TODO: move this instance to somewhere else
-instance FromHttpApiData Uid where
-  parseQueryParam = fmap Uid . readEither @Int . toString

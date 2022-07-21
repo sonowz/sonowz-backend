@@ -10,6 +10,7 @@ import Data.Profunctor.Product.Default (Default (def))
 import Database.PostgreSQL.Simple.FromField qualified as FF
 import Opaleye
 import Opaleye.Aggregate qualified as Agg
+import Servant (FromHttpApiData, parseQueryParam)
 import Sonowz.Core.Imports hiding (null)
 import Sonowz.Core.StdEff.Effect
 
@@ -23,6 +24,9 @@ deriving via Int instance DefaultFromField SqlInt4 Uid
 
 instance Default ToFields Uid (Column SqlInt4) where
   def = coerce (def :: ToFields Int (Column SqlInt4))
+
+instance FromHttpApiData Uid where
+  parseQueryParam = fmap Uid . readEither @Int . toString
 
 -- Default null value in aggregate operations
 nullify :: Aggregator (Field a) (FieldNullable a)
