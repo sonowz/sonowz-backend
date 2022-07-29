@@ -48,6 +48,8 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps:
+  - emoji-0.1.0.2
+  - discord-haskell-1.12.4
   - servant-websockets-2.0.0
   - text-icu-0.8.0.1
 
