@@ -25,7 +25,7 @@
           inherit name;
           inherit version;
           src = binPath;
-          nativeBuildInputs = [ pkgs.autoPatchelfHook ];
+          nativeBuildInputs = [];
           propagatedBuildInputs = requirements;
           installPhase = ''
             mkdir -p $out/bin
