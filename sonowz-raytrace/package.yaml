@@ -129,3 +129,4 @@ executables:
   sonowz-raytrace:
     source-dirs:      src
     main:             Main.hs
+    ghc-options:      [-threaded]
