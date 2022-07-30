@@ -32,7 +32,7 @@ import Sonowz.Raytrace.DB.Types
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.MessageQueue.Effect.DB (runMQueueDBDaemon, runMQueueDBServant)
 import Sonowz.Raytrace.RaytraceConfig (Config (..))
-import Turtle (ExitCode (ExitFailure, ExitSuccess))
+import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 
 forkRaytraceDaemon :: HasCallStack => DBConnPool -> IO ()
 forkRaytraceDaemon pool = do

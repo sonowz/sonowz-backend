@@ -6,8 +6,10 @@ module Sonowz.Raytrace.App.Daemon.RunnerScript
 where
 
 import Control.Exception.Safe (onException)
-import Relude hiding (FilePath, stdin)
-import Turtle
+import Relude
+import System.Process
+import System.Exit (ExitCode(..))
+import Data.Text.IO (hGetContents)
 
 data ShellResult = ShellResult ExitCode StdOut StdErr
 
@@ -19,14 +21,16 @@ raytraceScript :: Int -> Text -> FilePath -> FilePath -> IO ShellResult
 raytraceScript _id config raytracePath outputPath = onException raytraceScript' unexpectedException
   where
     raytraceScript' = do
-      cd raytracePath
-      writeTextFile "RTConf.h" config
-      hasNixShell <- which "nix-shell"
-      (buildExitCode, buildStdOut, buildStdErr) <- case hasNixShell of
-        Just _ -> shellStrictWithErr "nix-shell --command runner" stdin -- Nix environment
-        Nothing -> shellStrictWithErr "make && ./runner" stdin -- Non-nix environment
-      cp "out.png" (outputPath </> fromText (show _id <> ".png"))
-      return (ShellResult buildExitCode buildStdOut buildStdErr)
+      writeFile (raytracePath <> "/RTConf.h") (toString config)
+      let script = "cd " <> raytracePath <> "\n"
+            <> "if which \"nix-shell\"; then\n"
+            <> "  nix-shell --command runner\n"
+            <> "else\n"
+            <> "  make && ./runner\n"
+            <> "fi\n"
+            <> "cp out.png " <> (outputPath <> "/" <> show _id <> ".png")
+      (_, Just hStdout, Just hStderr, _) <- createProcess (shell script) { std_out = CreatePipe, std_err = CreatePipe }
+      ShellResult ExitSuccess <$> hGetContents hStdout <*>  hGetContents hStderr
     unexpectedException = return (ShellResult (ExitFailure 1) "" "Unexpected error")
 
 example :: IO ()

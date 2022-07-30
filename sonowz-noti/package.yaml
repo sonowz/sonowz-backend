@@ -113,3 +113,4 @@ executables:
   sonowz-noti:
     source-dirs:      src
     main:             Main.hs
+    ghc-options:      [-threaded]
