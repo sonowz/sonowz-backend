@@ -11,16 +11,16 @@ category:            Application
 extra-source-files:
   - README.md
 
+language: GHC2021
+
 ghc-options:
   - -O2
+  - -threaded
   - -flate-specialise
   - -fspecialise-aggressively
   - -fplugin=Polysemy.Plugin
   - -W
   - -Wno-partial-type-signatures
-#  - -ddump-to-file
-#  - -ddump-tc-trace
-#  - -fprint-potential-instances
 #  - -fforce-recomp
 
 dependencies:
@@ -58,47 +58,6 @@ dependencies:
   - wai
 
 default-extensions:
-  # GHC2021 #
-  - BangPatterns
-  - BinaryLiterals
-  - ConstrainedClassMethods
-  - ConstraintKinds
-  - DeriveDataTypeable
-  - DeriveFoldable
-  - DeriveFunctor
-  - DeriveGeneric
-  - DeriveLift
-  - DeriveTraversable
-  - DoAndIfThenElse
-  - EmptyCase
-  - EmptyDataDecls
-  - EmptyDataDeriving
-  - ExistentialQuantification
-  - ExplicitForAll
-  - FlexibleContexts
-  - FlexibleInstances
-  - ForeignFunctionInterface
-  - HexFloatLiterals
-  - ImportQualifiedPost
-  - InstanceSigs
-  - KindSignatures
-  - MultiParamTypeClasses
-  - NamedFieldPuns
-  - NamedWildCards
-  - NumericUnderscores
-  - PolyKinds
-  - PostfixOperators
-  - RankNTypes
-  - ScopedTypeVariables
-  - StandaloneDeriving
-  - StandaloneKindSignatures
-  - StarIsType
-  - TupleSections
-  - TypeApplications
-  - TypeOperators
-  - TypeSynonymInstances
-  
-  # extra #
   - ApplicativeDo           # New syntax #
   - DataKinds
   - DefaultSignatures       # New syntax #
@@ -119,12 +78,10 @@ default-extensions:
   - TypeFamilies
   - ViewPatterns            # New syntax #
 
+source-dirs: src
 
-library:
-  source-dirs:      src
+library: {}
 
 executables:
   sonowz-auth:
-    source-dirs:      src
     main:             Main.hs
-    ghc-options:      [-threaded]
