@@ -2,7 +2,7 @@
   description = "Sonowz Backend";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/nixos-22.05";
+    nixpkgs.url = "nixpkgs/nixos-unstable";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -13,7 +13,32 @@
         name = "sonowz-backend";
 
         pkgs = nixpkgs.legacyPackages.${system};
+        ghc = pkgs.haskell.packages.ghc924.ghc;  # The version should match with resolver!
         requirements = pkgs.callPackage ./requirements.nix {};
+        devRequirements = with pkgs; [
+          stack-wrapped
+          cabal-install
+
+          (haskell-language-server.override { supportedGhcVersions = [ "924" ]; })
+          haskellPackages.ormolu
+          hlint
+        ];
+
+        # https://docs.haskellstack.org/en/stable/nix_integration/#supporting-both-nix-and-non-nix-developers
+        stack-wrapped = pkgs.symlinkJoin {
+          name = "stack";
+          version = pkgs.stack.version;
+          paths = [ pkgs.stack ];
+          buildInputs = [ pkgs.makeWrapper ];
+          postBuild = ''
+            wrapProgram $out/bin/stack \
+              --add-flags "\
+                --no-nix \
+                --system-ghc \
+                --no-install-ghc \
+              "
+          '';
+        };
 
         # TODO: remove hardcoded path
         binPath = /home/sonowz/sonowz-backend/bin;
@@ -37,10 +62,19 @@
         inherit app;
         defaultPackage = app;
 
-        devShell = pkgs.mkShell {
-          # buildInputs = requirements;
-          LD_LIBRARY_PATH = "${pkgs.glibc}/lib/";
-        };
+        devShell = (pkgs.haskell.lib.buildStackProject {
+          inherit name;
+          inherit version;
+          inherit ghc;
+          stack = stack-wrapped;
+          buildInputs = requirements;
+        }).overrideAttrs (final: prev: {
+          buildInputs = prev.buildInputs ++ devRequirements;
+        });
+        /* devShell = pkgs.mkShell {
+          buildInputs = devRequirements ++ requirements ++ [ stack-wrapped ghc ];
+          # LD_LIBRARY_PATH = pkgs.lib.makeLibraryPath [ pkgs.glibc ];
+        }; */
       }
     );
 }

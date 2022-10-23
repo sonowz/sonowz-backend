@@ -18,8 +18,8 @@
 # resolver: ./custom-snapshot.yaml
 # resolver: https://example.com/snapshots/2018-01-01.yaml
 
-# GHC version: 8.10.7
-resolver: lts-18.28
+# GHC version: 9.2.4
+resolver: nightly-2022-10-22
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -48,10 +48,9 @@ packages:
 # using the same syntax as the packages field.
 # (e.g., acme-missiles-0.3)
 extra-deps:
+  - co-log-core-0.3.1.0
   - emoji-0.1.0.2
-  - discord-haskell-1.12.4
-  - servant-websockets-2.0.0
-  - text-icu-0.8.0.1
+  - discord-haskell-1.15.3
 
 
 # Override default flag values for local packages and extra-deps
@@ -77,8 +76,3 @@ extra-deps:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
-
-nix:
-  enable: true
-  shell-file: stack-shell.nix
-

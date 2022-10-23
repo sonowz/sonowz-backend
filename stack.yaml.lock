@@ -6,6 +6,13 @@
 packages:
 - completed:
     pantry-tree:
+      sha256: d4cc089c40c5052ee02f91eafa567e0a239908aabc561dfa6080ba3bfc8c25bd
+      size: 584
+    hackage: co-log-core-0.3.1.0@sha256:9794bdedd1391decd0e22bdfe2b11abcb42e6cff7a4531e1f8882890828f4e63,3816
+  original:
+    hackage: co-log-core-0.3.1.0
+- completed:
+    pantry-tree:
       sha256: dd9ea90a631342e5db0fc21331ade4d563a685e9125d5a3989eefa8e1b96c6c6
       size: 437
     hackage: emoji-0.1.0.2@sha256:d995572a5c7dcd28f98eb15c6e387a7b3bda1ac2477ab0d9dba8580d5d7b161f,1273
@@ -13,28 +20,14 @@ packages:
     hackage: emoji-0.1.0.2
 - completed:
     pantry-tree:
-      sha256: 6dfdc38afa993ea8d5a0dea563aff28c505f6d927b843ee77b77edb4a4e57c4c
-      size: 2681
-    hackage: discord-haskell-1.12.4@sha256:80ca52ccb6ceeb0dee3114037c16065ad2e1bf8223b80869566f60afeac5f6c3,4527
+      sha256: f6774f1547d4aabe2db431ae8ba4bb42045d40e6a71fa7840cd859fb7da61971
+      size: 3241
+    hackage: discord-haskell-1.15.3@sha256:abcd8dfb9fc8bad858ec7aac4873fd58200acba21da78a918c73b65eaa6a592a,5958
   original:
-    hackage: discord-haskell-1.12.4
-- completed:
-    pantry-tree:
-      sha256: 085c6620bff7671bef1d969652a349271c3703fbf10dd753cb63ee1cd700bca5
-      size: 523
-    hackage: servant-websockets-2.0.0@sha256:6e9e3600bced90fd52ed3d1bf632205cb21479075b20d6637153cc4567000234,2253
-  original:
-    hackage: servant-websockets-2.0.0
-- completed:
-    pantry-tree:
-      sha256: 71ed32ecdce71adba6df6220e717b8ec4bd252cc403714c5c4ba70cf6d1aa1e4
-      size: 3223
-    hackage: text-icu-0.8.0.1@sha256:22d21c91e7a81f1ee5766b3406f4fe9df0ff8cc426581a861de3f6f2fa413449,4624
-  original:
-    hackage: text-icu-0.8.0.1
+    hackage: discord-haskell-1.15.3
 snapshots:
 - completed:
-    sha256: 428ec8d5ce932190d3cbe266b9eb3c175cd81e984babf876b64019e2cbe4ea68
-    size: 590100
-    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/lts/18/28.yaml
-  original: lts-18.28
+    sha256: 7eaf017de341b0ea6b271fb7db2f688f4110dcd28673d335a6ffc49570bfe122
+    size: 644482
+    url: https://raw.githubusercontent.com/commercialhaskell/stackage-snapshots/master/nightly/2022/10/22.yaml
+  original: nightly-2022-10-22
