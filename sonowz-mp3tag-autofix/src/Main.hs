@@ -5,7 +5,6 @@ import Options.Applicative
 import Sonowz.Mp3tagAutofix.App (runMainFn)
 import Sonowz.Mp3tagAutofix.Env (Env (..))
 import Sonowz.Mp3tagAutofix.Imports
-import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
 pEnv :: Parser Env
 pEnv = do

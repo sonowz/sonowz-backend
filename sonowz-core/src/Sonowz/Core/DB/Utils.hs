@@ -14,7 +14,8 @@ import Servant (FromHttpApiData, parseQueryParam)
 import Sonowz.Core.Imports hiding (null)
 import Sonowz.Core.StdEff.Effect
 
-newtype DatabaseException = DatabaseException Text deriving (Show, Exception)
+newtype DatabaseException = DatabaseException Text deriving (Show)
+  deriving anyclass (Exception)
 
 newtype Uid = Uid Int
   deriving (Eq, Show, Read)
@@ -22,8 +23,8 @@ newtype Uid = Uid Int
 
 deriving via Int instance DefaultFromField SqlInt4 Uid
 
-instance Default ToFields Uid (Column SqlInt4) where
-  def = coerce (def :: ToFields Int (Column SqlInt4))
+instance Default ToFields Uid (Field SqlInt4) where
+  def = coerce (def :: ToFields Int (Field SqlInt4))
 
 instance FromHttpApiData Uid where
   parseQueryParam = fmap Uid . readEither @Int . toString

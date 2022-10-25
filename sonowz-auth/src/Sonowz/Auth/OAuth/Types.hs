@@ -12,7 +12,8 @@ import Text.Show qualified as S
 import URI.ByteString (URI)
 
 newtype OAuthException = OAuthException Text
-  deriving (Show, Exception)
+  deriving (Show)
+  deriving anyclass (Exception)
 
 data FetchOAuthUser = FetchOAuthUser
   { fetcherOAuthClientURL :: URI -> Text -> URI, -- (Redirect URL, State) as parameter

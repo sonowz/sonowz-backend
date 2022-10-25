@@ -72,16 +72,16 @@ logIO :: HasCallStack => Severity -> Text -> IO ()
 logIO sev text = withFrozenCallStack $ makeStdMessageIO sev text >>= unLogAction stdLogActionIO
 
 logDebugIO :: HasCallStack => Text -> IO ()
-logDebugIO = withFrozenCallStack . logIO Debug
+logDebugIO = withFrozenCallStack $ logIO Debug
 
 logInfoIO :: HasCallStack => Text -> IO ()
-logInfoIO = withFrozenCallStack . logIO Info
+logInfoIO = withFrozenCallStack $ logIO Info
 
 logWarningIO :: HasCallStack => Text -> IO ()
-logWarningIO = withFrozenCallStack . logIO Warning
+logWarningIO = withFrozenCallStack $ logIO Warning
 
 logErrorIO :: HasCallStack => Text -> IO ()
-logErrorIO = withFrozenCallStack . logIO Error
+logErrorIO = withFrozenCallStack $ logIO Error
 
 logExceptionIO :: HasCallStack => Exception e => e -> IO ()
 logExceptionIO e = withFrozenCallStack $ logIO Error (show $ displayException e)

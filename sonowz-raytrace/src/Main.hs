@@ -11,7 +11,6 @@ import Sonowz.Raytrace.App.Daemon (forkDaemon)
 import Sonowz.Raytrace.App.Web (api, server)
 import Sonowz.Raytrace.Env (Env (..))
 import Sonowz.Raytrace.Imports
-import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
 data Config = Config Port PGS.ConnectInfo
 

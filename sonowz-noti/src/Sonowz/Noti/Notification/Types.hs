@@ -39,11 +39,11 @@ instance DefaultFromField SqlText NotificationType where
 instance DefaultFromField SqlText NotificationBody where
   defaultFromField = fromPGSFromField
 
-instance Default ToFields NotificationType (Column SqlText) where
-  def = ToFields (sqlStrictText . show)
+instance Default ToFields NotificationType (Field SqlText) where
+  def = toToFields (sqlStrictText . show)
 
-instance Default ToFields NotificationBody (Column SqlText) where
-  def = ToFields (sqlStrictText . show)
+instance Default ToFields NotificationBody (Field SqlText) where
+  def = toToFields (sqlStrictText . show)
 
 instance FF.FromField NotificationType where
   fromField = fromFieldSimple (readEither . decodeUtf8)

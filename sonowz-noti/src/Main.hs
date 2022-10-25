@@ -9,7 +9,6 @@ import Sonowz.Noti.App (runApp)
 import Sonowz.Noti.Env (Env (..))
 import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.Handler.Email (EmailConfig (..))
-import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
 data Config = Config EmailConfig PGS.ConnectInfo
 

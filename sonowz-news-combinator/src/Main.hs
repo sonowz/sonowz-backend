@@ -8,9 +8,8 @@ import Sonowz.Core.Imports
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 import Sonowz.NewsCombinator.App.RuleWorker (runRuleWorker)
-import Sonowz.NewsCombinator.App.Web
+import Sonowz.NewsCombinator.App.Web (runServer)
 import Sonowz.NewsCombinator.Env (Env (..))
-import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
 data Config = Config WebAppEnv PGS.ConnectInfo Int
 

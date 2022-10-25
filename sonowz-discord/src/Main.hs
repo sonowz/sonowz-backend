@@ -1,15 +1,14 @@
 module Main where
 
 import Discord
-import Discord.Internal.Rest (Channel (ChannelDirectMessage, channelId), Snowflake (Snowflake), User (userId), UserId)
+import Discord.Internal.Rest (Channel (ChannelDirectMessage), DiscordId (DiscordId), User (userId), UserId)
 import Discord.Requests
-import GHC.IO.Handle (BufferMode (LineBuffering), hSetBuffering)
 import Sonowz.Discord.Imports
 import Sonowz.Discord.REST.Effect (DiscordREST, restCall', runDiscordRESTIO)
 import Sonowz.Discord.Utils (getOrCreateChannel)
 
 sonowzId :: UserId
-sonowzId = Snowflake 0
+sonowzId = DiscordId 0
 
 testHandler :: DiscordHandler ()
 testHandler =

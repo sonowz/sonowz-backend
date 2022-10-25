@@ -30,10 +30,10 @@ getCRUDQueries ::
   ( Default FromFields r item,
     Default ToFields citem w,
     Default Unpackspec r r,
-    Default ToFields uid (Column uidcol)
+    Default ToFields uid (Field uidcol)
   ) =>
   Table w r ->
-  (r -> Column uidcol) ->
+  (r -> Field uidcol) ->
   CRUDQueries item citem uid
 getCRUDQueries table rowToUid =
   CRUDQueries
@@ -44,9 +44,9 @@ getCRUDQueries table rowToUid =
     (delete table rowToUid)
 
 qSelectByUid ::
-  (Default Unpackspec r r, Default ToFields uid (Column uidcol)) =>
+  (Default Unpackspec r r, Default ToFields uid (Field uidcol)) =>
   Table w r ->
-  (r -> Column uidcol) ->
+  (r -> Field uidcol) ->
   uid ->
   Select r
 qSelectByUid table rowToUid uid = proc () -> do
@@ -65,10 +65,10 @@ read ::
   ( HasCallStack,
     Default FromFields r hask,
     Default Unpackspec r r,
-    Default ToFields uid (Column uidcol)
+    Default ToFields uid (Field uidcol)
   ) =>
   Table w r ->
-  (r -> Column uidcol) ->
+  (r -> Field uidcol) ->
   Connection ->
   uid ->
   IO (Maybe hask)
@@ -97,10 +97,10 @@ update ::
     Default FromFields r hask,
     Default ToFields chask w,
     Default Unpackspec r r,
-    Default ToFields uid (Column uidcol)
+    Default ToFields uid (Field uidcol)
   ) =>
   Table w r ->
-  (r -> Column uidcol) ->
+  (r -> Field uidcol) ->
   Connection ->
   uid ->
   chask ->
@@ -121,9 +121,9 @@ update table rowToUid conn uid item = withTransaction conn $ do
         }
 
 delete ::
-  (HasCallStack, Default Unpackspec r r, Default ToFields uid (Column uidcol)) =>
+  (HasCallStack, Default Unpackspec r r, Default ToFields uid (Field uidcol)) =>
   Table w r ->
-  (r -> Column uidcol) ->
+  (r -> Field uidcol) ->
   Connection ->
   uid ->
   IO Bool

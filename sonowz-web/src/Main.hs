@@ -13,7 +13,6 @@ import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 import Sonowz.Web.App qualified as Web
 import Sonowz.Web.Imports
-import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
 data Config = Config Port PGS.ConnectInfo GoogleAppInfo RootURI
 

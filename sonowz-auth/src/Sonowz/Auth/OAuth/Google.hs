@@ -62,11 +62,11 @@ fetchOAuthUserGoogle appInfo registerURL =
 oAuthInfoGoogle :: GoogleAppInfo -> URI -> OAuth2
 oAuthInfoGoogle (GoogleAppInfo appId appSecret) registerURL =
   OAuth2
-    { oauthClientId = appId,
-      oauthClientSecret = Just appSecret,
-      oauthCallback = Just registerURL, -- Google requires this URL to be same as serverside register URL
-      oauthOAuthorizeEndpoint = urlOAuthRedirect,
-      oauthAccessTokenEndpoint = urlOAuthAccessToken
+    { oauth2ClientId = appId,
+      oauth2ClientSecret = appSecret,
+      oauth2RedirectUri = registerURL, -- Google requires this URL to be same as serverside register URL
+      oauth2AuthorizeEndpoint = urlOAuthRedirect,
+      oauth2TokenEndpoint = urlOAuthAccessToken
     }
 
 oAuthClientURLGoogle :: GoogleAppInfo -> URI -> Text -> URI
@@ -89,6 +89,6 @@ googleUserToOAuthUser GoogleUserInfo {..} =
 
 getUserInfoGoogle :: Manager -> AccessToken -> IO (Either Text OAuthUser)
 getUserInfoGoogle m at =
-  authGetJSON m at urlGetUserInfo >>= \case
+  runExceptT (authGetJSON m at urlGetUserInfo) >>= \case
     Left errormsg -> return . Left . decodeUtf8 $ errormsg
     Right userInfo -> return . Right . googleUserToOAuthUser $ userInfo

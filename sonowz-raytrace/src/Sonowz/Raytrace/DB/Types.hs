@@ -10,7 +10,9 @@ import Opaleye
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.RaytraceConfig (Config (..))
 
-newtype DatabaseException = DatabaseException Text deriving (Show, Exception)
+newtype DatabaseException = DatabaseException Text
+  deriving (Show)
+  deriving anyclass (Exception)
 
 newtype Qid = Qid Int
   deriving (Eq, Show, Read)
@@ -89,17 +91,17 @@ instance DefaultFromField SqlText DaemonOp where
 instance DefaultFromField SqlText ServantOp where
   defaultFromField = fromPGSFromField
 
-instance Default ToFields Qid (Column SqlInt4) where
+instance Default ToFields Qid (Field SqlInt4) where
   def = coerce (def :: ToFields Int (Column SqlInt4))
 
-instance Default ToFields ServantId (Column SqlInt4) where
+instance Default ToFields ServantId (Field SqlInt4) where
   def = coerce (def :: ToFields Int (Column SqlInt4))
 
-instance Default ToFields DaemonOp (Column SqlText) where
-  def = ToFields (sqlStrictText . show)
+instance Default ToFields DaemonOp (Field SqlText) where
+  def = toToFields (sqlStrictText . show)
 
-instance Default ToFields ServantOp (Column SqlText) where
-  def = ToFields (sqlStrictText . show)
+instance Default ToFields ServantOp (Field SqlText) where
+  def = toToFields (sqlStrictText . show)
 
 instance FF.FromField DaemonOp where
   fromField = ffByReadInstance "DaemonOp"

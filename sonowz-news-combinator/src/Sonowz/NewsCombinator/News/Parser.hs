@@ -9,7 +9,9 @@ import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.News.Types (NewsItem (..))
 import Text.HTML.TagSoup (Tag (..), innerText, parseTags, partitions, renderTags, (~/=), (~==))
 
-newtype ParseException = ParseException String deriving (Show, Exception)
+newtype ParseException = ParseException String
+  deriving (Show)
+  deriving anyclass (Exception)
 
 type XMLParser a = [Tag Text] -> Either ParseException a
 

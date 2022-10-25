@@ -18,7 +18,6 @@ import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthCon
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
-import System.IO (BufferMode (LineBuffering), hSetBuffering)
 
 data Config = Config Port PGS.ConnectInfo GoogleAppInfo
 

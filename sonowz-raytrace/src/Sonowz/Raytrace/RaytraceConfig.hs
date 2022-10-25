@@ -52,21 +52,21 @@ parseRTConfig obj = do
   sceneNo <- parseItemRange "sceneNo" 1 3 obj
   return RTConfig {..}
 
-parseItemRange :: (FromJSON a, Show a, Ord a) => Text -> a -> a -> Aeson.Object -> Aeson.Parser a
+parseItemRange :: (FromJSON a, Show a, Ord a) => Key -> a -> a -> Aeson.Object -> Aeson.Parser a
 parseItemRange name minValue maxValue obj = do
   value <- obj .: name
   case range name minValue maxValue value of
     Right value' -> return value'
     Left errormsg -> fail (toString errormsg)
 
-parseItem :: FromJSON a => Text -> Aeson.Object -> Aeson.Parser a
+parseItem :: FromJSON a => Key -> Aeson.Object -> Aeson.Parser a
 parseItem = flip (.:)
 
-range :: (Show a, Ord a) => Text -> a -> a -> a -> Either Text a
+range :: (Show a, Ord a) => Key -> a -> a -> a -> Either Text a
 range name minValue maxValue value =
   if (minValue <= value) && (value <= maxValue)
     then Right value
-    else Left $ name <> " must be in range [" <> show minValue <> ", " <> show maxValue <> "]."
+    else Left $ show name <> " must be in range [" <> show minValue <> ", " <> show maxValue <> "]."
 
 createConfig :: RTConfig -> Config
 createConfig conf =
