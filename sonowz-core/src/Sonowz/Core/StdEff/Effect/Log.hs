@@ -164,12 +164,7 @@ showSourceLoc cs = braceWithPadding sourcePaddingCount showCallStack
   where
     showCallStack :: Text
     showCallStack = case getCallStack cs of
-      {-
-      [] -> "<unknown loc>"
-      [(name, loc)] -> showLoc name loc
-      _ : [(name, loc)] -> showLoc name loc
-      -}
-      _ : (_, loc) : (callerName, _) : _ -> showLoc callerName loc
+      (_, loc) : (callerName, _) : _ -> showLoc callerName loc
       _ -> "<unknown loc>"
 
     showLoc :: String -> SrcLoc -> Text
