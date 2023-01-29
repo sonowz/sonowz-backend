@@ -13,13 +13,13 @@
         name = "sonowz-backend";
 
         pkgs = nixpkgs.legacyPackages.${system};
-        ghc = pkgs.haskell.packages.ghc924.ghc;  # The version should match with resolver!
+        ghc = pkgs.haskell.packages.ghc925.ghc;  # The version should match with resolver!
         requirements = pkgs.callPackage ./requirements.nix {};
         devRequirements = with pkgs; [
           stack-wrapped
           cabal-install
 
-          (haskell-language-server.override { supportedGhcVersions = [ "924" ]; })
+          (haskell-language-server.override { supportedGhcVersions = [ "925" ]; })
           haskellPackages.ormolu
           hlint
         ];
