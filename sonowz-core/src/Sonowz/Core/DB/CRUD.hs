@@ -15,6 +15,7 @@ import Control.Arrow
 import Data.Profunctor.Product.Default (Default)
 import Database.PostgreSQL.Simple (Connection, withTransaction)
 import Opaleye
+import Sonowz.Core.DB.Utils (AlternativeUpdater, updateAlternative)
 import Sonowz.Core.Imports
 
 data CRUDQueries item citem uid = CRUDQueries
@@ -30,6 +31,8 @@ getCRUDQueries ::
   ( Default FromFields r item,
     Default ToFields citem w,
     Default Unpackspec r r,
+    Default Updater r w,
+    Default AlternativeUpdater w w,
     Default ToFields uid (Field uidcol)
   ) =>
   Table w r ->
@@ -97,6 +100,8 @@ update ::
     Default FromFields r hask,
     Default ToFields chask w,
     Default Unpackspec r r,
+    Default Updater r w,
+    Default AlternativeUpdater w w,
     Default ToFields uid (Field uidcol)
   ) =>
   Table w r ->
@@ -114,8 +119,7 @@ update table rowToUid conn uid item = withTransaction conn $ do
     query =
       Update
         { uTable = table,
-          -- TODO: bugfix: update overwrites field value e.g. 'createdTime' -> NOW()
-          uUpdateWith = const (toFields item),
+          uUpdateWith = updateAlternative (toFields item),
           uWhere = \row -> rowToUid row .== toFields uid,
           uReturning = rReturning id
         }
