@@ -6,7 +6,7 @@ module Sonowz.Noti.Notification.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
-import Sonowz.Core.DB.Field (Uid)
+import Sonowz.Core.DB.Field (EmptyField, Uid)
 import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.Types (NotificationBody, NotificationType)
 
@@ -18,7 +18,7 @@ data Notification' c1 c2 c3 c4 c5 = Notification'
     createdTime :: c5
   }
 
-type NotificationHaskW = Notification' Void NotificationType Text NotificationBody Void
+type NotificationHaskW = Notification' EmptyField NotificationType Text NotificationBody EmptyField
 
 type NotificationHask = Notification' Uid NotificationType Text NotificationBody UTCTime
 

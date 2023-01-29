@@ -102,9 +102,9 @@ crudSet = getCRUDQueries userTable uid
 oauthToHaskW :: OAuthUser -> UserInfoW
 oauthToHaskW OAuthUser {..} =
   User
-    { uid = error "Unexpected 'uid' access",
+    { uid = Nothing,
       oauthProvider = oauthUserProvider,
       oauthId = oauthUserId,
       representation = oauthUserRep,
-      createdTime = error "Unexpected 'createdTime' access"
+      createdTime = Nothing
     }

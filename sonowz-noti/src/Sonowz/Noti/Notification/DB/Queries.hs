@@ -62,11 +62,11 @@ haskToNoti Notification' {..} = Notification _type title body (Just uid)
 notiToHaskW :: Notification -> NotificationHaskW
 notiToHaskW Notification {..} =
   Notification'
-    { uid = error "Unexpected 'uid' access",
+    { uid = Nothing,
       _type = notificationType,
       title = notificationTitle,
       body = notificationBody,
-      createdTime = error "Unexpected 'createdTime' access"
+      createdTime = Nothing
     }
 
 -- Queries --

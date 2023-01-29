@@ -80,13 +80,13 @@ ruleToUidAndHask NewsScrapRule {..} = do
   return
     ( _uid,
       NewsScrapRule'
-        { uid = error "Unexpected 'uid' access",
+        { uid = Nothing,
           keyword = keyword,
           successCount = successCount,
           successPeriod = successPeriod,
           isEnabled = isEnabled,
           isOneTimeRule = isOneTimeRule,
-          createdTime = error "Unexpected 'createdTime' access",
-          updatedTime = error "Unexpected 'updatedTime' access"
+          createdTime = Nothing,
+          updatedTime = Nothing
         }
     )

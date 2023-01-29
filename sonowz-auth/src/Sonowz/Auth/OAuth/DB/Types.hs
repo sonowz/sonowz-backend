@@ -9,7 +9,7 @@ import Data.Time (UTCTime)
 import Opaleye
 import Servant.Auth.Server (FromJWT, ToJWT)
 import Sonowz.Auth.Imports
-import Sonowz.Core.DB.Field (Uid)
+import Sonowz.Core.DB.Field (EmptyField, Uid)
 
 -- 'uid' must be unique
 -- ('oauthProvider', 'oauthId') must be unique
@@ -22,7 +22,7 @@ data User c1 c2 c3 c4 c5 = User
   }
   deriving (Show, Read, Generic)
 
-type UserInfoW = User Void Text Text Text Void
+type UserInfoW = User EmptyField Text Text Text EmptyField
 
 type UserInfo = User Uid Text Text Text UTCTime
 

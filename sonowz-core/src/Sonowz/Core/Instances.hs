@@ -27,12 +27,6 @@ instance FromHttpApiData URI where
 instance MimeRender PlainText URI where
   mimeRender _ = toLazy . serializeURIRef'
 
--- This instance is used in DB type declaration
--- where type of 'write field' is 'Maybe (Column col)',
--- to indicate that the field is not used in writes.
-instance Default ToFields a (Maybe (Field_ n col)) where
-  def = toToFields (const Nothing)
-
 instance Default ToFields NominalDiffTime (Field SqlFloat8) where
   def = toToFields (toFields . fromRational @Double . toRational)
 

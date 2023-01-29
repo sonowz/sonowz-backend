@@ -79,12 +79,12 @@ deleteKey conn oauthId key =
 makeHaskW :: Text -> Text -> Text -> KVSHaskW
 makeHaskW oauthId key value =
   KVS
-    { uid = error "Unexpected 'uid' access",
+    { uid = Nothing,
       oauthId = oauthId,
       key = key,
       value = value,
-      createdTime = error "Unexpected 'createdTime' access",
-      updatedTime = error "Unexpected 'updatedTime' access"
+      createdTime = Nothing,
+      updatedTime = Nothing
     }
 
 -- Queries --

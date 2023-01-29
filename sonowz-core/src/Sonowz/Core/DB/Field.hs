@@ -6,7 +6,7 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON)
 import Data.Profunctor.Product.Default (Default (def))
-import Opaleye (DefaultFromField, Field, SqlInt4, ToFields, toToFields)
+import Opaleye (DefaultFromField, Field, Field_, SqlInt4, ToFields, toToFields)
 import Servant (FromHttpApiData, parseQueryParam)
 import Sonowz.Core.Imports
 
@@ -21,3 +21,14 @@ instance Default ToFields Uid (Field SqlInt4) where
 
 instance FromHttpApiData Uid where
   parseQueryParam = fmap Uid . readEither @Int . toString
+
+-- Use this type to indicate that this field is not used in writes
+type EmptyField = Maybe EmptyField_
+
+data EmptyField_
+
+instance Default ToFields EmptyField_ (Field_ n col) where
+  def = toToFields (error "Unexpected 'EmptyField' access")
+
+instance FromJSON EmptyField_ where
+  parseJSON = error "Unexpected 'EmptyField' access"

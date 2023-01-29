@@ -6,7 +6,7 @@ module Sonowz.Web.KVS.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
-import Sonowz.Core.DB.Field (Uid)
+import Sonowz.Core.DB.Field (EmptyField, Uid)
 import Sonowz.Web.Imports
 
 -- 'uid' must be unique
@@ -21,7 +21,7 @@ data KVS c1 c2 c3 c4 c5 c6 = KVS
   }
   deriving (Show, Read, Generic)
 
-type KVSHaskW = KVS Void Text Text Text Void Void
+type KVSHaskW = KVS EmptyField Text Text Text EmptyField EmptyField
 
 type KVSHaskR = KVS Uid Text Text Text UTCTime UTCTime
 
