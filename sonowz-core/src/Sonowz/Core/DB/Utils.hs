@@ -4,30 +4,16 @@ module Sonowz.Core.DB.Utils where
 
 import Control.Arrow
 import Control.Exception.Safe qualified as E
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Profunctor (dimap)
-import Data.Profunctor.Product.Default (Default (def))
 import Database.PostgreSQL.Simple.FromField qualified as FF
 import Opaleye
 import Opaleye.Aggregate qualified as Agg
-import Servant (FromHttpApiData, parseQueryParam)
 import Sonowz.Core.Imports hiding (null)
 import Sonowz.Core.StdEff.Effect
 
-newtype DatabaseException = DatabaseException Text deriving (Show)
+newtype DatabaseException = DatabaseException Text
+  deriving (Show)
   deriving anyclass (Exception)
-
-newtype Uid = Uid Int
-  deriving (Eq, Show, Read)
-  deriving (Num, ToJSON, FromJSON) via Int
-
-deriving via Int instance DefaultFromField SqlInt4 Uid
-
-instance Default ToFields Uid (Field SqlInt4) where
-  def = coerce (def :: ToFields Int (Field SqlInt4))
-
-instance FromHttpApiData Uid where
-  parseQueryParam = fmap Uid . readEither @Int . toString
 
 -- Default null value in aggregate operations
 nullify :: Aggregator (Field a) (FieldNullable a)

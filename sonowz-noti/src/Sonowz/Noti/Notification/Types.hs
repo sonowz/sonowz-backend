@@ -8,7 +8,8 @@ where
 import Data.Profunctor.Product.Default (Default (..))
 import Database.PostgreSQL.Simple.FromField qualified as FF
 import Opaleye
-import Sonowz.Core.DB.Utils (Uid, fromFieldSimple)
+import Sonowz.Core.DB.Field (Uid)
+import Sonowz.Core.DB.Utils (fromFieldSimple)
 import Sonowz.Noti.Imports
 
 data NotificationType = Email

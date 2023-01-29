@@ -6,7 +6,7 @@ module Sonowz.NewsCombinator.Rule.Types
 where
 
 import Data.Time (NominalDiffTime, nominalDay)
-import Sonowz.Core.DB.Utils (Uid)
+import Sonowz.Core.DB.Field (Uid)
 import Sonowz.NewsCombinator.Imports
 
 data NewsScrapRule = NewsScrapRule

@@ -6,8 +6,8 @@ where
 import Polysemy.Resource (resourceToIOFinal)
 import Relude.Monad (ExceptT (ExceptT))
 import Servant
+import Sonowz.Core.DB.Field (Uid (..))
 import Sonowz.Core.DB.Pool (DBEffects)
-import Sonowz.Core.DB.Utils (Uid (..))
 import Sonowz.Core.Web.CRUD (CRUDAPI, crudHandlerFromDBQueries)
 import Sonowz.Core.Web.Wai (runWithLog)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..))

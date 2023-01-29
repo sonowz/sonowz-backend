@@ -6,7 +6,7 @@ module Sonowz.Web.KVS.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
-import Sonowz.Core.DB.Utils (Uid)
+import Sonowz.Core.DB.Field (Uid)
 import Sonowz.Web.Imports
 
 -- 'uid' must be unique

@@ -15,7 +15,8 @@ import Sonowz.Auth.Imports hiding (null)
 import Sonowz.Auth.OAuth (OAuthUser (..))
 import Sonowz.Auth.OAuth.DB.Types
 import Sonowz.Core.DB.CRUD
-import Sonowz.Core.DB.Utils (Uid, maybeToExceptionIO, nullify)
+import Sonowz.Core.DB.Field (Uid)
+import Sonowz.Core.DB.Utils (maybeToExceptionIO, nullify)
 
 -- Table declarations --
 

@@ -9,7 +9,7 @@ import Data.Time (UTCTime)
 import Opaleye
 import Servant.Auth.Server (FromJWT, ToJWT)
 import Sonowz.Auth.Imports
-import Sonowz.Core.DB.Utils (Uid)
+import Sonowz.Core.DB.Field (Uid)
 
 -- 'uid' must be unique
 -- ('oauthProvider', 'oauthId') must be unique
