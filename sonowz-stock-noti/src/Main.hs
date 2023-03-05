@@ -6,6 +6,7 @@ import Options.Applicative
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
+import Sonowz.StockNoti.Env (Env (..))
 import Sonowz.StockNoti.Imports
 
 data Config = Config WebAppEnv PGS.ConnectInfo Int
@@ -35,4 +36,6 @@ main = do
 
   (Config webEnv pgConnectInfo workerInterval) <- execParser opts
   dbPool <- createConnPool pgConnectInfo
+  let env = Env dbPool workerInterval
+
   pass
