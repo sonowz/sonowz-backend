@@ -1,0 +1,73 @@
+name:                sonowz-stock-noti
+version:             0.1.0.0
+#synopsis:
+#description:
+homepage:            https://github.com/sonowz/sonowz-backend
+license:             BSD3
+author:              SoonHo Seo
+maintainer:          dnsdhrj123@gmail.com
+copyright:           MIT
+category:            Application
+extra-source-files:
+  - README.md
+
+language: GHC2021
+
+ghc-options:
+  - -O2
+  - -threaded
+  - -flate-specialise
+  - -fspecialise-aggressively
+  - -fplugin=Polysemy.Plugin
+  - -W
+  - -Wno-partial-type-signatures
+#  - -fforce-recomp
+
+dependencies:
+  - aeson
+  - base
+  - bytestring
+  - containers
+  - http-client
+  - opaleye
+  - optparse-applicative
+  - polysemy
+  - polysemy-plugin
+  - postgresql-simple
+  - product-profunctors
+  - relude
+  - safe-exceptions
+  - servant-server
+  - sonowz-core
+  - sonowz-noti
+  - text
+  - time
+  - uri-bytestring
+  - vector
+
+default-extensions:
+  - ApplicativeDo           # New syntax #
+  - DataKinds
+  - DefaultSignatures       # New syntax #
+  - DeriveAnyClass
+  - DerivingVia
+  - DuplicateRecordFields
+  - FunctionalDependencies  # New syntax #
+  - GADTs                   # New syntax #
+  - LambdaCase              # New syntax #
+  - MonadComprehensions     # New syntax #
+  - NoImplicitPrelude
+  - OverloadedLists
+  - OverloadedStrings
+  - ParallelListComp        # New syntax #
+  - PartialTypeSignatures   # New syntax #
+  - RecordWildCards         # New syntax #
+  - StrictData
+  - TypeFamilies
+  - ViewPatterns            # New syntax #
+
+source-dirs: src
+
+executables:
+  sonowz-stock-noti:
+    main:             Main.hs

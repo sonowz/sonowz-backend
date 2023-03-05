@@ -42,6 +42,7 @@ packages:
   - ./sonowz-mp3tag-autofix
   - ./sonowz-news-combinator
   - ./sonowz-noti
+  - ./sonowz-stock-noti
   - ./sonowz-web
 
 # Dependency packages to be pulled from upstream that are not in the resolver
