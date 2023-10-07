@@ -10,7 +10,7 @@ where
 import Data.Time (UTCTime)
 import Sonowz.StockNoti.Imports
 
-data TimeUnit = Year | Month | Week | Day | Hour deriving (Eq, Show)
+data TimeUnit = TYear | TMonth | TWeek | TDay | THour deriving (Eq, Show)
 
 newtype StockSymbol = StockSymbol Text deriving (Eq, Show) via Text
 

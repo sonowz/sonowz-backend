@@ -3,11 +3,15 @@ module Main where
 import Control.Concurrent (forkIO)
 import Database.PostgreSQL.Simple qualified as PGS
 import Options.Applicative
+import Polysemy.Embed (runEmbedded)
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 import Sonowz.StockNoti.Env (Env (..))
 import Sonowz.StockNoti.Imports
+import Sonowz.StockNoti.Stock.DataSource.AlphaVantage
+import Sonowz.StockNoti.Stock.DataSource.Effect (fetchWeekStockPrices)
+import Sonowz.StockNoti.Stock.Types (StockSymbol (..))
 
 data Config = Config WebAppEnv PGS.ConnectInfo Int
 
@@ -34,8 +38,17 @@ main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  (Config webEnv pgConnectInfo workerInterval) <- execParser opts
+  {- (Config webEnv pgConnectInfo workerInterval) <- execParser opts
   dbPool <- createConnPool pgConnectInfo
-  let env = Env dbPool workerInterval
+  let env = Env dbPool workerInterval -}
+
+  let action = do
+        timeSeries <- fetchWeekStockPrices (StockSymbol "NVDA")
+        embed (print timeSeries)
+
+  action
+    & runStockDataSourceAlphaVantage
+    & stdEffToIO
+    & runM
 
   pass
