@@ -1,19 +1,15 @@
 module Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser
   ( parseSearchResultArtist,
     parseSearchResultSong,
-    ParseException,
   )
 where
 
 import Data.Text qualified as T
+import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, Title, mkArtist, mkTitle)
 import Sonowz.Mp3tagAutofix.Imports
 import Text.HTML.TagSoup
-
-newtype ParseException = ParseException String deriving (Show, Typeable)
-
-instance Exception ParseException
 
 type HTMLParser a = [Tag Text] -> Either ParseException a
 
@@ -94,7 +90,7 @@ pSong html = case title of
       where
         msg = ParseException $ "No " <> show n <> "th selector exist!"
     maybeToExc :: Text -> Maybe a -> Either ParseException a
-    maybeToExc target = maybeToRight (ParseException $ "Failed to parse " <> toString target)
+    maybeToExc target = maybeToRight (ParseException $ "Failed to parse " <> target)
     checkNonEmpty :: Text -> [a] -> Either ParseException (NonEmpty a)
     checkNonEmpty target = maybeToExc target . nonEmpty
 

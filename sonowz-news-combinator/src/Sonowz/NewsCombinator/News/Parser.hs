@@ -5,13 +5,10 @@ module Sonowz.NewsCombinator.News.Parser
 where
 
 import Data.Time (UTCTime, defaultTimeLocale, parseTimeM)
+import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.News.Types (NewsItem (..))
 import Text.HTML.TagSoup (Tag (..), innerText, parseTags, partitions, renderTags, (~/=), (~==))
-
-newtype ParseException = ParseException String
-  deriving (Show)
-  deriving anyclass (Exception)
 
 type XMLParser a = [Tag Text] -> Either ParseException a
 
@@ -48,7 +45,7 @@ pAttrs :: XMLParser (Text, Text)
 pAttrs (TagOpen name _ : tags) = Right (name, value)
   where
     value = renderTags $ takeWhile (~/= s ("</" <> toString name <> ">")) tags
-pAttrs xml = Left (ParseException $ "'pAttrs' failed: " <> toString (renderTags xml))
+pAttrs xml = Left (ParseException $ "'pAttrs' failed: " <> renderTags xml)
 
 pGMTTime :: Text -> Either ParseException UTCTime
 pGMTTime (toString -> text) = maybeToException msg mbParsed
@@ -57,4 +54,4 @@ pGMTTime (toString -> text) = maybeToException msg mbParsed
     mbParsed = parseTimeM True defaultTimeLocale "%a, %d %b %Y %T GMT" text
 
 maybeToException :: String -> Maybe a -> Either ParseException a
-maybeToException msg = maybeToRight (ParseException msg)
+maybeToException msg = maybeToRight (ParseException $ toText msg)

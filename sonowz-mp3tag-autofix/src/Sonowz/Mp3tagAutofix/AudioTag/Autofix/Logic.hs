@@ -11,11 +11,11 @@ import Data.Text qualified as T
 import Relude.Extra.Newtype (un)
 import Relude.Extra.Tuple (fmapToFst)
 import Relude.Unsafe qualified as Unsafe
+import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Core.HTTP.Effect (HTTP, fetchURL)
 import Sonowz.Core.Time.Effect (Time, threadDelay)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser
-  ( ParseException,
-    parseSearchResultArtist,
+  ( parseSearchResultArtist,
     parseSearchResultSong,
   )
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Types

@@ -4,10 +4,10 @@ module Sonowz.Mp3tagAutofix.App
 where
 
 import Data.List ((\\))
+import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Logic (makeArtistFixes, makeArtistPool, runSearches)
-import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser (ParseException)
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag (..), Encoding (EncodingUtf8), unArtist)
 import Sonowz.Mp3tagAutofix.AudioTagIO.Effect
   ( AudioTagIO,
@@ -44,12 +44,12 @@ runMainFn env =
 type MainEfffects =
   Embed IO
     : Reader Env
-      : Time
-        : HTTP
-          : AudioTagIO
-            : Error ParseException
-              : Error HTagLibException
-                : StdEff
+    : Time
+    : HTTP
+    : AudioTagIO
+    : Error ParseException
+    : Error HTagLibException
+    : StdEff
 
 mainFn :: (Members MainEfffects r, HasCallStack) => Sem r ()
 mainFn = do
