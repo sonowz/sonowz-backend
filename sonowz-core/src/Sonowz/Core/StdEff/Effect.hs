@@ -40,14 +40,17 @@ stdEffToIO ::
   (Member (Embed IO) r, HasCallStack) => Sem (Error SomeException : StdLog : r) a -> Sem r a
 stdEffToIO m = runStdLogIO $ runError m >>= printException
   where
-    printException (Left e) = error ("Caught in 'stdEffToIO' : " <> show e)
+    printException (Left e) = error ("Caught in 'stdEffToIO' : " <> toText (displayException e))
     printException (Right x) = return x
 
 -- This catches all kinds of synchronous exceptions
 stdEffToIOFinal ::
   (Member (Final IO) r, HasCallStack) => Sem (Error SomeException : StdLog : r) a -> Sem r a
 stdEffToIOFinal m =
-  (errorToIOFinal (fromExceptionSem m) >>= printException) & raiseUnder & runStdLogIO & embedToFinal
+  ((errorToIOFinal . try . fromExceptionSem) m >>= printException . join)
+    & raiseUnder
+    & runStdLogIO
+    & embedToFinal
   where
-    printException (Left e) = error ("Caught in 'stdEffToIO' : " <> show e)
+    printException (Left e) = error ("Caught in 'stdEffToIO' : " <> toText (displayException e))
     printException (Right x) = return x

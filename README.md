@@ -12,3 +12,4 @@ All packages are maintained using one same GHC version, specified in `stack.yaml
 
 - Use `OverloadedRecordDot` extension when GHC version 9.x lands
 - Use `NamedRoutes` when `servant` version 19.x lands
+- Remove `Error SomeException` stack from StdEff and use `Control.Exception.catch` instead, therefore separating unchecked exceptions from effect stack
