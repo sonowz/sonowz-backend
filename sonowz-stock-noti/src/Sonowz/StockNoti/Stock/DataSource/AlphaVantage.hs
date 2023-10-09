@@ -36,13 +36,16 @@ runStockDataSourceAlphaVantage =
 
 fetchTimeSeries :: (Member HTTP r, Members StdEff r) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
 fetchTimeSeries apiTimeUnit symbol = do
+  logInfo $ "Started fetching stock time series from AlphaVantage (" <> show symbol <> ")"
   decoded <- eitherDecode . encodeUtf8 <$> fetchURL url
-  mapToStockTimeSeries <$> handleEither decoded
+  timeSeries <- mapToStockTimeSeries <$> handleEither decoded
+  logInfo $ "Fetched count: " <> (show . length . prices) timeSeries <> "."
+  return timeSeries
   where
     url = [uri|https://www.alphavantage.co/query|] {uriQuery = queryParams}
     queryParams =
       Query
-        [ ("function", "TIME_SERIES_" <> encodeUtf8 apiTimeUnit <> "_ADJUSTED"),
+        [ ("function", "TIME_SERIES_" <> encodeUtf8 apiTimeUnit),
           ("symbol", encodeUtf8 $ un @Text symbol),
           ("datatype", "json"),
           ("apikey", "3IRIGGU7NXGC9P6E")
@@ -72,9 +75,7 @@ data APIResponseTimeSeries = APIResponseTimeSeries
     high :: Double,
     low :: Double,
     close :: Double,
-    adjustedClose :: Double,
-    volume :: Double,
-    dividendAmount :: Double
+    volume :: Double
   }
   deriving (Show, Generic)
 
@@ -121,9 +122,7 @@ instance FromJSON (UTCTime -> APIResponseTimeSeries) where
     high <- obj .: "2. high" >>= readDouble
     low <- obj .: "3. low" >>= readDouble
     close <- obj .: "4. close" >>= readDouble
-    adjustedClose <- obj .: "5. adjusted close" >>= readDouble
-    volume <- obj .: "6. volume" >>= readDouble
-    dividendAmount <- obj .: "7. dividend amount" >>= readDouble
+    volume <- obj .: "5. volume" >>= readDouble
     pure $ \time -> APIResponseTimeSeries {..}
     where
       readDouble :: String -> Parser Double
