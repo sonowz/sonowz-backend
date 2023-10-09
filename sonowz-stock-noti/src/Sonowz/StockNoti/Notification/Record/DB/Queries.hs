@@ -26,7 +26,7 @@ CREATE TABLE public.stock_noti_record (
     uid serial PRIMARY KEY NOT NULL,
     stock_symbol text NOT NULL,
     noti_type text NOT NULL,
-    timestamp date NOT NULL,
+    timestamp date NOT NULL
 );
 -}
 

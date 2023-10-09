@@ -13,6 +13,7 @@ module Sonowz.Core.StdEff.Effect.Log
     logErrorIO,
     logExceptionIO,
     setStdLogActionLevel,
+    Severity (..),
     runStdLogIO,
     ignoreStdLog,
   )
@@ -33,6 +34,8 @@ import System.Console.ANSI
     SGR (..),
     setSGRCode,
   )
+
+-- TODO: fix callstack off-by-one error
 
 -- StdLog Effect --
 
@@ -150,8 +153,8 @@ sourcePaddingCount = 65
 
 showSeverity :: Severity -> Text
 showSeverity = \case
-  Debug -> color Green "DEBUG   "
-  Info -> color Blue "INFO    "
+  Debug -> color Blue "DEBUG   "
+  Info -> color Green "INFO    "
   Warning -> color Yellow "WARNING "
   Error -> color Red "ERROR   "
   where

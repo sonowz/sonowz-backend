@@ -21,14 +21,15 @@ import Sonowz.StockNoti.Notification.Record.DB.Types (StockNotiRecord' (..))
 import Sonowz.StockNoti.Notification.Types (StockNotificationType (..))
 import Sonowz.StockNoti.Stock.Types (StockSymbol)
 
-createNotification :: Members DBEffects r => StockSymbol -> StockNotificationType -> Day -> Sem r (Maybe Notification)
+createNotification :: (Members DBEffects r, HasCallStack) => StockSymbol -> StockNotificationType -> Day -> Sem r (Maybe Notification)
 createNotification stockSymbol notiType timestamp = withDBConn $ \conn -> do
   isAlreadyNotified <- checkAndInsertNotiRecord conn stockSymbol notiType timestamp
   if isAlreadyNotified
     then do
-      logDebug $ show stockSymbol <> " was already notified in " <> show timestamp
+      logDebug $ show stockSymbol <> " at " <> show timestamp <> " was already notified."
       return Nothing
     else do
+      logInfo $ "Creating notification for " <> show stockSymbol <> " in " <> show timestamp <> "..."
       maybeCreated <- liftIO $ insertNotification conn (makeNoti stockSymbol notiType timestamp)
       case maybeCreated of
         Just noti -> return $ Just noti
