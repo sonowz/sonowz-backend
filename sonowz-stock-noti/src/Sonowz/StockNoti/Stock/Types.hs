@@ -12,7 +12,7 @@ import Sonowz.StockNoti.Imports
 
 data TimeUnit = TYear | TMonth | TWeek | TDay | THour deriving (Eq, Show)
 
-newtype StockSymbol = StockSymbol Text deriving (Eq, Show) via Text
+newtype StockSymbol = StockSymbol Text deriving (Eq, Show, Read) via Text
 
 data StockTimeSeries (tu :: TimeUnit) = StockTimeSeries
   { symbol :: StockSymbol,

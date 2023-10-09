@@ -34,7 +34,7 @@ runStockDataSourceAlphaVantage =
           FetchHourStockPrices _ -> throw' (NotImplemented "hour is not implemented yet")
       )
 
-fetchTimeSeries :: (Member HTTP r, Members StdEff r) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
+fetchTimeSeries :: (Member HTTP r, Members StdEff r, HasCallStack) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
 fetchTimeSeries apiTimeUnit symbol = do
   logInfo $ "Started fetching stock time series from AlphaVantage (" <> show symbol <> ")"
   decoded <- eitherDecode . encodeUtf8 <$> fetchURL url
