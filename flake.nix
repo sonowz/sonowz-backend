@@ -73,6 +73,7 @@
           ghc = haskellPkgs.ghc;
           stack = stack-wrapped;
           buildInputs = requirements;
+          enterShell = ''eval "$(stack --bash-completion-script stack)"'';
         }).overrideAttrs (final: prev: {
           buildInputs = prev.buildInputs ++ devRequirements;
         });
