@@ -7,6 +7,7 @@ import Control.Concurrent (threadDelay)
 import Data.Time (UTCTime (utctDay))
 import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects)
+import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.StockNoti.Env (Env (..))
 import Sonowz.StockNoti.Imports
 import Sonowz.StockNoti.Notification (StockNotificationType (NotiDeadCross), createNotification)
@@ -31,6 +32,7 @@ runApp env = infinitely $ do
       mainLoop (envStockSymbols env)
         & runStockDataSourceAlphaVantage
         & runReader (envPgConnection env)
+        & (runError @ParseException >=> either logException pure)
         & embedToFinal
         & resourceToIOFinal
         & stdEffToIOFinal
@@ -39,7 +41,7 @@ runApp env = infinitely $ do
 type MainLoopEffects = Final IO : StockDataSource : DBEffects
 
 mainLoop :: (HasCallStack, Members MainLoopEffects r) => [StockSymbol] -> Sem r ()
-mainLoop stocks = forM_ stocks $ \stock -> flip catch logException $ fromExceptionSem $ do
+mainLoop stocks = forM_ stocks $ \stock -> runError @SomeException . flip catch logException . fromExceptionSem $ do
   logInfo $ "Checking " <> show stock <> "..."
   stockTimeSeries <- fetchDayStockPrices stock
   let smaPeriodShort = 5

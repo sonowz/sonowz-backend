@@ -6,12 +6,10 @@ module Sonowz.Core.Imports
     module Polysemy.Reader,
     module Polysemy.State,
     lengthText,
-    unsafeLiftIO,
     type (<>),
   )
 where
 
-import Control.Monad.IO.Class qualified as IO
 import Data.Text qualified as T
 import Polysemy
 import Polysemy.AtomicState
@@ -32,8 +30,6 @@ import Relude hiding
     execState,
     fromException,
     gets,
-    -- This function is redefined in 'Sonowz.Core.StdEff.Effect'
-    liftIO,
     modify,
     modify',
     runReader,
@@ -45,10 +41,6 @@ import Relude hiding
 
 lengthText :: Text -> Int
 lengthText = T.length
-
--- The original 'liftIO' function
-unsafeLiftIO :: MonadIO m => IO a -> m a
-unsafeLiftIO = IO.liftIO
 
 -- Type-level list concatenation
 type (<>) a b = Append a b

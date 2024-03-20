@@ -19,7 +19,8 @@ import Sonowz.Noti.Notification.Types (Notification (..), NotificationType (..))
 
 runApp :: HasCallStack => Env -> IO ()
 runApp Env {..} =
-  forever (catch (fromExceptionSem doStreamLoop) handleError)
+  doStreamLoop
+    & forever . runError @SomeException . flip catch handleError . fromExceptionSem
     & runMQueueStream notificationHandler
     & runMQueueDBNoti
     & runMQueueVoid

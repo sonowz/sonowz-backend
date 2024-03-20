@@ -42,16 +42,16 @@ forkRaytraceDaemon pool = do
       (error "Attempt to access uninitialized CurrentRunInfo" :: CurrentRunInfo)
   doFork
     & runMQueueDBDaemon
-    & stdEffToIO
     & runMQueueState
-    & subsume -- For 'runMQueueState'
+    & subsume @(AtomicState [RunInfo]) -- For 'runMQueueState'
     & runAtomicStateTVar runInfoQueue
     & runAtomicStateTVar currentRunInfo
     & runReader pool
     & timeToIO
+    & embedToFinal
     & asyncToIOFinal
     & resourceToIOFinal
-    & embedToFinal
+    & stdEffToIOFinal
     & runFinal
   where
     doFork ::

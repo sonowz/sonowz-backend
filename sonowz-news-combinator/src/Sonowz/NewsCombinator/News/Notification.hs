@@ -3,6 +3,7 @@ module Sonowz.NewsCombinator.News.Notification
   )
 where
 
+import Control.Exception.Safe qualified as E
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.DB.Utils (DatabaseException (..))
 import Sonowz.NewsCombinator.Imports
@@ -20,7 +21,7 @@ createNotification rule newsItems = withDBConn $ \conn -> do
   maybeCreated <- liftIO $ insertNotification conn (makeNoti rule newsItems)
   case maybeCreated of
     Just noti -> return noti
-    Nothing -> throw' (DatabaseException "Could not insert notification!")
+    Nothing -> liftIO $ E.throw (DatabaseException "Could not insert notification!")
 
 makeNoti :: NewsScrapRule -> [NewsItem] -> Notification
 makeNoti rule items = Notification Email title body Nothing

@@ -36,13 +36,16 @@ runRuleWorker env = forever $ do
     workerIO env =
       worker
         & runHTTPIO
-        & mapError (toException @HttpException)
+        & runError' @HttpException
         & runReader (envPgConnection env)
         & timeToIO
         & embedToFinal
         & resourceToIOFinal
         & stdEffToIOFinal
         & runFinal @IO
+      where
+        runError' :: forall e r a. (Exception e, Member (Embed IO) r) => Sem (Error e : r) a -> Sem r a
+        runError' = liftIO . either E.throw pure <=< runError
 
 type WorkerEffects = Final IO : Time : HTTP : DBEffects
 
@@ -50,7 +53,8 @@ worker :: HasCallStack => Members WorkerEffects r => Sem r ()
 worker = do
   rules <- filter isEnabled <$> withDBConn (liftIO . getNewsScrapRules)
   mapM_
-    ( \rule -> flip (catch @SomeException) logExc $ do
+    -- TODO: refactor this effect stack
+    ( \rule -> runError @SomeException . flip catch logException . fromExceptionSem $ mapError @HttpException toException $ do
         -- Continues even when exception is thrown
         logDebug ("Evaluate \"" <> keyword rule <> "\"...")
         (newsItems, rule') <- mapError (toException @ParseException) $ evalNewsScrapRule rule
@@ -60,6 +64,3 @@ worker = do
         withDBConn (\conn -> liftIO $ updateNewsScrapRule conn rule')
     )
     rules
-  where
-    logExc :: Member StdLog r => SomeException -> Sem r ()
-    logExc e = logException e >> pass

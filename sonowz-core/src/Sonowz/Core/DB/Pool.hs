@@ -22,15 +22,15 @@ maxDBConn :: Int
 maxDBConn = 10
 
 createConnPool :: (MonadIO m, HasCallStack) => ConnectInfo -> m DBConnPool
-createConnPool connInfo = unsafeLiftIO $ do
+createConnPool connInfo = liftIO $ do
   logDebugIO $ "DB connection pool was created. (Max connection: " <> show maxDBConn <> ")"
   DBConnPool <$> createPool (connect connInfo) close 1 10 maxDBConn
 
 withDBConnIO :: DBConnPool -> (Connection -> IO a) -> IO a
 withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction
   where
-    takeAction = unsafeLiftIO (getWorkingConnection pool)
-    putAction = unsafeLiftIO . uncurry (flip putResource)
+    takeAction = liftIO (getWorkingConnection pool)
+    putAction = liftIO . uncurry (flip putResource)
     doAction = action . fst
 
 withDBConn :: Members DBEffects r => (Connection -> Sem r a) -> Sem r a

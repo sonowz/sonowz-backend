@@ -1,53 +1,34 @@
 module Sonowz.Core.StdEff.Effect
   ( module Sonowz.Core.StdEff.Effect.Log,
     StdEff,
-    throw',
-    liftIO,
     webLiftIO,
-    stdEffToIO,
     stdEffToIOFinal,
   )
 where
 
+import Control.Exception.Safe qualified as E
+import Relude.Extra.Bifunctor (firstF)
 import Servant (ServerError (errBody), err500)
 import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect.Log
 
--- Note: In order to catch all exceptions
--- including those not thrown by 'Polysemy.Error.throw', (e.g. 'Control.Exception.throw')
--- one should use `fromExceptionSem (catch _action_)`
--- rather than `catch _action_`.
+type StdEff = '[StdLog]
 
-type StdEff = '[Error SomeException, StdLog]
-
--- Utility function for 'Polysemy.Error.throw'
-throw' :: forall e r a. (Member (Error SomeException) r, Exception e) => e -> Sem r a
-throw' = throw . toException
-
--- This embraces all IO exceptions into 'Error SomeException' effect
--- The original function was renamed as 'unsafeLiftIO' in 'Sonowz.Core.Imports'
-liftIO :: Members '[Error SomeException, Embed IO] r => IO a -> Sem r a
-liftIO = fromException
-
--- 'liftIO' variant in web servers
+-- TODO: move this to another file
+-- wraps exception to ServerError
 -- Example: withDBConn $ \conn -> webLiftIO (someQuery ...)
 -- Warning: This exposes exception message to client side
 webLiftIO :: Members '[Error ServerError, Embed IO] r => IO a -> Sem r a
-webLiftIO = fromExceptionVia (\(e :: SomeException) -> err500 {errBody = show e})
-
--- This throws exceptions which are not thrown by 'Polysemy.Error.throw'
-stdEffToIO ::
-  (Member (Embed IO) r, HasCallStack) => Sem (Error SomeException : StdLog : r) a -> Sem r a
-stdEffToIO m = runStdLogIO $ runError m >>= printException
+webLiftIO = fromEitherM . mapToServerError
   where
-    printException (Left e) = error ("Caught in 'stdEffToIO' : " <> toText (displayException e))
-    printException (Right x) = return x
+    mapToServerError :: IO a -> IO (Either ServerError a)
+    mapToServerError = firstF (\e -> err500 {errBody = show e}) . E.tryAny
 
--- This catches all kinds of synchronous exceptions
+-- This catches all exceptions, including asynchronous exceptions
 stdEffToIOFinal ::
-  (Member (Final IO) r, HasCallStack) => Sem (Error SomeException : StdLog : r) a -> Sem r a
+  (Member (Final IO) r, HasCallStack) => Sem (StdLog : r) a -> Sem r a
 stdEffToIOFinal m =
-  ((errorToIOFinal . try . fromExceptionSem) m >>= printException . join)
+  ((errorToIOFinal . try . fromExceptionSem @SomeException . raise) m >>= printException . join)
     & raiseUnder
     & runStdLogIO
     & embedToFinal

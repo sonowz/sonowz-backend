@@ -41,6 +41,7 @@ dependencies:
   - pretty-simple
   - random
   - relude
+  - safe-exceptions
   - sonowz-core
   - tagsoup
   - text

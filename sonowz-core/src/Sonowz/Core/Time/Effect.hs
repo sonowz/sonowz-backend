@@ -23,13 +23,15 @@ makeSem ''Time
 
 timeToIO :: Member (Embed IO) r => Sem (Time : r) a -> Sem r a
 timeToIO = interpretH $ \case
-  ThreadDelay microsec -> pureT =<< unsafeLiftIO (T.threadDelay microsec)
+  ThreadDelay microsec -> pureT =<< liftIO (T.threadDelay microsec)
   Timeout microsec action -> do
     action' <- runT action
     nothing <- pureT Nothing
     withLowerToIO $ \lower _ -> do
       let done = lower . raise . timeToIO
-      T.timeout microsec (done action') >>= \case
-        Just x -> return (Just <$> x)
-        Nothing -> return nothing
-  GetTime -> pureT =<< unsafeLiftIO getZonedTime
+          -- sequence' = maybe nothing sequence
+          sequence' = \case
+            Nothing -> nothing
+            Just x -> Just <$> x
+      sequence' <$> T.timeout microsec (done action')
+  GetTime -> pureT =<< liftIO getZonedTime

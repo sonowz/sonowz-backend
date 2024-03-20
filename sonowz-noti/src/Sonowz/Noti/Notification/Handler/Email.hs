@@ -18,7 +18,7 @@ data EmailConfig = EmailConfig
 
 generateEmailNotification ::
   forall r.
-  Members '[Reader EmailConfig, Error SomeException, Embed IO] r =>
+  Members '[Reader EmailConfig, Embed IO] r =>
   Notification ->
   Sem r ()
 generateEmailNotification noti = do

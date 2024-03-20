@@ -14,4 +14,4 @@ api :: Proxy RaytraceWsAPI
 api = Proxy
 
 server :: Env -> Server RaytraceWsAPI
-server Env {..} = unsafeLiftIO . websocketHandler envPgConnection
+server Env {..} = liftIO . websocketHandler envPgConnection

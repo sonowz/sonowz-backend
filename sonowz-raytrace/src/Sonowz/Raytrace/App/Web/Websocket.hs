@@ -8,6 +8,7 @@ import Network.WebSockets qualified as WS
 import Polysemy.Async (Async, asyncToIOFinal)
 import Polysemy.Async qualified as P
 import Polysemy.Resource (Resource, bracket, finally, resourceToIOFinal)
+import Relude.Extra.Bifunctor (firstF)
 import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
 import Sonowz.Core.MessageQueue.Effect (MessageQueue, enqueue)
 import Sonowz.Core.MessageQueueThread.Effect
@@ -53,15 +54,16 @@ websocketHandler dbPool wsConn =
     & runWebsocketToIO wsConn
     & runMQueueDBDaemon
     & runReader dbPool
-    & stdEffToIO
     & timeToIO
+    & (runError @WSException >=> either logException pure)
+    & embedToFinal
     & asyncToIOFinal
     & resourceToIOFinal
-    & embedToFinal
+    & stdEffToIOFinal
     & runFinal
   where
     websocketHandler' ::
-      ( Members '[Websocket, Async, Resource, Time, MessageQueue DaemonMessage] r,
+      ( Members '[Websocket, Async, Resource, Time, MessageQueue DaemonMessage, Error WSException] r,
         Members DBEffects r
       ) =>
       Sem r ()
@@ -87,20 +89,19 @@ forkWaitProgressThreads servantId' = do
     else logError "'pingThread' was aborted."
   pass
 
-getRunnerConfig :: (Members '[Websocket, Time] r, Members StdEff r) => Sem r Config
+getRunnerConfig :: (Members '[Websocket, Time, Error WSException] r) => Sem r Config
 getRunnerConfig = receiveText >>= makeRunnerConfig . encodeUtf8
   where
-    receiveText :: (Members '[Websocket, Time] r, Members StdEff r) => Sem r Text
+    receiveText :: Members '[Websocket, Time, Error WSException] r => Sem r Text
     receiveText =
       timeout (3 * 10 ^ 6) getWSMessage >>= \case
         Just (WSMessage text) -> return text
-        Nothing -> throw' (WSException "Failed to receive config from client")
+        Nothing -> throw (WSException "Failed to receive config from client")
 
-    makeRunnerConfig :: Members StdEff r => LByteString -> Sem r Config
+    makeRunnerConfig :: Member (Error WSException) r => LByteString -> Sem r Config
     makeRunnerConfig json = case jsonToConfig json of
       DecodeFail errormsg ->
-        let exception = WSException $ "Failed to parse config: " <> errormsg
-         in logException exception >> throw' exception
+        throw $ WSException $ "Failed to parse config: " <> errormsg
       ConfigSuccess config -> return config
 
 enqueueRaytrace :: (Members DBEffects r, HasCallStack) => Config -> Sem r ServantId

@@ -22,7 +22,6 @@ import Opaleye
 import Opaleye.Aggregate qualified as Agg
 import Opaleye.Internal.Manipulation (Updater (..))
 import Sonowz.Core.Imports hiding (null)
-import Sonowz.Core.StdEff.Effect
 
 newtype DatabaseException = DatabaseException Text
   deriving (Show)
@@ -45,13 +44,13 @@ fromFieldSimple parse field = \case
 maybeToExceptionIO :: HasCallStack => Text -> Maybe a -> IO a
 maybeToExceptionIO msg = withFrozenCallStack $ maybe (E.throw $ DatabaseException msg) return
 
-throwException :: Members StdEff r => Text -> Sem r a
-throwException text = throw' (DatabaseException $ "Error occurred while " <> text)
+throwException :: Member (Embed IO) r => Text -> Sem r a
+throwException text = liftIO $ E.throw (DatabaseException $ "Error occurred while " <> text)
 
-boolToException :: Members StdEff r => Text -> Sem r Bool -> Sem r ()
+boolToException :: Member (Embed IO) r => Text -> Sem r Bool -> Sem r ()
 boolToException actionText action = unlessM action (throwException actionText)
 
-maybeToException :: Members StdEff r => Text -> Sem r (Maybe a) -> Sem r a
+maybeToException :: Member (Embed IO) r => Text -> Sem r (Maybe a) -> Sem r a
 maybeToException actionText action =
   action >>= \case
     Nothing -> throwException actionText

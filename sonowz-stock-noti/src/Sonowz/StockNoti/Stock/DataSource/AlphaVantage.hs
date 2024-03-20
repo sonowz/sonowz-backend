@@ -5,6 +5,7 @@ module Sonowz.StockNoti.Stock.DataSource.AlphaVantage
   )
 where
 
+import Control.Exception.Safe qualified as E
 import Data.Aeson
 import Data.Aeson.Key qualified as A
 import Data.Aeson.KeyMap (keys)
@@ -21,20 +22,20 @@ import Sonowz.StockNoti.Stock.Types (StockPrice (..), StockSymbol (..), StockTim
 import URI.ByteString
 import URI.ByteString.QQ (uri)
 
-runStockDataSourceAlphaVantage :: (Member (Embed IO) r, Members StdEff r) => Sem (StockDataSource : r) a -> Sem r a
+runStockDataSourceAlphaVantage :: Members (Embed IO : Error ParseException : StdEff) r => Sem (StockDataSource : r) a -> Sem r a
 runStockDataSourceAlphaVantage =
-  mapError @HttpException toException
+  mapError @HttpException (ParseException . toText . displayException)
     . runHTTPIO
     . reinterpret2
       ( \case
-          FetchYearStockPrices _ -> throw' (NotImplemented "year API does not exist")
+          FetchYearStockPrices _ -> liftIO $ E.throw (NotImplemented "year API does not exist")
           FetchMonthStockPrices symbol -> coerce <$> fetchTimeSeries "MONTHLY" symbol
           FetchWeekStockPrices symbol -> coerce <$> fetchTimeSeries "WEEKLY" symbol
           FetchDayStockPrices symbol -> coerce <$> fetchTimeSeries "DAILY" symbol
-          FetchHourStockPrices _ -> throw' (NotImplemented "hour is not implemented yet")
+          FetchHourStockPrices _ -> liftIO $ E.throw (NotImplemented "hour is not implemented yet")
       )
 
-fetchTimeSeries :: (Member HTTP r, Members StdEff r, HasCallStack) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
+fetchTimeSeries :: (Members (HTTP : Error ParseException : StdEff) r, HasCallStack) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
 fetchTimeSeries apiTimeUnit symbol = do
   logDebug $ "Started fetching stock time series from AlphaVantage (" <> show symbol <> ")"
   decoded <- eitherDecode . encodeUtf8 <$> fetchURL url
@@ -50,7 +51,7 @@ fetchTimeSeries apiTimeUnit symbol = do
           ("datatype", "json"),
           ("apikey", "3IRIGGU7NXGC9P6E")
         ]
-    handleEither = fromEither . first (toException . ParseException . toText)
+    handleEither = fromEither . first (ParseException . toText)
 
 -- JSON response parsing --
 

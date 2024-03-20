@@ -40,7 +40,7 @@ makeSem ''Session
 
 runSessionToIO :: Member (Embed IO) r => Sem (Session v : r) a -> Sem r a
 runSessionToIO action = do
-  storeRef <- unsafeLiftIO (newIORef mempty)
+  storeRef <- liftIO (newIORef mempty)
   timeToIO . runReader storeRef . runSessionAsReaderIORef . raiseUnder2 $ action
 
 type ReaderIORefEffects v = '[Embed IO, Time, Reader (SessionRef v)]
@@ -56,7 +56,7 @@ runSessionAsReaderIORef = interpret $ \case
     return k
   where
     askStore :: Member (Reader (SessionRef v)) r => Sem r (SessionStore v)
-    askStore = unsafeLiftIO . readIORef =<< ask
+    askStore = liftIO . readIORef =<< ask
     checkValid :: Member Time r => (LocalTime, v) -> Sem r (Maybe v)
     checkValid (expiry, v) = do
       time <- zonedTimeToLocalTime <$> getTime
@@ -71,5 +71,5 @@ runSessionAsReaderIORef = interpret $ \case
     generateKey = T.take 64 . show . sha256 . show <$> generateNumber
       where
         sha256 = hash :: ByteString -> Digest SHA256
-        generateNumber = unsafeLiftIO randomIO :: Member (Embed IO) r => Sem r Int64
+        generateNumber = liftIO randomIO :: Member (Embed IO) r => Sem r Int64
     toFixed = MkFixed . fromIntegral

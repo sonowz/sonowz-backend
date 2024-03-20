@@ -7,6 +7,7 @@ module Sonowz.Auth.Web.OAuth.Login
   )
 where
 
+import Control.Exception.Safe qualified as E
 import Network.HTTP.Client (Manager)
 import Network.HTTP.Types qualified as HTTP
 import Network.OAuth.OAuth2 (ExchangeToken (..))
@@ -94,7 +95,7 @@ loginWithOAuth fetch exchangeToken redirectURL = do
   mApplyCookies <- liftIO $ acceptLogin cookieSettings jwtSettings user
   cookieHeaders <-
     getHeaders <$> case mApplyCookies of
-      Nothing -> throw' $ OAuthException "Unexpected Error"
+      Nothing -> liftIO $ E.throw $ OAuthException "Unexpected Error"
       Just applyCookies -> return $ applyCookies NoContent
   let redirectHeader = ("Location", serializeURIRef' redirectURL)
   -- Return SetCookie & Redirect headers

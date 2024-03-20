@@ -4,6 +4,7 @@ module Sonowz.StockNoti.Notification
   )
 where
 
+import Control.Exception.Safe qualified as E
 import Data.Time (Day)
 import Database.PostgreSQL.Simple (Connection)
 import Sonowz.Core.DB.CRUD (CRUDQueries (..))
@@ -33,7 +34,7 @@ createNotification stockSymbol notiType timestamp = withDBConn $ \conn -> do
       maybeCreated <- liftIO $ insertNotification conn (makeNoti stockSymbol notiType timestamp)
       case maybeCreated of
         Just noti -> return $ Just noti
-        Nothing -> throw' (DatabaseException "Could not insert notification!")
+        Nothing -> liftIO $ E.throw (DatabaseException "Could not insert notification!")
 
 makeNoti :: StockSymbol -> StockNotificationType -> Day -> Notification
 makeNoti stockSymbol notiType timestamp = Notification Email title body Nothing

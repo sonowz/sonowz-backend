@@ -3,8 +3,8 @@ module Sonowz.NewsCombinator.Rule.Executor
   )
 where
 
-import Control.Exception (AssertionFailed (..))
 import Data.Time (UTCTime, addUTCTime, zonedTimeToUTC)
+import Sonowz.Core.Exception.Types (ParseException (ParseException))
 import Sonowz.Core.HTTP.Effect (HTTP, fetchURL)
 import Sonowz.Core.Time.Effect (Time, getTime)
 import Sonowz.NewsCombinator.Imports
@@ -29,7 +29,11 @@ evalNewsScrapRule rule = do
     Nothing -> return (Nothing, whenFail rule)
   where
     assertRuleEnabled =
-      if not (isEnabled rule) then throw' (AssertionFailed "Rule is disabled!") else pass
+      if not (isEnabled rule)
+        then
+          let e = ParseException "Rule is disabled!"
+           in logException e >> throw e
+        else pass
     whenSuccess rule
       | isOneTimeRule rule = rule {isEnabled = False}
       | otherwise = rule
@@ -38,6 +42,6 @@ evalNewsScrapRule rule = do
 checkNewsRule :: [NewsItem] -> NewsScrapRule -> UTCTime -> Maybe [NewsItem]
 checkNewsRule items rule now = do
   let recentItems = filter (\item -> getDate item > baseTime) items
-      baseTime = addUTCTime (- (successPeriod rule)) now
+      baseTime = addUTCTime (-(successPeriod rule)) now
   guard (length recentItems >= successCount rule)
   return recentItems

@@ -22,7 +22,7 @@ testHandler =
     action = do
       chan <- getOrCreateChannel sonowzId
       restCall' (CreateMessage chan "hello world!")
-      embed @DiscordHandler $ unsafeLiftIO $ print "done"
+      embed @DiscordHandler $ liftIO $ print "done"
       pass
 
 isDM :: Channel -> Bool

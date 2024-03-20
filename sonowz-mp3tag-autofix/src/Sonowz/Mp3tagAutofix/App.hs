@@ -3,6 +3,7 @@ module Sonowz.Mp3tagAutofix.App
   )
 where
 
+import Control.Exception.Safe qualified as E
 import Data.List ((\\))
 import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
@@ -32,14 +33,17 @@ runMainFn env =
   mainFn
     & runReader env
     & runHTTPIO
-    & mapError @HttpException toException
     & runAudioTagIOIO
-    & mapError @HTagLibException toException
-    & (mapError @ParseException toException . flip (catch @ParseException) (error . show))
     & timeToIO
+    & runError' @HttpException
+    & runError' @HTagLibException
+    & runError' @ParseException
     & embedToFinal
     & stdEffToIOFinal
     & runFinal @IO
+  where
+    runError' :: forall e r a. (Exception e, Member (Embed IO) r) => Sem (Error e : r) a -> Sem r a
+    runError' = liftIO . either E.throw pure <=< runError
 
 type MainEfffects =
   Embed IO
@@ -146,7 +150,7 @@ getTargetFileList dir = do
   unlessM
     (liftIO (doesDirectoryExist dir))
     ( let errorMsg = "No directory named " <> toText dir
-       in logError errorMsg >> throw' (MainException $ toString errorMsg)
+       in logError errorMsg >> (liftIO . E.throw . MainException . toString) errorMsg
     )
   dirContents <- liftIO $ (dir </>) <<$>> listDirectory dir
   (subdirs, dirFiles) <- liftIO $ partitionM doesDirectoryExist dirContents
