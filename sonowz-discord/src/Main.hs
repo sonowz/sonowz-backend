@@ -3,6 +3,8 @@ module Main where
 import Discord
 import Discord.Internal.Rest (Channel (ChannelDirectMessage), DiscordId (DiscordId), User (userId), UserId)
 import Discord.Requests
+import Polysemy.Embed (runEmbedded)
+import Sonowz.Core.Error.Effect (unsafeErrorToIO)
 import Sonowz.Discord.Imports
 import Sonowz.Discord.REST.Effect (DiscordREST, restCall', runDiscordRESTIO)
 import Sonowz.Discord.Utils (getOrCreateChannel)
@@ -14,8 +16,8 @@ testHandler :: DiscordHandler ()
 testHandler =
   action
     & runDiscordRESTIO
-    & runError
-    & fmap (either (error . show) id)
+    & unsafeErrorToIO
+    & runEmbedded @IO liftIO
     & runM
   where
     action :: Members [Embed DiscordHandler, DiscordREST] r => Sem r ()

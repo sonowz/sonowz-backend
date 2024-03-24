@@ -8,8 +8,8 @@ import Network.WebSockets qualified as WS
 import Polysemy.Async (Async, asyncToIOFinal)
 import Polysemy.Async qualified as P
 import Polysemy.Resource (Resource, bracket, finally, resourceToIOFinal)
-import Relude.Extra.Bifunctor (firstF)
 import Sonowz.Core.DB.Pool (DBConnPool, DBEffects)
+import Sonowz.Core.Error.Effect (runErrorAsLogging)
 import Sonowz.Core.MessageQueue.Effect (MessageQueue, enqueue)
 import Sonowz.Core.MessageQueueThread.Effect
   ( StreamHandler,
@@ -55,7 +55,7 @@ websocketHandler dbPool wsConn =
     & runMQueueDBDaemon
     & runReader dbPool
     & timeToIO
-    & (runError @WSException >=> either logException pure)
+    & runErrorAsLogging @WSException
     & embedToFinal
     & asyncToIOFinal
     & resourceToIOFinal

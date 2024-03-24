@@ -40,5 +40,5 @@ main = do
   dbPool <- createConnPool pgConnectInfo
   let env = Env dbPool workerInterval
 
-  void $ forkIO $ runRuleWorker env
+  void $ forkIO $ void $ runRuleWorker env
   runServer webEnv env

@@ -5,6 +5,7 @@ where
 
 import Control.Exception.Safe qualified as E
 import Data.List ((\\))
+import Sonowz.Core.Error.Effect (runErrorAsLogging)
 import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
 import Sonowz.Core.Time.Effect (Time, timeToIO)
@@ -35,15 +36,12 @@ runMainFn env =
     & runHTTPIO
     & runAudioTagIOIO
     & timeToIO
-    & runError' @HttpException
-    & runError' @HTagLibException
-    & runError' @ParseException
+    & runErrorAsLogging @HttpException
+    & runErrorAsLogging @HTagLibException
+    & runErrorAsLogging @ParseException
     & embedToFinal
     & stdEffToIOFinal
     & runFinal @IO
-  where
-    runError' :: forall e r a. (Exception e, Member (Embed IO) r) => Sem (Error e : r) a -> Sem r a
-    runError' = liftIO . either E.throw pure <=< runError
 
 type MainEfffects =
   Embed IO

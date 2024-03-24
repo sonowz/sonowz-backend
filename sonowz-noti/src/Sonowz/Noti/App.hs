@@ -2,6 +2,7 @@ module Sonowz.Noti.App where
 
 import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
+import Sonowz.Core.Error.Effect (foreverCatch)
 import Sonowz.Core.MessageQueue.Effect.Void (runMQueueVoid)
 import Sonowz.Core.MessageQueueThread.Effect
   ( StreamHandler,
@@ -9,7 +10,7 @@ import Sonowz.Core.MessageQueueThread.Effect
     doStreamLoop,
     runMQueueStream,
   )
-import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIO)
+import Sonowz.Core.Time.Effect (threadDelay, timeToIO)
 import Sonowz.Noti.Env (Env (..))
 import Sonowz.Noti.Imports
 import Sonowz.Noti.MessageQueue.DB (runMQueueDBNoti)
@@ -17,10 +18,10 @@ import Sonowz.Noti.Notification.DB.Queries (deleteNotificationByUid)
 import Sonowz.Noti.Notification.Handler.Email (EmailConfig, generateEmailNotification)
 import Sonowz.Noti.Notification.Types (Notification (..), NotificationType (..))
 
-runApp :: HasCallStack => Env -> IO ()
+runApp :: HasCallStack => Env -> IO Void
 runApp Env {..} =
-  doStreamLoop
-    & forever . runError @SomeException . flip catch handleError . fromExceptionSem
+  (doStreamLoop >> threadDelay (60 * 10 ^ 6))
+    & foreverCatch
     & runMQueueStream notificationHandler
     & runMQueueDBNoti
     & runMQueueVoid
@@ -31,12 +32,6 @@ runApp Env {..} =
     & resourceToIOFinal
     & stdEffToIOFinal
     & runFinal @IO
-  where
-    handleError :: Members '[Time, StdLog] r => SomeException -> Sem r ()
-    handleError e = do
-      logError "Critical error, sleeping for 1 minute... (details below)"
-      logException e
-      threadDelay (60 * 10 ^ 6)
 
 type HandlerEffects = Reader EmailConfig : Embed IO : DBEffects
 

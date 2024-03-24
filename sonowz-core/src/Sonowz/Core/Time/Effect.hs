@@ -15,7 +15,7 @@ import Sonowz.Core.Imports
 import System.Timeout qualified as T
 
 data Time m a where
-  ThreadDelay :: Int -> Time m ()
+  ThreadDelay :: Integer -> Time m ()
   Timeout :: Int -> m a -> Time m (Maybe a)
   GetTime :: Time m ZonedTime
 
@@ -23,7 +23,7 @@ makeSem ''Time
 
 timeToIO :: Member (Embed IO) r => Sem (Time : r) a -> Sem r a
 timeToIO = interpretH $ \case
-  ThreadDelay microsec -> pureT =<< liftIO (T.threadDelay microsec)
+  ThreadDelay microsec -> pureT =<< liftIO (threadDelayInteger microsec)
   Timeout microsec action -> do
     action' <- runT action
     nothing <- pureT Nothing
@@ -35,3 +35,8 @@ timeToIO = interpretH $ \case
             Just x -> Just <$> x
       sequence' <$> T.timeout microsec (done action')
   GetTime -> pureT =<< liftIO getZonedTime
+
+threadDelayInteger :: Integer -> IO ()
+threadDelayInteger t
+  | t > 10 ^ 9 = T.threadDelay (10 ^ 9) >> threadDelayInteger (t - 10 ^ 9)
+  | otherwise = T.threadDelay (fromIntegral t)

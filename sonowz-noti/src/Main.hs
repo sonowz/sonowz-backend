@@ -26,7 +26,7 @@ pConfig = Config <$> pEmailConfig <*> pPGSConnectInfo
 opts :: ParserInfo Config
 opts = info (helper <*> pConfig) (fullDesc <> progDesc "Notification generator")
 
-main :: IO ()
+main :: IO Void
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
