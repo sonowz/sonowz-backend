@@ -10,8 +10,7 @@ All packages are maintained using one same GHC version, specified in `stack.yaml
 
 # TODOs
 
-- Use `OverloadedRecordDot` extension when GHC version 9.x lands
 - Use `NamedRoutes` when `servant` version 19.x lands
-- Refactor common logics in main apps
-  - `runError` resolved with `logException`
-  - run forever by catching all exceptions
+- Update to GHC 9.10
+  - Use `GHC2024` language edition
+  - Adapt to [exception backtrace](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0330-exception-backtraces.rst)
