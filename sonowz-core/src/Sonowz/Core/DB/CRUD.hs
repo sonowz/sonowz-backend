@@ -18,18 +18,18 @@ import Opaleye
 import Sonowz.Core.DB.Utils (AlternativeUpdater, updateAlternative)
 import Sonowz.Core.Imports
 
-data CRUDQueries item citem uid = CRUDQueries
-  { crudList :: Connection -> IO [item],
-    crudRead :: Connection -> uid -> IO (Maybe item),
-    crudCreate :: Connection -> citem -> IO (Maybe item),
-    crudUpdate :: Connection -> uid -> citem -> IO (Maybe item),
+data CRUDQueries dto wdto uid = CRUDQueries
+  { crudList :: Connection -> IO [dto],
+    crudRead :: Connection -> uid -> IO (Maybe dto),
+    crudCreate :: Connection -> wdto -> IO (Maybe dto),
+    crudUpdate :: Connection -> uid -> wdto -> IO (Maybe dto),
     crudDelete :: Connection -> uid -> IO Bool
   }
 
 -- Utility function for generating all CRUD queries
 getCRUDQueries ::
-  ( Default FromFields r item,
-    Default ToFields citem w,
+  ( Default FromFields r dto,
+    Default ToFields wdto w,
     Default Unpackspec r r,
     Default Updater r w,
     Default AlternativeUpdater w w,
@@ -37,7 +37,7 @@ getCRUDQueries ::
   ) =>
   Table w r ->
   (r -> Field uidcol) ->
-  CRUDQueries item citem uid
+  CRUDQueries dto wdto uid
 getCRUDQueries table rowToUid =
   CRUDQueries
     (list table)
@@ -58,15 +58,15 @@ qSelectByUid table rowToUid uid = proc () -> do
   returnA -< selected
 
 list ::
-  (HasCallStack, Default FromFields r hask, Default Unpackspec r r) =>
+  (HasCallStack, Default FromFields r dto, Default Unpackspec r r) =>
   Table w r ->
   Connection ->
-  IO [hask]
+  IO [dto]
 list table conn = withTransaction conn $ runSelect conn (selectTable table)
 
 read ::
   ( HasCallStack,
-    Default FromFields r hask,
+    Default FromFields r dto,
     Default Unpackspec r r,
     Default ToFields uid (Field uidcol)
   ) =>
@@ -74,17 +74,17 @@ read ::
   (r -> Field uidcol) ->
   Connection ->
   uid ->
-  IO (Maybe hask)
+  IO (Maybe dto)
 read table rowToUid conn uid = withTransaction conn $ oneListToMaybe <$> runSelect conn query
   where
     query = qSelectByUid table rowToUid uid
 
 create ::
-  (HasCallStack, Default FromFields r hask, Default ToFields chask w, Default Unpackspec r r) =>
+  (HasCallStack, Default FromFields r dto, Default ToFields wdto w, Default Unpackspec r r) =>
   Table w r ->
   Connection ->
-  chask ->
-  IO (Maybe hask)
+  wdto ->
+  IO (Maybe dto)
 create table conn item = withTransaction conn $ oneListToMaybe <$> runInsert_ conn query
   where
     query =
@@ -97,8 +97,8 @@ create table conn item = withTransaction conn $ oneListToMaybe <$> runInsert_ co
 
 update ::
   ( HasCallStack,
-    Default FromFields r hask,
-    Default ToFields chask w,
+    Default FromFields r dto,
+    Default ToFields wdto w,
     Default Unpackspec r r,
     Default Updater r w,
     Default AlternativeUpdater w w,
@@ -108,8 +108,8 @@ update ::
   (r -> Field uidcol) ->
   Connection ->
   uid ->
-  chask ->
-  IO (Maybe hask)
+  wdto ->
+  IO (Maybe dto)
 update table rowToUid conn uid item = withTransaction conn $ do
   (targetCount :: Int64) <-
     unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table rowToUid uid

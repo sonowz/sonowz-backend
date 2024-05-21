@@ -22,9 +22,9 @@ data NewsScrapRule' c1 c2 c3 c4 c5 c6 c7 c8 = NewsScrapRule'
   }
   deriving (Show, Generic)
 
-type NewsScrapRuleHaskW = NewsScrapRule' EmptyField Text Int NominalDiffTime Bool Bool EmptyField EmptyField
+type NewsScrapRuleWriteDto = NewsScrapRule' EmptyField Text Int NominalDiffTime Bool Bool EmptyField EmptyField
 
-type NewsScrapRuleHask = NewsScrapRule' Uid Text Int NominalDiffTime Bool Bool UTCTime UTCTime
+type NewsScrapRuleDto = NewsScrapRule' Uid Text Int NominalDiffTime Bool Bool UTCTime UTCTime
 
 type NewsScrapRuleW =
   NewsScrapRule'
@@ -50,9 +50,9 @@ type NewsScrapRuleR =
 
 type NewsScrapRuleTable = Table NewsScrapRuleW NewsScrapRuleR
 
-instance ToJSON NewsScrapRuleHask
+instance ToJSON NewsScrapRuleDto
 
-instance FromJSON NewsScrapRuleHaskW
+instance FromJSON NewsScrapRuleWriteDto
 
 -- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pNewsScrapRule" ''NewsScrapRule')

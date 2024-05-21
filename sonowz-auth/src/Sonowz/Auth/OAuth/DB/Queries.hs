@@ -74,7 +74,7 @@ selectTotalUserCount conn = toInt <<$>> headOrError =<< runSelect conn (qSelectU
 
 -- Queries --
 
-qSelectUserByOAuth :: UserTable -> UserInfoW -> Select UserFieldR
+qSelectUserByOAuth :: UserTable -> UserInfoWriteDto -> Select UserFieldR
 qSelectUserByOAuth table user = proc () -> do
   selected <- selectTable table -< ()
   restrict -< toFields (oauthProvider user) .== oauthProvider selected
@@ -85,7 +85,7 @@ qSelectUserCount :: UserTable -> Select (Field SqlInt8)
 qSelectUserCount table =
   uid <$> aggregate (pUser $ emptyAggUser {uid = count}) (selectTable table)
 
-qInsertUser :: UserTable -> UserInfoW -> Insert [UserInfo]
+qInsertUser :: UserTable -> UserInfoWriteDto -> Insert [UserInfo]
 qInsertUser table user =
   Insert
     { iTable = table,
@@ -96,10 +96,10 @@ qInsertUser table user =
 
 -- Private Functions --
 
-crudSet :: CRUDQueries UserInfo UserInfoW Uid
+crudSet :: CRUDQueries UserInfo UserInfoWriteDto Uid
 crudSet = getCRUDQueries userTable uid
 
-oauthToHaskW :: OAuthUser -> UserInfoW
+oauthToHaskW :: OAuthUser -> UserInfoWriteDto
 oauthToHaskW OAuthUser {..} =
   User
     { uid = Nothing,

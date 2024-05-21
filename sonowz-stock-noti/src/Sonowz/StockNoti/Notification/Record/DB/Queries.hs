@@ -43,10 +43,10 @@ stockNotiRecordTable = table "stock_noti_record" (pStockNotiRecord fields)
 
 -- Public Interfaces --
 
-stockNotiRecordCRUD :: CRUDQueries StockNotiRecordHask StockNotiRecordHaskW Uid
+stockNotiRecordCRUD :: CRUDQueries StockNotiRecordDto StockNotiRecordWriteDto Uid
 stockNotiRecordCRUD = getCRUDQueries stockNotiRecordTable uid
 
-findStockNotiRecord :: Connection -> StockSymbol -> StockNotificationType -> Day -> IO (Maybe StockNotiRecordHask)
+findStockNotiRecord :: Connection -> StockSymbol -> StockNotificationType -> Day -> IO (Maybe StockNotiRecordDto)
 findStockNotiRecord conn stockSymbol notiType timestamp = do
   runSelect conn (qSelectRecordByFields stockNotiRecordTable stockSymbol notiType timestamp) >>= \case
     [] -> return Nothing
@@ -58,7 +58,7 @@ findStockNotiRecord conn stockSymbol notiType timestamp = do
 qSelectRecordByFields :: StockNotiRecordTable -> StockSymbol -> StockNotificationType -> Day -> Select StockNotiRecordR
 qSelectRecordByFields table _stockSymbol _notiType _timestamp = proc () -> do
   record <- selectTable table -< ()
-  restrict -< toFields _stockSymbol .== stockSymbol record
-  restrict -< toFields _notiType .== notiType record
+  restrict -< toFields (show @Text _stockSymbol) .== stockSymbol record
+  restrict -< toFields (show @Text _notiType) .== notiType record
   restrict -< toFields _timestamp .== timestamp record
   returnA -< record

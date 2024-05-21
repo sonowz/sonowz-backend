@@ -144,7 +144,7 @@ selectServantMinQid table = proc servantIdEq -> do
   returnA -< qid row
 
 popMessage ::
-  DefaultFromField SqlText op => MessageTable op -> Qid -> Delete [MessageHask op]
+  DefaultFromField SqlText op => MessageTable op -> Qid -> Delete [Message' op]
 popMessage dTable qidEq = Delete {..}
   where
     dWhere (qid -> rowQid) = rowQid .== toFields qidEq

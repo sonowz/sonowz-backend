@@ -21,9 +21,9 @@ data KVS c1 c2 c3 c4 c5 c6 = KVS
   }
   deriving (Show, Read, Generic)
 
-type KVSHaskW = KVS EmptyField Text Text Text EmptyField EmptyField
+type KVSWriteDto = KVS EmptyField Text Text Text EmptyField EmptyField
 
-type KVSHaskR = KVS Uid Text Text Text UTCTime UTCTime
+type KVSDto = KVS Uid Text Text Text UTCTime UTCTime
 
 type KVSW =
   KVS

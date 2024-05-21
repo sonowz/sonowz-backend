@@ -22,7 +22,7 @@ data User c1 c2 c3 c4 c5 = User
   }
   deriving (Show, Read, Generic)
 
-type UserInfoW = User EmptyField Text Text Text EmptyField
+type UserInfoWriteDto = User EmptyField Text Text Text EmptyField
 
 type UserInfo = User Uid Text Text Text UTCTime
 

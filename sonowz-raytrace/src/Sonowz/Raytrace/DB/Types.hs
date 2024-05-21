@@ -43,7 +43,7 @@ data Message c1 c2 c3 c4 = Message
   }
   deriving (Show, Read)
 
-type MessageHask op = Message Qid ServantId op UTCTime
+type Message' op = Message Qid ServantId op UTCTime
 
 type MessageFieldW op =
   Message -- Write fields
@@ -63,11 +63,11 @@ type MessageTable op = Table (MessageFieldW op) (MessageFieldR op)
 
 type DaemonMessageTable = MessageTable DaemonOp
 
-type DaemonMessage = MessageHask DaemonOp
+type DaemonMessage = Message' DaemonOp
 
 type ServantMessageTable = MessageTable ServantOp
 
-type ServantMessage = MessageHask ServantOp
+type ServantMessage = Message' ServantOp
 
 emptyMessage :: Message c1 c2 c3 c4
 emptyMessage =

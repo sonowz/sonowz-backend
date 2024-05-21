@@ -49,18 +49,18 @@ newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields)
 -- Public Interfaces --
 
 -- This is raw-type interface used in web module
-newsScrapRuleCRUD :: CRUDQueries NewsScrapRuleHask NewsScrapRuleHaskW Uid
+newsScrapRuleCRUD :: CRUDQueries NewsScrapRuleDto NewsScrapRuleWriteDto Uid
 newsScrapRuleCRUD = getCRUDQueries newsScrapRuleTable Sonowz.NewsCombinator.Rule.DB.Types.uid
 
 getNewsScrapRules :: Connection -> IO [NewsScrapRule]
-getNewsScrapRules = fmap (fmap haskToRule) . crudList newsScrapRuleCRUD
+getNewsScrapRules = fmap (fmap fromDto) . crudList newsScrapRuleCRUD
 
 updateNewsScrapRule :: Connection -> NewsScrapRule -> IO ()
 updateNewsScrapRule conn rule =
   toDBException
     =<< runMaybeT
       ( do
-          (uid, hask) <- hoistMaybe $ ruleToUidAndHask rule
+          (uid, hask) <- hoistMaybe $ ruleToUidAndWriteDto rule
           MaybeT $ crudUpdate newsScrapRuleCRUD conn uid hask
       )
   where
@@ -70,12 +70,12 @@ updateNewsScrapRule conn rule =
 
 -- Private Functions --
 
-haskToRule :: NewsScrapRuleHask -> NewsScrapRule
-haskToRule NewsScrapRule' {..} =
+fromDto :: NewsScrapRuleDto -> NewsScrapRule
+fromDto NewsScrapRule' {..} =
   NewsScrapRule (Just uid) keyword successCount successPeriod isEnabled isOneTimeRule
 
-ruleToUidAndHask :: NewsScrapRule -> Maybe (Uid, NewsScrapRuleHaskW)
-ruleToUidAndHask NewsScrapRule {..} = do
+ruleToUidAndWriteDto :: NewsScrapRule -> Maybe (Uid, NewsScrapRuleWriteDto)
+ruleToUidAndWriteDto NewsScrapRule {..} = do
   let Just _uid = uid
   return
     ( _uid,

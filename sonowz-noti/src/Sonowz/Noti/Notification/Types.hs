@@ -5,11 +5,7 @@ module Sonowz.Noti.Notification.Types
   )
 where
 
-import Data.Profunctor.Product.Default (Default (..))
-import Database.PostgreSQL.Simple.FromField qualified as FF
-import Opaleye
 import Sonowz.Core.DB.Field (Uid)
-import Sonowz.Core.DB.Utils (fromFieldSimple)
 import Sonowz.Noti.Imports
 
 data NotificationType = Email
@@ -33,21 +29,3 @@ instance Semigroup NotificationBody where
 
 instance Monoid NotificationBody where
   mempty = TextBody ""
-
-instance DefaultFromField SqlText NotificationType where
-  defaultFromField = fromPGSFromField
-
-instance DefaultFromField SqlText NotificationBody where
-  defaultFromField = fromPGSFromField
-
-instance Default ToFields NotificationType (Field SqlText) where
-  def = toToFields (sqlStrictText . show)
-
-instance Default ToFields NotificationBody (Field SqlText) where
-  def = toToFields (sqlStrictText . show)
-
-instance FF.FromField NotificationType where
-  fromField = fromFieldSimple (readEither . decodeUtf8)
-
-instance FF.FromField NotificationBody where
-  fromField = fromFieldSimple (readEither . decodeUtf8)

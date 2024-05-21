@@ -49,7 +49,7 @@ kvsFields =
 getKeyValue :: HasCallStack => Connection -> Text -> Text -> IO (Maybe Text)
 getKeyValue conn oauthId key = withTransaction conn (value <<$>> selectResult)
   where
-    selectResult :: IO (Maybe KVSHaskR)
+    selectResult :: IO (Maybe KVSDto)
     selectResult = listToMaybe <$> runSelect conn (qSelectKeyValue kvsTable oauthId key)
 
 setKeyValue :: HasCallStack => Connection -> Text -> Text -> Text -> IO ()
@@ -76,7 +76,7 @@ deleteKey conn oauthId key =
 
 -- Private Functions --
 
-makeHaskW :: Text -> Text -> Text -> KVSHaskW
+makeHaskW :: Text -> Text -> Text -> KVSWriteDto
 makeHaskW oauthId key value =
   KVS
     { uid = Nothing,
@@ -96,7 +96,7 @@ qSelectKeyValue table _oauthId _key = proc () -> do
   restrict -< toFields _key .== key selected
   returnA -< selected
 
-qInsertKeyValue :: KVSTable -> KVSHaskW -> Insert [KVSHaskR]
+qInsertKeyValue :: KVSTable -> KVSWriteDto -> Insert [KVSDto]
 qInsertKeyValue table kv =
   Insert
     { iTable = table,
@@ -105,7 +105,7 @@ qInsertKeyValue table kv =
       iOnConflict = Just DoNothing
     }
 
-qUpdateKeyValue :: KVSTable -> Text -> Text -> Text -> Update [KVSHaskR]
+qUpdateKeyValue :: KVSTable -> Text -> Text -> Text -> Update [KVSDto]
 qUpdateKeyValue table _oauthId _key _value =
   Update
     { uTable = table,

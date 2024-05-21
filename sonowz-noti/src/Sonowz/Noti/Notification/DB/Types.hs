@@ -8,7 +8,6 @@ import Data.Time (UTCTime)
 import Opaleye
 import Sonowz.Core.DB.Field (EmptyField, Uid)
 import Sonowz.Noti.Imports
-import Sonowz.Noti.Notification.Types (NotificationBody, NotificationType)
 
 data Notification' c1 c2 c3 c4 c5 = Notification'
   { uid :: c1,
@@ -18,9 +17,9 @@ data Notification' c1 c2 c3 c4 c5 = Notification'
     createdTime :: c5
   }
 
-type NotificationHaskW = Notification' EmptyField NotificationType Text NotificationBody EmptyField
+type NotificationWriteDto = Notification' EmptyField String Text String EmptyField
 
-type NotificationHask = Notification' Uid NotificationType Text NotificationBody UTCTime
+type NotificationDto = Notification' Uid String Text String UTCTime
 
 type NotificationFieldW =
   Notification' -- Write fields
