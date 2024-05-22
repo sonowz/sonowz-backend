@@ -64,7 +64,7 @@ setKeyValue conn oauthId key value = withTransaction conn $ do
       Unsafe.head <<$>> runSelect conn $ countRows (qSelectKeyValue kvsTable oauthId key)
     insertResult = listToMaybe <$> runInsert_ conn (qInsertKeyValue kvsTable writeFields)
     updateResult = listToMaybe <$> runUpdate_ conn (qUpdateKeyValue kvsTable oauthId key value)
-    writeFields = makeHaskW oauthId key value
+    writeFields = makeWriteDto oauthId key value
 
 deleteKey :: HasCallStack => Connection -> Text -> Text -> IO ()
 deleteKey conn oauthId key =
@@ -76,8 +76,8 @@ deleteKey conn oauthId key =
 
 -- Private Functions --
 
-makeHaskW :: Text -> Text -> Text -> KVSWriteDto
-makeHaskW oauthId key value =
+makeWriteDto :: Text -> Text -> Text -> KVSWriteDto
+makeWriteDto oauthId key value =
   KVS
     { uid = Nothing,
       oauthId = oauthId,

@@ -16,14 +16,14 @@ import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect (webLiftIO)
 
-type CRUDAPI item citem uid (path :: Symbol) =
+type CRUDAPI uid citem item (path :: Symbol) =
   path :> Get '[JSON] [item]
     :<|> path :> Capture "uid" uid :> Get '[JSON] item
     :<|> path :> ReqBody '[JSON] citem :> Post '[JSON] item
     :<|> path :> Capture "uid" uid :> ReqBody '[JSON] citem :> Put '[JSON] item
     :<|> path :> Capture "uid" uid :> Delete '[JSON] ()
 
-data CRUDHandlers item citem uid r = CRUDHandlers
+data CRUDHandlers uid citem item r = CRUDHandlers
   { list :: Sem r [item],
     read :: uid -> Sem r item,
     create :: citem -> Sem r item,
@@ -32,23 +32,23 @@ data CRUDHandlers item citem uid r = CRUDHandlers
   }
 
 crudHandlerFromHandlers ::
-  forall item citem uid (path :: Symbol) r.
+  forall uid citem item (path :: Symbol) r.
   (Member (Error ServerError) r, FromJSON citem, ToJSON item, FromHttpApiData uid) =>
-  CRUDHandlers item citem uid r ->
-  ServerT (CRUDAPI item citem uid path) (Sem r)
+  CRUDHandlers uid citem item r ->
+  ServerT (CRUDAPI uid citem item path) (Sem r)
 crudHandlerFromHandlers CRUDHandlers {..} = list :<|> read :<|> create :<|> update :<|> delete
 
 -- Throws 500 Internal Server Error when query fails
 crudHandlerFromDBQueries ::
-  forall item citem uid (path :: Symbol) r.
+  forall uid citem item (path :: Symbol) r.
   ( Member (Error ServerError) r,
     Members DBEffects r,
     FromJSON citem,
     ToJSON item,
     FromHttpApiData uid
   ) =>
-  CRUDQueries item citem uid ->
-  ServerT (CRUDAPI item citem uid path) (Sem r)
+  CRUDQueries uid citem item ->
+  ServerT (CRUDAPI uid citem item path) (Sem r)
 crudHandlerFromDBQueries queries = crudHandlerFromHandlers crudHandler
   where
     crudHandler =

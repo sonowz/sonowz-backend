@@ -16,7 +16,7 @@ import Data.Aeson (FromJSON, ToJSON)
 import Servant
 import Servant.Auth.Server (Auth, AuthResult (..), Cookie, FromJWT, JWT, ToJWT)
 import Sonowz.Auth.Imports
-import Sonowz.Auth.OAuth.DB.Types (UserInfo)
+import Sonowz.Auth.OAuth.Types (UserInfo)
 import Sonowz.Auth.Web.OAuth.Types (LoginRedirectURL (..))
 import URI.ByteString (serializeURIRef')
 

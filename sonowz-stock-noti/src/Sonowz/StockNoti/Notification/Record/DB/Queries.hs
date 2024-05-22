@@ -43,7 +43,7 @@ stockNotiRecordTable = table "stock_noti_record" (pStockNotiRecord fields)
 
 -- Public Interfaces --
 
-stockNotiRecordCRUD :: CRUDQueries StockNotiRecordDto StockNotiRecordWriteDto Uid
+stockNotiRecordCRUD :: CRUDQueries Uid StockNotiRecordWriteDto StockNotiRecordDto
 stockNotiRecordCRUD = getCRUDQueries stockNotiRecordTable uid
 
 findStockNotiRecord :: Connection -> StockSymbol -> StockNotificationType -> Day -> IO (Maybe StockNotiRecordDto)

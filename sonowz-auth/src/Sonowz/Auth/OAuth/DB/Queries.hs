@@ -8,11 +8,13 @@ module Sonowz.Auth.OAuth.DB.Queries
 where
 
 import Control.Arrow
+import Data.Profunctor (dimap)
 import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 import Sonowz.Auth.Imports hiding (null)
-import Sonowz.Auth.OAuth (OAuthUser (..))
+import Sonowz.Auth.OAuth (OAuthUser (..), UserInfo)
+import Sonowz.Auth.OAuth qualified as OAuth (UserInfo (..))
 import Sonowz.Auth.OAuth.DB.Types
 import Sonowz.Core.DB.CRUD
 import Sonowz.Core.DB.Field (Uid)
@@ -56,8 +58,9 @@ emptyAggUser =
 -- Public Interfaces --
 
 selectOrInsertOAuthUser :: HasCallStack => Connection -> OAuthUser -> IO UserInfo
-selectOrInsertOAuthUser conn (oauthToHaskW -> writeFields) = withTransaction conn $ do
-  maybeUser <- (<|>) <$> selectResult <*> insertResult
+selectOrInsertOAuthUser conn (oauthToWriteDto -> writeFields) = withTransaction conn $ do
+  maybeUserDto <- (<|>) <$> selectResult <*> insertResult
+  let maybeUser = fromDto <$> maybeUserDto
   maybeToExceptionIO "Insert/Select userInfo failed" maybeUser
   where
     selectResult = listToMaybe <$> runSelect conn (qSelectUserByOAuth userTable writeFields)
@@ -85,7 +88,7 @@ qSelectUserCount :: UserTable -> Select (Field SqlInt8)
 qSelectUserCount table =
   uid <$> aggregate (pUser $ emptyAggUser {uid = count}) (selectTable table)
 
-qInsertUser :: UserTable -> UserInfoWriteDto -> Insert [UserInfo]
+qInsertUser :: UserTable -> UserInfoWriteDto -> Insert [UserInfoDto]
 qInsertUser table user =
   Insert
     { iTable = table,
@@ -96,11 +99,24 @@ qInsertUser table user =
 
 -- Private Functions --
 
-crudSet :: CRUDQueries UserInfo UserInfoWriteDto Uid
-crudSet = getCRUDQueries userTable uid
+crudSet :: CRUDQueries Uid UserInfo UserInfo
+crudSet = dimap toWriteDto fromDto $ getCRUDQueries userTable uid
 
-oauthToHaskW :: OAuthUser -> UserInfoWriteDto
-oauthToHaskW OAuthUser {..} =
+fromDto :: UserInfoDto -> UserInfo
+fromDto User {..} = OAuth.UserInfo {..}
+
+toWriteDto :: UserInfo -> UserInfoWriteDto
+toWriteDto OAuth.UserInfo {..} =
+  User
+    { uid = Nothing,
+      oauthProvider = oauthProvider,
+      oauthId = oauthId,
+      representation = representation,
+      createdTime = Nothing
+    }
+
+oauthToWriteDto :: OAuthUser -> UserInfoWriteDto
+oauthToWriteDto OAuthUser {..} =
   User
     { uid = Nothing,
       oauthProvider = oauthUserProvider,

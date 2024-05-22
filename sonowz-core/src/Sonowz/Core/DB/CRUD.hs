@@ -7,24 +7,46 @@ module Sonowz.Core.DB.CRUD
     delete,
     list,
     getCRUDQueries,
-    CRUDQueries (crudCreate, crudDelete, crudList, crudRead, crudUpdate),
+    CRUDQueries (..),
   )
 where
 
 import Control.Arrow
+import Data.Profunctor (Profunctor (lmap, rmap))
 import Data.Profunctor.Product.Default (Default)
 import Database.PostgreSQL.Simple (Connection, withTransaction)
 import Opaleye
 import Sonowz.Core.DB.Utils (AlternativeUpdater, updateAlternative)
 import Sonowz.Core.Imports
 
-data CRUDQueries dto wdto uid = CRUDQueries
+data CRUDQueries uid wdto dto = CRUDQueries
   { crudList :: Connection -> IO [dto],
     crudRead :: Connection -> uid -> IO (Maybe dto),
     crudCreate :: Connection -> wdto -> IO (Maybe dto),
     crudUpdate :: Connection -> uid -> wdto -> IO (Maybe dto),
     crudDelete :: Connection -> uid -> IO Bool
   }
+
+-- Use Profunctor to compose 'mapper' with CRUDQueries
+instance Profunctor (CRUDQueries uid) where
+  lmap :: (model -> wdto) -> CRUDQueries uid wdto dto -> CRUDQueries uid model dto
+  lmap f CRUDQueries {..} =
+    CRUDQueries
+      { crudList = crudList,
+        crudRead = crudRead,
+        crudCreate = \conn wdto -> crudCreate conn (f wdto),
+        crudUpdate = \conn uid wdto -> crudUpdate conn uid (f wdto),
+        crudDelete = crudDelete
+      }
+  rmap :: (dto -> model) -> CRUDQueries uid wdto dto -> CRUDQueries uid wdto model
+  rmap f CRUDQueries {..} =
+    CRUDQueries
+      { crudList = \conn -> f <<$>> crudList conn,
+        crudRead = \conn uid -> f <<$>> crudRead conn uid,
+        crudCreate = \conn wdto -> f <<$>> crudCreate conn wdto,
+        crudUpdate = \conn uid wdto -> f <<$>> crudUpdate conn uid wdto,
+        crudDelete = crudDelete
+      }
 
 -- Utility function for generating all CRUD queries
 getCRUDQueries ::
@@ -37,7 +59,7 @@ getCRUDQueries ::
   ) =>
   Table w r ->
   (r -> Field uidcol) ->
-  CRUDQueries dto wdto uid
+  CRUDQueries uid wdto dto
 getCRUDQueries table rowToUid =
   CRUDQueries
     (list table)

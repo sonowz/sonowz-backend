@@ -49,7 +49,7 @@ newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields)
 -- Public Interfaces --
 
 -- This is raw-type interface used in web module
-newsScrapRuleCRUD :: CRUDQueries NewsScrapRuleDto NewsScrapRuleWriteDto Uid
+newsScrapRuleCRUD :: CRUDQueries Uid NewsScrapRuleWriteDto NewsScrapRuleDto
 newsScrapRuleCRUD = getCRUDQueries newsScrapRuleTable Sonowz.NewsCombinator.Rule.DB.Types.uid
 
 getNewsScrapRules :: Connection -> IO [NewsScrapRule]

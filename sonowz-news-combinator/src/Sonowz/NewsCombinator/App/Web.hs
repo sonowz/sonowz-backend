@@ -14,10 +14,10 @@ import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..))
 import Sonowz.NewsCombinator.Env (Env (envPgConnection))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.Rule.DB.Queries (newsScrapRuleCRUD)
-import Sonowz.NewsCombinator.Rule.DB.Types (NewsScrapRuleHask, NewsScrapRuleHaskW)
+import Sonowz.NewsCombinator.Rule.DB.Types (NewsScrapRuleDto, NewsScrapRuleWriteDto)
 
 -- TODO: add auth
-type NewsScrapRuleAPI = CRUDAPI NewsScrapRuleHask NewsScrapRuleHaskW Uid "rule"
+type NewsScrapRuleAPI = CRUDAPI Uid NewsScrapRuleWriteDto NewsScrapRuleDto "rule"
 
 api :: Proxy NewsScrapRuleAPI
 api = Proxy

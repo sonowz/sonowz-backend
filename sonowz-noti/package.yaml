@@ -31,6 +31,7 @@ dependencies:
   - opaleye
   - optparse-applicative
   - product-profunctors
+  - profunctors
   - polysemy
   - polysemy-plugin
   - postgresql-simple

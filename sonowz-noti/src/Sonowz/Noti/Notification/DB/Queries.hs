@@ -5,6 +5,7 @@ module Sonowz.Noti.Notification.DB.Queries
   )
 where
 
+import Data.Profunctor (dimap)
 import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
@@ -42,7 +43,7 @@ notificationFields =
 -- Public Interfaces --
 
 insertNotification :: HasCallStack => Connection -> Notification -> IO (Maybe Notification)
-insertNotification conn noti = fromDto <<$>> crudCreate crudSet conn (toWriteDto noti)
+insertNotification = crudCreate crudSet
 
 selectOneNotification :: HasCallStack => Connection -> IO (Maybe Notification)
 selectOneNotification conn = withTransaction conn $ listToMaybe <$> (fromDto <<$>> selectResult)
@@ -54,8 +55,8 @@ deleteNotificationByUid = crudDelete crudSet
 
 -- Private Functions --
 
-crudSet :: CRUDQueries NotificationDto NotificationWriteDto Uid
-crudSet = getCRUDQueries notificationTable uid
+crudSet :: CRUDQueries Uid Notification Notification
+crudSet = dimap toWriteDto fromDto $ getCRUDQueries notificationTable uid
 
 fromDto :: NotificationDto -> Notification
 fromDto Notification' {..} = Notification (Unsafe.read _type) title (Unsafe.read body) (Just uid)

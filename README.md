@@ -16,6 +16,5 @@ All packages are maintained using one same GHC version, specified in `stack.yaml
   - Adapt to [exception backtrace](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0330-exception-backtraces.rst)
 - Fix auto binary compilation in the source tree
 - opaleye
-  - separate DTO and domain model
-  - use `updateEasy` instead of `updateAlternative`
+  - map to domain model in APIs of news-combinator and stock-noti
   - update declarations of `ToFields` and `FromFields`

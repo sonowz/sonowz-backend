@@ -18,7 +18,7 @@ import Sonowz.Noti.Notification.Types
   )
 import Sonowz.StockNoti.Imports
 import Sonowz.StockNoti.Notification.Record.DB.Queries (findStockNotiRecord, stockNotiRecordCRUD)
-import Sonowz.StockNoti.Notification.Record.DB.Types (StockNotiRecord' (..))
+import Sonowz.StockNoti.Notification.Record.DB.Types (StockNotiRecord' (..), StockNotiRecordWriteDto)
 import Sonowz.StockNoti.Notification.Types (StockNotificationType (..))
 import Sonowz.StockNoti.Stock.Types (StockSymbol)
 
@@ -51,6 +51,6 @@ checkAndInsertNotiRecord conn stockSymbol notiType timestamp = do
   case maybeRecord of
     Just _ -> return True
     Nothing -> do
-      let newRecord = StockNotiRecord' Nothing stockSymbol notiType timestamp
+      let newRecord = StockNotiRecord' Nothing (show stockSymbol) (show notiType) timestamp :: StockNotiRecordWriteDto
       liftIO $ crudCreate stockNotiRecordCRUD conn newRecord
       return False

@@ -3,11 +3,9 @@
 
 module Sonowz.Auth.OAuth.DB.Types where
 
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
-import Servant.Auth.Server (FromJWT, ToJWT)
 import Sonowz.Auth.Imports
 import Sonowz.Core.DB.Field (EmptyField, Uid)
 
@@ -20,11 +18,11 @@ data User c1 c2 c3 c4 c5 = User
     representation :: c4,
     createdTime :: c5
   }
-  deriving (Show, Read, Generic)
+  deriving (Show, Read)
 
 type UserInfoWriteDto = User EmptyField Text Text Text EmptyField
 
-type UserInfo = User Uid Text Text Text UTCTime
+type UserInfoDto = User Uid Text Text Text UTCTime
 
 type UserFieldW =
   User -- Write fields
@@ -43,13 +41,5 @@ type UserFieldR =
     (Field SqlTimestamptz)
 
 type UserTable = Table UserFieldW UserFieldR
-
-instance ToJSON UserInfo
-
-instance ToJWT UserInfo
-
-instance FromJSON UserInfo
-
-instance FromJWT UserInfo
 
 $(makeAdaptorAndInstance "pUser" ''User)
