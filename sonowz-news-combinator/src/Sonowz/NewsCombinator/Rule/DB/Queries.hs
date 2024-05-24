@@ -6,6 +6,7 @@ module Sonowz.NewsCombinator.Rule.DB.Queries
 where
 
 import Control.Exception.Safe qualified as E
+import Data.Profunctor (dimap)
 import Database.PostgreSQL.Simple (Connection)
 import Opaleye
 import Sonowz.Core.DB.CRUD (CRUDQueries (..), getCRUDQueries)
@@ -13,7 +14,9 @@ import Sonowz.Core.DB.Field (Uid)
 import Sonowz.Core.DB.Utils (DatabaseException (DatabaseException))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.Rule.DB.Types
+import Sonowz.NewsCombinator.Rule.DB.Types qualified as Dto (NewsScrapRule' (uid))
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
+import Sonowz.NewsCombinator.Rule.Types qualified as Rule (NewsScrapRule (uid))
 
 -- Table declarations --
 
@@ -49,20 +52,17 @@ newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields)
 -- Public Interfaces --
 
 -- This is raw-type interface used in web module
-newsScrapRuleCRUD :: CRUDQueries Uid NewsScrapRuleWriteDto NewsScrapRuleDto
-newsScrapRuleCRUD = getCRUDQueries newsScrapRuleTable Sonowz.NewsCombinator.Rule.DB.Types.uid
+newsScrapRuleCRUD :: CRUDQueries Uid NewsScrapRule NewsScrapRule
+newsScrapRuleCRUD = dimap toWriteDto fromDto $ getCRUDQueries newsScrapRuleTable Dto.uid
 
 getNewsScrapRules :: Connection -> IO [NewsScrapRule]
-getNewsScrapRules = fmap (fmap fromDto) . crudList newsScrapRuleCRUD
+getNewsScrapRules = crudList newsScrapRuleCRUD
 
 updateNewsScrapRule :: Connection -> NewsScrapRule -> IO ()
 updateNewsScrapRule conn rule =
-  toDBException
-    =<< runMaybeT
-      ( do
-          (uid, hask) <- hoistMaybe $ ruleToUidAndWriteDto rule
-          MaybeT $ crudUpdate newsScrapRuleCRUD conn uid hask
-      )
+  toDBException =<< do
+    let Just _uid = Rule.uid rule
+    crudUpdate newsScrapRuleCRUD conn _uid rule
   where
     toDBException :: Maybe a -> IO ()
     toDBException (Just _) = pass
@@ -74,19 +74,15 @@ fromDto :: NewsScrapRuleDto -> NewsScrapRule
 fromDto NewsScrapRule' {..} =
   NewsScrapRule (Just uid) keyword successCount successPeriod isEnabled isOneTimeRule
 
-ruleToUidAndWriteDto :: NewsScrapRule -> Maybe (Uid, NewsScrapRuleWriteDto)
-ruleToUidAndWriteDto NewsScrapRule {..} = do
-  let Just _uid = uid
-  return
-    ( _uid,
-      NewsScrapRule'
-        { uid = Nothing,
-          keyword = keyword,
-          successCount = successCount,
-          successPeriod = successPeriod,
-          isEnabled = isEnabled,
-          isOneTimeRule = isOneTimeRule,
-          createdTime = Nothing,
-          updatedTime = Nothing
-        }
-    )
+toWriteDto :: NewsScrapRule -> NewsScrapRuleWriteDto
+toWriteDto NewsScrapRule {..} =
+  NewsScrapRule'
+    { uid = Nothing,
+      keyword = keyword,
+      successCount = successCount,
+      successPeriod = successPeriod,
+      isEnabled = isEnabled,
+      isOneTimeRule = isOneTimeRule,
+      createdTime = Nothing,
+      updatedTime = Nothing
+    }

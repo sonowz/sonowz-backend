@@ -6,7 +6,7 @@ where
 
 import Data.Aeson (ToJSON)
 import Servant
-import Sonowz.Auth.OAuth.DB.Types (User (representation))
+import Sonowz.Auth.OAuth.Types (UserInfo (representation))
 import Sonowz.Auth.Web.OAuth.Combinators (RequireAuth401, auth401)
 import Sonowz.Core.DB.Pool (DBEffects)
 import Sonowz.Web.Imports

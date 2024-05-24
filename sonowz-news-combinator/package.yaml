@@ -35,6 +35,7 @@ dependencies:
   - polysemy-plugin
   - postgresql-simple
   - product-profunctors
+  - profunctors
   - relude
   - resource-pool
   - safe-exceptions

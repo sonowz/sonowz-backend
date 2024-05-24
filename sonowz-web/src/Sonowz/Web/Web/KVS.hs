@@ -6,14 +6,15 @@ where
 
 import Data.Aeson (FromJSON, ToJSON)
 import Servant
-import Sonowz.Auth.OAuth.DB.Types (User (oauthId))
+import Sonowz.Auth.OAuth.Types (UserInfo (oauthId))
 import Sonowz.Auth.Web.OAuth.Combinators (RequireAuth401, auth401)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Web.Imports
 import Sonowz.Web.KVS.DB.Queries (deleteKey, getKeyValue, setKeyValue)
 
 type KVSAPI =
-  RequireAuth401 :> Capture "key" Text
+  RequireAuth401
+    :> Capture "key" Text
     :> ( Get '[JSON] ValueBody
            :<|> (ReqBody '[JSON] ValueBody :> Post '[JSON] Response)
            :<|> Delete '[JSON] Response

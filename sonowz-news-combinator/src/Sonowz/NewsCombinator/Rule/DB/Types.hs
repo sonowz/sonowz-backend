@@ -3,7 +3,6 @@
 
 module Sonowz.NewsCombinator.Rule.DB.Types where
 
-import Data.Aeson (FromJSON, ToJSON)
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (NominalDiffTime, UTCTime)
 import Opaleye
@@ -49,10 +48,6 @@ type NewsScrapRuleR =
     (Field SqlTimestamptz)
 
 type NewsScrapRuleTable = Table NewsScrapRuleW NewsScrapRuleR
-
-instance ToJSON NewsScrapRuleDto
-
-instance FromJSON NewsScrapRuleWriteDto
 
 -- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pNewsScrapRule" ''NewsScrapRule')

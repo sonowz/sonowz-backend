@@ -16,7 +16,7 @@ data StockNotiRecord' c1 c2 c3 c4 = StockNotiRecord'
     timestamp :: c4
   }
 
-type StockNotiRecordWriteDto = StockNotiRecord' EmptyField String String Day
+type StockNotiRecordWriteDto = StockNotiRecord' EmptyField Text Text Day
 
 type StockNotiRecordDto = StockNotiRecord' Uid String String Day
 

@@ -17,7 +17,7 @@ data Notification' c1 c2 c3 c4 c5 = Notification'
     createdTime :: c5
   }
 
-type NotificationWriteDto = Notification' EmptyField String Text String EmptyField
+type NotificationWriteDto = Notification' EmptyField Text Text Text EmptyField
 
 type NotificationDto = Notification' Uid String Text String UTCTime
 

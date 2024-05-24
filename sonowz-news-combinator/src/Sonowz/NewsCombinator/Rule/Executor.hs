@@ -8,7 +8,7 @@ import Sonowz.Core.Exception.Types (ParseException (ParseException))
 import Sonowz.Core.HTTP.Effect (HTTP, fetchURL)
 import Sonowz.Core.Time.Effect (Time, getTime)
 import Sonowz.NewsCombinator.Imports
-import Sonowz.NewsCombinator.News.Parser (ParseException, parseNewsItems)
+import Sonowz.NewsCombinator.News.Parser (parseNewsItems)
 import Sonowz.NewsCombinator.News.Types (NewsItem (..), googleNewsRSSUrl)
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
 

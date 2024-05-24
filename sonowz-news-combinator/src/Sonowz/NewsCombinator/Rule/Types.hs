@@ -5,6 +5,7 @@ module Sonowz.NewsCombinator.Rule.Types
   )
 where
 
+import Data.Aeson (FromJSON, ToJSON)
 import Data.Time (NominalDiffTime, nominalDay)
 import Sonowz.Core.DB.Field (Uid)
 import Sonowz.NewsCombinator.Imports
@@ -17,7 +18,11 @@ data NewsScrapRule = NewsScrapRule
     isEnabled :: Bool,
     isOneTimeRule :: Bool
   }
-  deriving (Show)
+  deriving (Show, Generic)
+
+instance ToJSON NewsScrapRule
+
+instance FromJSON NewsScrapRule
 
 oneTimeRule :: Text -> Int -> NewsScrapRule
 oneTimeRule keyword successCount = NewsScrapRule {..}
