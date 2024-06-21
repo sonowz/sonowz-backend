@@ -67,7 +67,11 @@ default-extensions:
 
 source-dirs: src
 
-library: {}
+library:
+  when:
+  - condition: false
+    exposed-modules:
+      - Main
 
 executables:
   sonowz-noti:
