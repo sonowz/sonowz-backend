@@ -10,6 +10,7 @@ import Database.PostgreSQL.Simple (Connection)
 import Database.PostgreSQL.Simple.Transaction (withTransaction)
 import Opaleye
 import Opaleye.Aggregate qualified as Agg
+import Polysemy.Fail (Fail, runFail)
 import Sonowz.Raytrace.DB.Types
 import Sonowz.Raytrace.Imports hiding (null)
 
@@ -95,12 +96,17 @@ enqueueServant conn servantId' message =
 
 dequeueDaemon :: HasCallStack => Connection -> IO (Maybe DaemonMessage)
 dequeueDaemon conn = withTransaction conn $
-  runMaybeT $ do
-    targetQid <- MaybeT $ listToMaybe <$> selectResult conn
-    MaybeT $ deleteResult conn targetQid >>= logCheckMaybe . listToMaybe
+  withEffects $ do
+    -- Returns Nothing if casting fails
+    [targetQid] <- liftIO $ selectResult conn
+    dequeued <- liftIO $ deleteResult conn targetQid
+    Just msg <- liftIO . logCheckMaybe . listToMaybe $ dequeued
+    return msg
   where
     selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
     deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
+    withEffects :: Sem [Fail, Embed IO] a -> IO (Maybe a)
+    withEffects = fmap rightToMaybe . runM . runFail
 
 dequeueServant :: HasCallStack => Connection -> ServantId -> IO (Maybe ServantMessage)
 dequeueServant conn sid = withTransaction conn $
