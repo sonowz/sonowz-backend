@@ -11,7 +11,7 @@ import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.Time.Effect (threadDelay, timeToIO)
 import Sonowz.StockNoti.Env (Env (..))
 import Sonowz.StockNoti.Imports
-import Sonowz.StockNoti.Notification (StockNotificationType (NotiDeadCross), createNotification)
+import Sonowz.StockNoti.Notification (StockNotificationType (NotiDeadCross, NotiGoldenCross), createNotification)
 import Sonowz.StockNoti.Stock.DataSource.AlphaVantage (runStockDataSourceAlphaVantage)
 import Sonowz.StockNoti.Stock.DataSource.Effect (StockDataSource, fetchDayStockPrices)
 import Sonowz.StockNoti.Stock.Logic.Cross (calcDeadCross, calcGoldenCross)
@@ -49,4 +49,4 @@ mainLoop stocks = forM_ stocks $ \stock -> catchAnyException $ do
     Nothing -> logDebug $ show stock <> " has no golden cross."
     Just xs ->
       let lastDate = utctDay (last xs)
-       in void $ createNotification stock NotiDeadCross lastDate
+       in void $ createNotification stock NotiGoldenCross lastDate
