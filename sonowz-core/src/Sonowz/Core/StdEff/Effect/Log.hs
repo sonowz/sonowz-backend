@@ -167,7 +167,9 @@ showSourceLoc cs = braceWithPadding sourcePaddingCount showCallStack
   where
     showCallStack :: Text
     showCallStack = case getCallStack cs of
-      (_, loc) : (callerName, _) : _ -> showLoc callerName loc
+      -- TODO: fix callstack inconsistency between 'log' effect and 'logIO'
+      (_, loc) : (callerName, _) : _ | srcLocModule loc /= "Sonowz.Core.StdEff.Effect.Log" -> showLoc callerName loc
+      _ : (_, loc) : (callerName, _) : _ -> showLoc callerName loc
       _ -> "<unknown loc>"
 
     showLoc :: String -> SrcLoc -> Text
