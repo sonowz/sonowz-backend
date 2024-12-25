@@ -7,6 +7,7 @@ import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time
 import Database.PostgreSQL.Simple.FromField qualified as FF
 import Opaleye
+import Sonowz.Core.DB.Utils (fieldParserByReadInstance)
 import Sonowz.Raytrace.Imports
 import Sonowz.Raytrace.RaytraceConfig (Config (..))
 
@@ -86,10 +87,10 @@ deriving via Int instance DefaultFromField SqlInt4 Qid
 deriving via Int instance DefaultFromField SqlInt4 ServantId
 
 instance DefaultFromField SqlText DaemonOp where
-  defaultFromField = fromPGSFromField
+  defaultFromField = fromPGSFieldParser $ fieldParserByReadInstance "DaemonOp"
 
 instance DefaultFromField SqlText ServantOp where
-  defaultFromField = fromPGSFromField
+  defaultFromField = fromPGSFieldParser $ fieldParserByReadInstance "ServantOp"
 
 instance Default ToFields Qid (Field SqlInt4) where
   def = coerce (def :: ToFields Int (Column SqlInt4))
@@ -102,17 +103,3 @@ instance Default ToFields DaemonOp (Field SqlText) where
 
 instance Default ToFields ServantOp (Field SqlText) where
   def = toToFields (sqlStrictText . show)
-
-instance FF.FromField DaemonOp where
-  fromField = ffByReadInstance "DaemonOp"
-
-instance FF.FromField ServantOp where
-  fromField = ffByReadInstance "ServantOp"
-
-ffByReadInstance :: (Typeable a, Read a) => String -> FF.Field -> Maybe ByteString -> FF.Conversion a
-ffByReadInstance name field (Just bs) =
-  either
-    (const $ FF.returnError FF.ConversionFailed field ("Parse failed in: " <> name))
-    return
-    (readEither . toString $ decodeUtf8 @Text bs)
-ffByReadInstance name field Nothing = FF.returnError FF.UnexpectedNull field ("Null value in: " <> name)

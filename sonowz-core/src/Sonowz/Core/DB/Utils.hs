@@ -2,7 +2,7 @@ module Sonowz.Core.DB.Utils
   ( DatabaseException (..),
     nullify,
     putArg,
-    fromFieldSimple,
+    fieldParserByReadInstance,
     maybeToExceptionIO,
     throwException,
     boolToException,
@@ -34,12 +34,13 @@ nullify = dimap id (const null) Agg.count
 putArg :: SelectArr a b -> a -> Select b
 putArg f a = arr (const a) >>> f
 
--- Use this when instantiating 'FromField' typeclass
-fromFieldSimple ::
-  Typeable hasktype => (ByteString -> Either Text hasktype) -> FF.FieldParser hasktype
-fromFieldSimple parse field = \case
-  Just bs -> either (FF.returnError FF.ConversionFailed field . toString) return (parse bs)
-  Nothing -> FF.returnError FF.UnexpectedNull field "Unexpected null value"
+fieldParserByReadInstance :: (Typeable a, Read a) => String -> FF.FieldParser a
+fieldParserByReadInstance name field (Just bs) =
+  either
+    (const $ FF.returnError FF.ConversionFailed field ("Parse failed in: " <> name))
+    return
+    (readEither . toString $ decodeUtf8 @Text bs)
+fieldParserByReadInstance name field Nothing = FF.returnError FF.UnexpectedNull field ("Null value in: " <> name)
 
 maybeToExceptionIO :: HasCallStack => Text -> Maybe a -> IO a
 maybeToExceptionIO msg = withFrozenCallStack $ maybe (E.throw $ DatabaseException msg) return

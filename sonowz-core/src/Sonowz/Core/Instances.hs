@@ -2,16 +2,14 @@ module Sonowz.Core.Instances where
 
 import Data.Profunctor.Product.Default (Default (def))
 import Data.Time (NominalDiffTime)
-import Database.PostgreSQL.Simple.FromField qualified as FF
 import Opaleye
   ( DefaultFromField (defaultFromField),
     Field,
-    Field_,
     SqlFloat8,
     ToFields,
-    fromPGSFromField,
     toFields,
     toToFields,
+    unsafeFromField,
   )
 import Servant (PlainText)
 import Servant.API (FromHttpApiData (..), MimeRender (..), ToHttpApiData (..))
@@ -35,7 +33,4 @@ instance Default ToFields NominalDiffTime (Field SqlFloat8) where
 --  def = toToFields (toFields . Just . fromRational @Double . toRational)
 
 instance DefaultFromField SqlFloat8 NominalDiffTime where
-  defaultFromField = fromPGSFromField
-
-instance FF.FromField NominalDiffTime where
-  fromField = fmap (fromRational . toRational) <<$>> (FF.fromField :: FF.FieldParser Double)
+  defaultFromField = unsafeFromField (fromRational . toRational) (defaultFromField @SqlFloat8 @Double)

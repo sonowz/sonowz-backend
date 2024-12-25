@@ -36,16 +36,5 @@ type StockNotiRecordR =
 
 type StockNotiRecordTable = Table StockNotiRecordW StockNotiRecordR
 
-{- deriving via Text instance DefaultFromField SqlText StockSymbol
-
-instance Default ToFields StockSymbol (Field SqlText) where
-  def = coerce (def :: ToFields Text (Field SqlText))
-
-instance DefaultFromField SqlText StockNotificationType where
-  defaultFromField = fromMaybe (error "Invalid StockNotificationType value") . readMaybe <$> fromPGSFromField
-
-instance Default ToFields StockNotificationType (Field SqlText) where
-  def = toToFields (toFields . show @Text) -}
-
 -- Opaleye-related stuffs --
 $(makeAdaptorAndInstance "pStockNotiRecord" ''StockNotiRecord')
