@@ -7,7 +7,7 @@ import Opaleye
     Field,
     SqlFloat8,
     ToFields,
-    toFields,
+    sqlDouble,
     toToFields,
     unsafeFromField,
   )
@@ -26,11 +26,7 @@ instance MimeRender PlainText URI where
   mimeRender _ = toLazy . serializeURIRef'
 
 instance Default ToFields NominalDiffTime (Field SqlFloat8) where
-  def = toToFields (toFields . fromRational @Double . toRational)
-
--- TODO: delete if unnecessary
--- instance Default ToFields NominalDiffTime (FieldNullable SqlFloat8) where
---  def = toToFields (toFields . Just . fromRational @Double . toRational)
+  def = toToFields (sqlDouble . fromRational . toRational)
 
 instance DefaultFromField SqlFloat8 NominalDiffTime where
   defaultFromField = unsafeFromField (fromRational . toRational) (defaultFromField @SqlFloat8 @Double)

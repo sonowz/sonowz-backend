@@ -5,7 +5,6 @@ module Sonowz.Raytrace.DB.Types where
 import Data.Profunctor.Product.Default (Default (..))
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time
-import Database.PostgreSQL.Simple.FromField qualified as FF
 import Opaleye
 import Sonowz.Core.DB.Utils (fieldParserByReadInstance)
 import Sonowz.Raytrace.Imports
