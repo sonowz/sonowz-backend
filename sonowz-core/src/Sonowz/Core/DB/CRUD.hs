@@ -16,6 +16,7 @@ import Data.Profunctor (Profunctor (lmap, rmap))
 import Data.Profunctor.Product.Default (Default)
 import Database.PostgreSQL.Simple (Connection, withTransaction)
 import Opaleye
+import Sonowz.Core.DB.Entity (Entity (EntityId, entityIdField, entityToFields))
 import Sonowz.Core.DB.Utils (AlternativeUpdater, updateAlternative)
 import Sonowz.Core.Imports
 
@@ -50,33 +51,32 @@ instance Profunctor (CRUDQueries uid) where
 
 -- Utility function for generating all CRUD queries
 getCRUDQueries ::
-  ( Default FromFields r dto,
+  ( Entity r,
+    Default FromFields r dto,
     Default ToFields wdto w,
     Default Unpackspec r r,
     Default Updater r w,
-    Default AlternativeUpdater w w,
-    Default ToFields uid (Field uidcol)
+    Default AlternativeUpdater w w
   ) =>
   Table w r ->
-  (r -> Field uidcol) ->
-  CRUDQueries uid wdto dto
-getCRUDQueries table rowToUid =
+  CRUDQueries (EntityId r) wdto dto
+getCRUDQueries table =
   CRUDQueries
     (list table)
-    (read table rowToUid)
+    (read table)
     (create table)
-    (update table rowToUid)
-    (delete table rowToUid)
+    (update table)
+    (delete table)
 
 qSelectByUid ::
-  (Default Unpackspec r r, Default ToFields uid (Field uidcol)) =>
+  forall w r.
+  (Entity r, Default Unpackspec r r) =>
   Table w r ->
-  (r -> Field uidcol) ->
-  uid ->
+  EntityId r ->
   Select r
-qSelectByUid table rowToUid uid = proc () -> do
+qSelectByUid table uid = proc () -> do
   selected <- selectTable table -< ()
-  restrict -< rowToUid selected .== toFields uid
+  restrict -< entityIdField selected .== entityToFields (Proxy @r) uid
   returnA -< selected
 
 list ::
@@ -88,18 +88,17 @@ list table conn = withTransaction conn $ runSelect conn (selectTable table)
 
 read ::
   ( HasCallStack,
+    Entity r,
     Default FromFields r dto,
-    Default Unpackspec r r,
-    Default ToFields uid (Field uidcol)
+    Default Unpackspec r r
   ) =>
   Table w r ->
-  (r -> Field uidcol) ->
   Connection ->
-  uid ->
+  EntityId r ->
   IO (Maybe dto)
-read table rowToUid conn uid = withTransaction conn $ oneListToMaybe <$> runSelect conn query
+read table conn uid = withTransaction conn $ oneListToMaybe <$> runSelect conn query
   where
-    query = qSelectByUid table rowToUid uid
+    query = qSelectByUid table uid
 
 create ::
   (HasCallStack, Default FromFields r dto, Default ToFields wdto w, Default Unpackspec r r) =>
@@ -118,23 +117,23 @@ create table conn item = withTransaction conn $ oneListToMaybe <$> runInsert_ co
         }
 
 update ::
+  forall w r dto wdto.
   ( HasCallStack,
+    Entity r,
     Default FromFields r dto,
     Default ToFields wdto w,
     Default Unpackspec r r,
     Default Updater r w,
-    Default AlternativeUpdater w w,
-    Default ToFields uid (Field uidcol)
+    Default AlternativeUpdater w w
   ) =>
   Table w r ->
-  (r -> Field uidcol) ->
   Connection ->
-  uid ->
+  EntityId r ->
   wdto ->
   IO (Maybe dto)
-update table rowToUid conn uid item = withTransaction conn $ do
+update table conn uid item = withTransaction conn $ do
   (targetCount :: Int64) <-
-    unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table rowToUid uid
+    unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table uid
   guard (targetCount == 1) -- Raises exception when update target is not one row
   oneListToMaybe <$> runUpdate_ conn query
   where
@@ -142,25 +141,25 @@ update table rowToUid conn uid item = withTransaction conn $ do
       Update
         { uTable = table,
           uUpdateWith = updateAlternative (toFields item),
-          uWhere = \row -> rowToUid row .== toFields uid,
+          uWhere = \row -> entityIdField row .== entityToFields (Proxy @r) uid,
           uReturning = rReturning id
         }
 
 delete ::
-  (HasCallStack, Default Unpackspec r r, Default ToFields uid (Field uidcol)) =>
+  forall w r.
+  (HasCallStack, Entity r, Default Unpackspec r r) =>
   Table w r ->
-  (r -> Field uidcol) ->
   Connection ->
-  uid ->
+  EntityId r ->
   IO Bool
-delete table rowToUid conn uid = withTransaction conn $ do
+delete table conn uid = withTransaction conn $ do
   (targetCount :: Int64) <-
-    unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table rowToUid uid
+    unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table uid
   guard (targetCount == 1) -- Raises exception when delete target is not one row
   (== 1) <$> runDelete_ conn query
   where
     query =
-      Delete {dTable = table, dWhere = \row -> rowToUid row .== toFields uid, dReturning = rCount}
+      Delete {dTable = table, dWhere = \row -> entityIdField row .== entityToFields (Proxy @r) uid, dReturning = rCount}
 
 oneListToMaybe :: [a] -> Maybe a
 oneListToMaybe [x] = Just x
