@@ -6,6 +6,7 @@ module Sonowz.NewsCombinator.Rule.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (NominalDiffTime, UTCTime)
 import Opaleye
+import Sonowz.Core.DB.Entity (Entity (..))
 import Sonowz.Core.DB.Field (EmptyField, Uid)
 import Sonowz.NewsCombinator.Imports
 
@@ -46,6 +47,10 @@ type NewsScrapRuleR =
     (Field SqlBool)
     (Field SqlTimestamptz)
     (Field SqlTimestamptz)
+
+instance Entity NewsScrapRuleR where
+  entityIdField = uid
+  entityToFields _ = toFields
 
 type NewsScrapRuleTable = Table NewsScrapRuleW NewsScrapRuleR
 

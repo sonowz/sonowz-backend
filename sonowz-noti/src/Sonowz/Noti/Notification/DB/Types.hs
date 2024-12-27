@@ -6,6 +6,7 @@ module Sonowz.Noti.Notification.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
+import Sonowz.Core.DB.Entity (Entity (..))
 import Sonowz.Core.DB.Field (EmptyField, Uid)
 import Sonowz.Noti.Imports
 
@@ -36,6 +37,10 @@ type NotificationFieldR =
     (Field SqlText)
     (Field SqlText)
     (Field SqlTimestamptz)
+
+instance Entity NotificationFieldR where
+  entityIdField = uid
+  entityToFields _ = toFields
 
 type NotificationTable = Table NotificationFieldW NotificationFieldR
 

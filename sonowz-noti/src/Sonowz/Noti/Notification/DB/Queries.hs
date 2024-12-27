@@ -56,7 +56,7 @@ deleteNotificationByUid = crudDelete crudSet
 -- Private Functions --
 
 crudSet :: CRUDQueries Uid Notification Notification
-crudSet = dimap toWriteDto fromDto $ getCRUDQueries notificationTable uid
+crudSet = dimap toWriteDto fromDto $ getCRUDQueries notificationTable
 
 fromDto :: NotificationDto -> Notification
 fromDto Notification' {..} = Notification (Unsafe.read _type) title (Unsafe.read body) (Just uid)

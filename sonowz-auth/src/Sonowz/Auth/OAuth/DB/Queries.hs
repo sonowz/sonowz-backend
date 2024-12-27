@@ -100,7 +100,7 @@ qInsertUser table user =
 -- Private Functions --
 
 crudSet :: CRUDQueries Uid UserInfo UserInfo
-crudSet = dimap toWriteDto fromDto $ getCRUDQueries userTable uid
+crudSet = dimap toWriteDto fromDto $ getCRUDQueries userTable
 
 fromDto :: UserInfoDto -> UserInfo
 fromDto User {..} = OAuth.UserInfo {..}

@@ -6,6 +6,7 @@ module Sonowz.StockNoti.Notification.Record.DB.Types where
 import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (Day)
 import Opaleye
+import Sonowz.Core.DB.Entity (Entity (..))
 import Sonowz.Core.DB.Field (EmptyField, Uid)
 import Sonowz.StockNoti.Imports
 
@@ -33,6 +34,10 @@ type StockNotiRecordR =
     (Field SqlText)
     (Field SqlText)
     (Field SqlDate)
+
+instance Entity StockNotiRecordR where
+  entityIdField = uid
+  entityToFields _ = toFields
 
 type StockNotiRecordTable = Table StockNotiRecordW StockNotiRecordR
 

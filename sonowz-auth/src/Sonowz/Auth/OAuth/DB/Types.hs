@@ -7,6 +7,7 @@ import Data.Profunctor.Product.TH (makeAdaptorAndInstance)
 import Data.Time (UTCTime)
 import Opaleye
 import Sonowz.Auth.Imports
+import Sonowz.Core.DB.Entity (Entity (..))
 import Sonowz.Core.DB.Field (EmptyField, Uid)
 
 -- 'uid' must be unique
@@ -39,6 +40,10 @@ type UserFieldR =
     (Field SqlText)
     (Field SqlText)
     (Field SqlTimestamptz)
+
+instance Entity UserFieldR where
+  entityIdField = uid
+  entityToFields _ = toFields
 
 type UserTable = Table UserFieldW UserFieldR
 

@@ -14,7 +14,6 @@ import Sonowz.Core.DB.Field (Uid)
 import Sonowz.Core.DB.Utils (DatabaseException (DatabaseException))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.Rule.DB.Types
-import Sonowz.NewsCombinator.Rule.DB.Types qualified as Dto (NewsScrapRule' (uid))
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
 import Sonowz.NewsCombinator.Rule.Types qualified as Rule (NewsScrapRule (uid))
 
@@ -53,7 +52,7 @@ newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields)
 
 -- This is raw-type interface used in web module
 newsScrapRuleCRUD :: CRUDQueries Uid NewsScrapRule NewsScrapRule
-newsScrapRuleCRUD = dimap toWriteDto fromDto $ getCRUDQueries newsScrapRuleTable Dto.uid
+newsScrapRuleCRUD = dimap toWriteDto fromDto $ getCRUDQueries newsScrapRuleTable
 
 getNewsScrapRules :: Connection -> IO [NewsScrapRule]
 getNewsScrapRules = crudList newsScrapRuleCRUD

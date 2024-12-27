@@ -47,7 +47,7 @@ stockNotiRecordTable = table "stock_noti_record" (pStockNotiRecord fields)
 -- Public Interfaces --
 
 stockNotiRecordCRUD :: CRUDQueries Uid StockNotiRecordWriteDto StockNotiRecord
-stockNotiRecordCRUD = rmap fromDto $ getCRUDQueries stockNotiRecordTable uid
+stockNotiRecordCRUD = rmap fromDto $ getCRUDQueries stockNotiRecordTable
 
 findStockNotiRecord :: Connection -> StockSymbol -> StockNotificationType -> Day -> IO (Maybe StockNotiRecord)
 findStockNotiRecord conn stockSymbol notiType timestamp = do

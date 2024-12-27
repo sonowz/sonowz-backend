@@ -16,8 +16,8 @@ class Entity a where
   type EntityIdFieldType a
   type EntityIdFieldType a = SqlInt4
 
-  entityToFields :: Proxy a -> EntityId a -> EntityIdField a
-
   entityIdField :: a -> EntityIdField a
+
+  entityToFields :: Proxy a -> EntityId a -> EntityIdField a
 
 type EntityIdField a = Field (EntityIdFieldType a)
