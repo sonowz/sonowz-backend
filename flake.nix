@@ -74,6 +74,7 @@
           stack = stack-wrapped;
           buildInputs = requirements;
           enterShell = ''eval "$(stack --bash-completion-script stack)"'';
+          shellHook = ''export TMPDIR=/home/sonowz/tmp''; # HLS tmp dir permission fix
         }).overrideAttrs (final: prev: {
           buildInputs = prev.buildInputs ++ devRequirements;
         });
