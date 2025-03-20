@@ -9,6 +9,9 @@ cradle:
     - path: "./sonowz-discord/src"
       component: "sonowz-discord:exe:sonowz-discord"
 
+    - path: "./sonowz-rag/src"
+      component: "sonowz-rag:exe:sonowz-rag"
+
     - path: "./sonowz-raytrace/src"
       component: "sonowz-raytrace:exe:sonowz-raytrace"
 
