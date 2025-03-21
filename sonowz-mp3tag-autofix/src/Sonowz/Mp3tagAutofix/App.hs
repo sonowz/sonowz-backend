@@ -118,9 +118,7 @@ applyArtistFixes ::
   (Members AudioTagIOEffects r, HasCallStack) => [AudioTag] -> Fix Artist -> Sem r ()
 applyArtistFixes audioTags fixes = do
   let fixed = (\tag -> tag {artist = applyFix fixes (artist tag)}) <$> audioTags
-      changed =
-        catMaybes $
-          zipWith (\orig fixed -> if orig /= fixed then Just fixed else Nothing) audioTags fixed
+      changed = [fixed | (orig, fixed) <- zip audioTags fixed, orig /= fixed]
   logInfo $ show (length changed) <> " files will be written."
   mapM_
     ( \tag -> do
@@ -132,8 +130,7 @@ applyArtistFixes audioTags fixes = do
 
 applyEncodingFixes :: (Members AudioTagIOEffects r, HasCallStack) => [AudioTag] -> Sem r ()
 applyEncodingFixes audioTags = do
-  let changed =
-        mapMaybe (\tag -> if encoding tag /= EncodingUtf8 then Just tag else Nothing) audioTags
+  let changed = [tag | tag <- audioTags, encoding tag /= EncodingUtf8]
   logInfo $ show (length changed) <> " files will be written."
   mapM_
     ( \tag -> do
