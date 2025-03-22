@@ -18,7 +18,6 @@ type EmbeddingGenerationAPIEffects =
   Reader Env
     : HTTP
     : Error ParseException
-    : Error ServerError
     : DBEffects
 
 embeddingGenerationAPIHandler :: Members EmbeddingGenerationAPIEffects r => ServerT EmbeddingGenerationAPI (Sem r)

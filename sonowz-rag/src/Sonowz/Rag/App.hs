@@ -14,8 +14,9 @@ import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
 import Sonowz.Rag.Env (Env (..))
 import Sonowz.Rag.Imports
 import Sonowz.Rag.Web.EmbeddingGeneration (EmbeddingGenerationAPI, embeddingGenerationAPIHandler)
+import Sonowz.Rag.Web.Rag (RagAPI, ragAPIHandler)
 
-type RagServerAPI = EmbeddingGenerationAPI
+type RagServerAPI = EmbeddingGenerationAPI :<|> RagAPI
 
 type RagHandlerEffects =
   [ Reader Env,
@@ -26,7 +27,7 @@ type RagHandlerEffects =
     <> DBEffects
 
 server :: Members RagHandlerEffects r => ServerT RagServerAPI (Sem r)
-server = embeddingGenerationAPIHandler
+server = embeddingGenerationAPIHandler :<|> ragAPIHandler
 
 runWithEffects :: forall a. Env -> Sem _ a -> Handler a
 runWithEffects env (action :: Members RagHandlerEffects r => Sem r a) =

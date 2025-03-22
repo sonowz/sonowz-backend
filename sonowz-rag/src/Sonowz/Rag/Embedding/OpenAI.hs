@@ -7,6 +7,7 @@ where
 
 import Data.Aeson (ToJSON, encode)
 import Data.Aeson.Optics
+import Data.Text qualified as T
 import Data.Vector (Vector)
 import Network.HTTP.Client (Request (..), RequestBody (RequestBodyLBS))
 import Network.HTTP.Types (hAuthorization, hContentType)
@@ -20,13 +21,15 @@ import URI.ByteString.QQ (uri)
 
 createOpenAIEmbedding3 ::
   ( Members '[Reader Env, HTTP, Error ParseException] r,
+    Members StdEff r,
     HasCallStack
   ) =>
   Text ->
   Sem r (Vector Float)
-createOpenAIEmbedding3 document = do
+createOpenAIEmbedding3 queryText = do
+  when (T.length queryText > 5000) (logWarning "Query text is too long!")
   openAIKey <- envOpenAIKey <$> ask
-  request <- fromEither $ openAIEmbeddingRequest (getKey openAIKey) "text-embedding-3-large" 3072 document
+  request <- fromEither $ openAIEmbeddingRequest (getKey openAIKey) "text-embedding-3-large" 3072 queryText
   response <- fetchWithRequest request
   fromEither $ parseOpenAIEmbeddingResponse response
 

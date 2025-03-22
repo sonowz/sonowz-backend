@@ -58,4 +58,4 @@ selectTopNDocuments conn tableName n embedding =
             <> " JOIN rag_raw_document doc ON e.document_uid = doc.uid"
             <> " ORDER BY e.embedding <=> ? ASC"
             <> " LIMIT ?"
-   in query conn sql (embedding, n)
+   in query conn sql (show embedding :: Text, n) -- Embedding vector should be quoted as text
