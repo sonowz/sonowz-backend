@@ -1,6 +1,6 @@
 {-# LANGUAGE QuasiQuotes #-}
 
-module Sonowz.Rag.Embedding.Generation.OpenAI
+module Sonowz.Rag.Embedding.OpenAI
   ( createOpenAIEmbedding3,
   )
 where
@@ -13,7 +13,7 @@ import Network.HTTP.Types (hAuthorization, hContentType)
 import Optics
 import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Core.HTTP.Effect (HTTP, fetchWithRequest, urlToRequest)
-import Sonowz.Rag.Embedding.Generation.Types (OpenAIKey (getKey))
+import Sonowz.Rag.Embedding.Types (OpenAIKey (getKey))
 import Sonowz.Rag.Env (Env (envOpenAIKey))
 import Sonowz.Rag.Imports
 import URI.ByteString.QQ (uri)

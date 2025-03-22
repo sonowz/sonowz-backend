@@ -8,7 +8,7 @@ import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.Rag.App (RagServerAPI, runWithEffects, server)
-import Sonowz.Rag.Embedding.Generation.Types (OpenAIKey (..))
+import Sonowz.Rag.Embedding.Types (OpenAIKey (..))
 import Sonowz.Rag.Env (Env (..))
 import Sonowz.Rag.Imports
 

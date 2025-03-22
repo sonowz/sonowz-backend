@@ -1,4 +1,4 @@
-module Sonowz.Rag.Embedding.Generation.Types
+module Sonowz.Rag.Embedding.Types
   ( OpenAIKey (..),
   )
 where

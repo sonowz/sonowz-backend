@@ -1,7 +1,8 @@
-module Sonowz.Rag.Embedding.Generation.Queries
+module Sonowz.Rag.Embedding.Queries
   ( openAI3EmbeddingTableName,
-    createEmbedding,
+    insertEmbedding,
     selectDocumentsWithoutEmbedding,
+    selectTopNDocuments,
   )
 where
 
@@ -35,8 +36,8 @@ CREATE TABLE public.rag_embedding_openai_3 (
 openAI3EmbeddingTableName :: Text
 openAI3EmbeddingTableName = "rag_embedding_openai_3"
 
-createEmbedding :: Connection -> Text -> Uid -> Vector Float -> IO Bool
-createEmbedding conn tableName documentUid embedding =
+insertEmbedding :: Connection -> Text -> Uid -> Vector Float -> IO Bool
+insertEmbedding conn tableName documentUid embedding =
   let sql = fromString . toString $ "INSERT INTO " <> tableName <> " (uid, document_uid, embedding) VALUES (DEFAULT, ?, ?)"
    in (==) 1 <$> execute conn sql (documentUid, embedding)
 
@@ -45,3 +46,16 @@ selectDocumentsWithoutEmbedding :: Connection -> Text -> IO [RawDocument]
 selectDocumentsWithoutEmbedding conn tableName =
   let sql = fromString . toString $ "SELECT * FROM rag_raw_document WHERE uid NOT IN (SELECT DISTINCT document_uid FROM " <> tableName <> ")"
    in query_ conn sql
+
+selectTopNDocuments :: Connection -> Text -> Int -> Vector Float -> IO [RawDocument]
+selectTopNDocuments conn tableName n embedding =
+  let sql =
+        fromString . toString $
+          "SELECT doc.*"
+            <> " FROM "
+            <> tableName
+            <> " e"
+            <> " JOIN rag_raw_document doc ON e.document_uid = doc.uid"
+            <> " ORDER BY e.embedding <=> ? ASC"
+            <> " LIMIT ?"
+   in query conn sql (embedding, n)
