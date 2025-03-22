@@ -6,12 +6,15 @@ where
 
 import Data.Aeson (FromJSON (parseJSON), ToJSON)
 import Data.Profunctor.Product.Default (Default (def))
+import Database.PostgreSQL.Simple.FromField (FromField)
+import Database.PostgreSQL.Simple.ToField (ToField)
 import Opaleye (DefaultFromField, Field, Field_, SqlInt4, ToFields, toToFields)
 import Servant (FromHttpApiData, parseQueryParam)
 import Sonowz.Core.Imports
 
 newtype Uid = Uid Int
   deriving (Eq, Show, Read)
+  deriving newtype (ToField, FromField)
   deriving (Num, ToJSON, FromJSON) via Int
 
 deriving via Int instance DefaultFromField SqlInt4 Uid

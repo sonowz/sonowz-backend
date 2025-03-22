@@ -25,11 +25,15 @@ ghc-options:
 
 dependencies:
   - aeson
+  - aeson-optics
   - async
   - base
   - bytestring
   - containers
   - deepseq
+  - http-client
+  - http-types
+  - optics
   - optparse-applicative
   - polysemy
   - polysemy-plugin
