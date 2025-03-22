@@ -13,14 +13,20 @@ import Network.HTTP.Types (hAuthorization, hContentType)
 import Optics
 import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Core.HTTP.Effect (HTTP, fetchWithRequest, urlToRequest)
+import Sonowz.Rag.Embedding.Generation.Types (OpenAIKey (getKey))
 import Sonowz.Rag.Env (Env (envOpenAIKey))
 import Sonowz.Rag.Imports
 import URI.ByteString.QQ (uri)
 
-createOpenAIEmbedding3 :: Members '[Reader Env, HTTP, Error ParseException] r => Text -> Sem r (Vector Float)
+createOpenAIEmbedding3 ::
+  ( Members '[Reader Env, HTTP, Error ParseException] r,
+    HasCallStack
+  ) =>
+  Text ->
+  Sem r (Vector Float)
 createOpenAIEmbedding3 document = do
   openAIKey <- envOpenAIKey <$> ask
-  request <- fromEither $ openAIEmbeddingRequest openAIKey "text-embedding-3-large" 3072 document
+  request <- fromEither $ openAIEmbeddingRequest (getKey openAIKey) "text-embedding-3-large" 3072 document
   response <- fetchWithRequest request
   fromEither $ parseOpenAIEmbeddingResponse response
 

@@ -4,9 +4,10 @@ module Sonowz.Rag.Env
 where
 
 import Sonowz.Core.DB.Pool (DBConnPool)
+import Sonowz.Rag.Embedding.Generation.Types (OpenAIKey)
 import Sonowz.Rag.Imports
 
 data Env = Env
   { envPgConnection :: DBConnPool,
-    envOpenAIKey :: Text
+    envOpenAIKey :: OpenAIKey
   }

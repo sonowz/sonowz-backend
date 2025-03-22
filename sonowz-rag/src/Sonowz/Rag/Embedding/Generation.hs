@@ -4,7 +4,7 @@ module Sonowz.Rag.Embedding.Generation
 where
 
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
-import Sonowz.Core.Exception.Types (ParseException)
+import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Core.HTTP.Effect (HTTP)
 import Sonowz.Rag.Document.Types (document, title, uid)
 import Sonowz.Rag.Embedding.Generation.OpenAI (createOpenAIEmbedding3)
@@ -22,5 +22,6 @@ generateMissingEmbeddings = do
   for_ documentsMissingEmbeddings $ \docEntity -> do
     logInfo $ "Generating embedding for document " <> show (title docEntity) <> "..."
     embedding <- createOpenAIEmbedding3 (document docEntity)
-    withDBConn (\conn -> liftIO $ Queries.createEmbedding conn openAI3EmbeddingTableName (uid docEntity) embedding)
+    created <- withDBConn (\conn -> liftIO $ Queries.createEmbedding conn openAI3EmbeddingTableName (uid docEntity) embedding)
+    unless created $ throw $ ParseException "Failed to insert embedding to DB"
   logInfo "Done generating embeddings."

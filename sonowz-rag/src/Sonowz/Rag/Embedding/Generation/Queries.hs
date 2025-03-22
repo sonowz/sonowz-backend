@@ -28,6 +28,7 @@ CREATE TABLE public.rag_embedding_openai_3 (
     embedding vector(3072) NOT NULL,
     CONSTRAINT fk_rag_raw_document FOREIGN KEY (document_uid)
         REFERENCES public.rag_raw_document(uid)
+        ON DELETE CASCADE
 );
 -}
 
@@ -36,11 +37,11 @@ openAI3EmbeddingTableName = "rag_embedding_openai_3"
 
 createEmbedding :: Connection -> Text -> Uid -> Vector Float -> IO Bool
 createEmbedding conn tableName documentUid embedding =
-  let sql = "INSERT INTO ? (uid, document_uid, embedding) VALUES (DEFAULT, ?, ?)"
-   in (==) 1 <$> execute conn sql (tableName, documentUid, embedding)
+  let sql = fromString . toString $ "INSERT INTO " <> tableName <> " (uid, document_uid, embedding) VALUES (DEFAULT, ?, ?)"
+   in (==) 1 <$> execute conn sql (documentUid, embedding)
 
 -- Use 'fold' instead of 'query' if memory exceeds
 selectDocumentsWithoutEmbedding :: Connection -> Text -> IO [RawDocument]
 selectDocumentsWithoutEmbedding conn tableName =
-  let sql = fromString . toString $ "SELECT * FROM rag_raw_document WHERE uid NOT IN (SELECT DISTINCT document_uid FROM" <> tableName <> ")"
+  let sql = fromString . toString $ "SELECT * FROM rag_raw_document WHERE uid NOT IN (SELECT DISTINCT document_uid FROM " <> tableName <> ")"
    in query_ conn sql

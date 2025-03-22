@@ -1,5 +1,6 @@
 module Sonowz.Core.Error.Effect
   ( runErrorAsLogging,
+    mapErrorAs500,
     unsafeErrorToIO,
     catchAnyException,
     foreverCatch,
@@ -7,6 +8,7 @@ module Sonowz.Core.Error.Effect
 where
 
 import Control.Exception.Safe qualified as E
+import Servant (ServerError (errBody), err500)
 import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect (StdLog, logError, logException)
 
@@ -15,6 +17,9 @@ runErrorAsLogging =
   runError >=> \case
     Left e -> logException e >> mempty
     Right a -> pure a
+
+mapErrorAs500 :: forall e r a. (Member (Error ServerError) r, Exception e, HasCallStack) => Sem (Error e : r) a -> Sem r a
+mapErrorAs500 = mapError (\e -> err500 {errBody = show e})
 
 unsafeErrorToIO :: forall e r a. (Member (Embed IO) r, Exception e, HasCallStack) => Sem (Error e : r) a -> Sem r a
 unsafeErrorToIO =
