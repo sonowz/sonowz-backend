@@ -1,8 +1,8 @@
 module Main where
 
-import Database.PostgreSQL.Simple qualified as PGS
+import qualified Database.PostgreSQL.Simple as PGS
 import Network.Wai.Handler.Warp (Port)
-import Network.Wai.Handler.Warp qualified as Warp
+import qualified Network.Wai.Handler.Warp as Warp
 import Options.Applicative
 import Servant.Server (serve)
 import Sonowz.Core.DB.Pool (createConnPool)

@@ -1,9 +1,9 @@
-module Sonowz.Core.Web.Wai
-  ( runWithLog,
+module Sonowz.Core.Web.Warp
+  ( runAppWithAccessLog,
   )
 where
 
-import Data.Text qualified as T
+import qualified Data.Text as T
 import Network.HTTP.Types (Status (statusCode, statusMessage))
 import Network.Wai (Application, Request (rawPathInfo, requestMethod))
 import Network.Wai.Handler.Warp (Port, defaultSettings, runSettings, setLogger, setPort)
@@ -11,8 +11,8 @@ import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect.Log (logInfoIO)
 import System.Console.ANSI
 
-runWithLog :: HasCallStack => Port -> Application -> IO ()
-runWithLog port = runSettings settings
+runAppWithAccessLog :: HasCallStack => Port -> Application -> IO ()
+runAppWithAccessLog port = runSettings settings
   where
     settings = setPort port $ setLogger logger defaultSettings
     logger :: Request -> Status -> Maybe Integer -> IO ()

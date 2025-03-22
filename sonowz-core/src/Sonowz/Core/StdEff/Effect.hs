@@ -2,13 +2,15 @@ module Sonowz.Core.StdEff.Effect
   ( module Sonowz.Core.StdEff.Effect.Log,
     StdEff,
     webLiftIO,
+    stdEffToWebHandler,
     stdEffToIOFinal,
   )
 where
 
 import Control.Exception.Safe qualified as E
 import Relude.Extra.Bifunctor (firstF)
-import Servant (ServerError (errBody), err500)
+import Relude.Monad.Reexport (ExceptT (ExceptT))
+import Servant (Handler (Handler), ServerError (errBody), err500)
 import Sonowz.Core.Imports
 import Sonowz.Core.StdEff.Effect.Log
 
@@ -26,6 +28,19 @@ webLiftIO = fromEitherM . mapToServerError
   where
     mapToServerError :: IO a -> IO (Either ServerError a)
     mapToServerError = firstF (\e -> err500 {errBody = show e}) . E.tryAny
+
+-- | Entry point for web handlers
+stdEffToWebHandler :: Sem _ a -> Handler a
+stdEffToWebHandler (m :: Members (Error ServerError : Final IO : StdEff) r => Sem r a) =
+  m
+    & errorToIOFinal @ServerError
+    & stdEffToIOFinal
+    & runFinal @IO
+    & logServerError
+    & (Handler . ExceptT)
+  where
+    logServerError :: IO (Either ServerError a) -> IO (Either ServerError a)
+    logServerError action = action >>= bitraverse (\e -> logInfoIO (show e) >> return e) return
 
 -- | This catches all exceptions, including asynchronous exceptions
 stdEffToIOFinal ::

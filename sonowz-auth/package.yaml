@@ -34,7 +34,6 @@ dependencies:
   - http-client
   - http-client-tls
   - http-types
-  - mtl  # For 1 use case
   - opaleye
   - optparse-applicative
   - polysemy

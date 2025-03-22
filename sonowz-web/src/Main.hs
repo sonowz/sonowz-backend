@@ -3,13 +3,13 @@ module Main where
 import Database.PostgreSQL.Simple qualified as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
-import Network.Wai.Handler.Warp qualified as Warp
 import Options.Applicative
 import Servant.Server (Handler, hoistServerWithContext, serveWithContext)
 import Sonowz.Auth.OAuth (GoogleAppInfo (..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
+import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 import Sonowz.Web.App qualified as Web
 import Sonowz.Web.Imports
@@ -51,4 +51,4 @@ main = do
       nt :: forall x. Sem _ x -> Handler x -- Natural Transformation from 'Sem r' to 'Handler'
       nt = Web.runWithEffects webappEnv oauthEnv tlsManager dbPool
       server = Web.webHandler webappEnv gAppInfo
-  Warp.run warpPort waiApp
+  runAppWithAccessLog warpPort waiApp

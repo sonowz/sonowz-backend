@@ -4,12 +4,12 @@ module Sonowz.NewsCombinator.App.Web
 where
 
 import Polysemy.Resource (resourceToIOFinal)
-import Relude.Monad (ExceptT (ExceptT))
 import Servant
 import Sonowz.Core.DB.Field (Uid (..))
 import Sonowz.Core.DB.Pool (DBEffects)
+import Sonowz.Core.StdEff.Effect (stdEffToWebHandler)
 import Sonowz.Core.Web.CRUD (CRUDAPI, crudHandlerFromDBQueries)
-import Sonowz.Core.Web.Wai (runWithLog)
+import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..))
 import Sonowz.NewsCombinator.Env (Env (envPgConnection))
 import Sonowz.NewsCombinator.Imports
@@ -23,7 +23,7 @@ api :: Proxy NewsScrapRuleAPI
 api = Proxy
 
 runServer :: WebAppEnv -> Env -> IO ()
-runServer webEnv env = runWithLog (eWebPort webEnv) app
+runServer webEnv env = runAppWithAccessLog (eWebPort webEnv) app
   where
     app = serve api $ hoistServer api (runWithEffects env) server
 
@@ -38,11 +38,4 @@ runWithEffects env (action :: Members ServerEffects r => Sem r a) =
     & runReader (envPgConnection env)
     & embedToFinal
     & resourceToIOFinal
-    & errorToIOFinal @ServerError
-    & stdEffToIOFinal
-    & runFinal @IO
-    & logServerError
-    & (Handler . ExceptT)
-  where
-    logServerError :: IO (Either ServerError a) -> IO (Either ServerError a)
-    logServerError action = action >>= bitraverse (\e -> logInfoIO (show e) >> return e) return
+    & stdEffToWebHandler

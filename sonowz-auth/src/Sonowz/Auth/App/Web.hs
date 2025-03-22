@@ -6,7 +6,6 @@ module Sonowz.Auth.App.Web
   )
 where
 
-import Control.Monad.Except (MonadError) -- 'mtl' package is used here
 import Network.HTTP.Client (Manager)
 import Polysemy.Resource (resourceToIOFinal)
 import Servant hiding (URI, uriPath)
@@ -59,18 +58,7 @@ runWithEffects env oauthEnv manager dbPool (action :: Members AuthHandlerEffects
     & runReader dbPool
     & embedToFinal @IO
     & resourceToIOFinal
-    & errorToIOFinal
-    & stdEffToIOFinal
-    & (embed @Handler . liftIO . runFinal @IO)
-    & runM @Handler
-    & logAndThrow
-  where
-    logAndThrow :: (MonadError ServerError m, MonadIO m) => m (Either ServerError a) -> m a
-    logAndThrow action =
-      action
-        >>= either
-          (\e -> (liftIO . logInfoIO . toText . displayException) e >> throwError e)
-          return
+    & stdEffToWebHandler
 
 step1API :: Members AuthHandlerEffects r => FetchSetOAuthUser -> ServerT Step1API (Sem r)
 step1API FetchSetOAuthUser {..} = handlerDefault :<|> handlerGoogle

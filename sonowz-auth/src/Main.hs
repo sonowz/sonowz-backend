@@ -3,20 +3,21 @@ module Main where
 -- This module and runtime is used for OAuth test purpose
 -- This module is not used in production
 
-import Database.PostgreSQL.Simple qualified as PGS
+import qualified Database.PostgreSQL.Simple as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
-import Network.Wai.Handler.Warp qualified as Warp
+import qualified Network.Wai.Handler.Warp as Warp
 import Options.Applicative
 import Servant (Proxy (..), (:<|>) (..))
 import Servant.Server (Handler, hoistServerWithContext, serveWithContext)
-import Sonowz.Auth.App.Test qualified as Test
-import Sonowz.Auth.App.Web qualified as Web
+import qualified Sonowz.Auth.App.Test as Test
+import qualified Sonowz.Auth.App.Web as Web
 import Sonowz.Auth.Imports hiding (Proxy)
 import Sonowz.Auth.OAuth (GoogleAppInfo (..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
+import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 
 data Config = Config Port PGS.ConnectInfo GoogleAppInfo
@@ -54,4 +55,4 @@ main = do
       nt :: forall x. Sem _ x -> Handler x -- Natural Transformation from 'Sem r' to 'Handler'
       nt = Web.runWithEffects webappEnv oauthEnv tlsManager dbPool
       server = Web.server webappEnv gAppInfo :<|> Test.server
-  Warp.run warpPort waiApp
+  runAppWithAccessLog warpPort waiApp
