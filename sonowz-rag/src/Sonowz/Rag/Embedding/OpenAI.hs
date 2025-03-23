@@ -27,7 +27,7 @@ createOpenAIEmbedding3 ::
   Text ->
   Sem r (Vector Float)
 createOpenAIEmbedding3 queryText = do
-  when (T.length queryText > 5000) (logWarning "Query text is too long!")
+  when (T.length queryText > 10000) (logWarning "Query text is too long!")
   openAIKey <- envOpenAIKey <$> ask
   request <- fromEither $ openAIEmbeddingRequest (getKey openAIKey) "text-embedding-3-large" 3072 queryText
   response <- fetchWithRequest request
