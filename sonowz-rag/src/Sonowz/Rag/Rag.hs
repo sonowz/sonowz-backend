@@ -13,9 +13,15 @@ import Sonowz.Rag.Env (Env)
 import Sonowz.Rag.Imports
 import Sonowz.Rag.Rag.Types (RagResultDocument (RagResultDocument))
 
-doRagSearch :: (Members '[Reader Env, HTTP, Error ParseException] r, Members DBEffects r) => Text -> Sem r [RagResultDocument]
+doRagSearch ::
+  ( Members '[Reader Env, HTTP, Error ParseException] r,
+    Members DBEffects r,
+    HasCallStack
+  ) =>
+  Text ->
+  Sem r [RagResultDocument]
 doRagSearch query = do
-  logDebug "Start RAG..."
+  logDebug $ "Starting RAG search with query: " <> query
   embedding <- createOpenAIEmbedding3 query
   searchedDocuments <- withDBConn (\conn -> liftIO $ Queries.selectTopNDocuments conn Queries.openAI3EmbeddingTableName 5 embedding)
   logDebug $ "RAG result: " <> show (title <$> searchedDocuments)
