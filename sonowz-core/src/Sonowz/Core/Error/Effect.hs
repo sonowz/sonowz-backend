@@ -30,17 +30,17 @@ unsafeErrorToIO =
 -- | This catches all exceptions, including asynchronous exceptions
 --
 -- /Warning/: @Error e@ effects should be stacked above this
-catchAnyException :: (Members [Final IO, StdLog] r, Monoid a) => Sem r a -> Sem r a
-catchAnyException = errorToIOFinalAsLogging @SomeException . fromExceptionSem . raise
+catchAnyException :: (Members [Final IO, StdLog] r, Monoid a) => Sem r () -> Sem r a -> Sem r a
+catchAnyException callback = errorToIOFinalAsLogging @SomeException callback . fromExceptionSem . raise
   where
-    errorToIOFinalAsLogging :: forall e r a. (Members [Final IO, StdLog] r, Exception e, Monoid a) => Sem (Error e : r) a -> Sem r a
-    errorToIOFinalAsLogging =
+    errorToIOFinalAsLogging :: forall e r a. (Members [Final IO, StdLog] r, Exception e, Monoid a) => Sem r () -> Sem (Error e : r) a -> Sem r a
+    errorToIOFinalAsLogging callback =
       errorToIOFinal >=> \case
-        Left e -> logError "Unhandled exception in 'catchAnyException':" >> logException e >> mempty
+        Left e -> logError "Unhandled exception in 'catchAnyException':" >> logException e >> callback >> mempty
         Right a -> pure a
 
 -- | This catches all exceptions, including asynchronous exceptions
 --
 -- /Warning/: @Error e@ effects should be stacked above this
-foreverCatch :: (Members [Final IO, StdLog] r, HasCallStack) => Sem r a -> Sem r Void
-foreverCatch = infinitely . catchAnyException . void
+foreverCatch :: (Members [Final IO, StdLog] r, HasCallStack) => Sem r () -> Sem r a -> Sem r Void
+foreverCatch callback = infinitely . catchAnyException callback . void

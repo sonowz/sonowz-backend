@@ -19,7 +19,7 @@ import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
 
 runRuleWorker :: HasCallStack => Env -> IO Void
 runRuleWorker env =
-  foreverCatch (worker >> threadDelay (fromIntegral (envWorkerIntervalSeconds env) * 10 ^ 6))
+  foreverCatch sleep (worker >> sleep)
     & runHTTPIO
     & unsafeErrorToIO @HttpException
     & runReader (envPgConnection env)
@@ -28,6 +28,8 @@ runRuleWorker env =
     & resourceToIOFinal
     & stdEffToIOFinal
     & runFinal @IO
+  where
+    sleep = threadDelay (fromIntegral (envWorkerIntervalSeconds env) * 10 ^ 6)
 
 type WorkerEffects = Final IO : Time : HTTP : DBEffects
 

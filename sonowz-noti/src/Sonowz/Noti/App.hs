@@ -21,7 +21,7 @@ import Sonowz.Noti.Notification.Types (Notification (..), NotificationType (..))
 runApp :: HasCallStack => Env -> IO Void
 runApp Env {..} =
   (doStreamLoop >> threadDelay (60 * 10 ^ 6))
-    & foreverCatch
+    & foreverCatch (threadDelay (60 * 10 ^ 6))
     & runMQueueStream notificationHandler
     & runMQueueDBNoti
     & runMQueueVoid
