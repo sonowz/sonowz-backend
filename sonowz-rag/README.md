@@ -4,6 +4,9 @@ RAG service intended for MCP endpoint
 
 ## TODO
 - Add endpoint for uploading documents
+- Centralize RAG search in this repo
+  - Use `langchain-hs` and `hs-mcp` library
+  - Add endpoint for RAG which returns list of items with each source included
 - Knowledge extraction from LibreChat conversations
   - Extract personal information (knowledge level, personality, and preferences)
   - Information which LLM cannot know in prior (niche or recent)
