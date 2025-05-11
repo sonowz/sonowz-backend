@@ -11,6 +11,8 @@ where
 
 import Control.Concurrent qualified as T
 import Data.Time.LocalTime (ZonedTime, getZonedTime)
+import Polysemy.Final (getInspectorS, interpretFinal)
+import Polysemy.Internal.Strategy (liftS, pureS, runS)
 import Sonowz.Core.Imports
 import System.Timeout qualified as T
 
@@ -21,20 +23,15 @@ data Time m a where
 
 makeSem ''Time
 
-timeToIO :: Member (Embed IO) r => Sem (Time : r) a -> Sem r a
-timeToIO = interpretH $ \case
-  ThreadDelay microsec -> pureT =<< liftIO (threadDelayInteger microsec)
+timeToIO :: (Member (Final IO) r) => Sem (Time : r) a -> Sem r a
+timeToIO = interpretFinal $ \case
+  ThreadDelay microsec -> liftS (threadDelayInteger microsec)
   Timeout microsec action -> do
-    action' <- runT action
-    nothing <- pureT Nothing
-    withLowerToIO $ \lower _ -> do
-      let done = lower . raise . timeToIO
-          -- sequence' = maybe nothing sequence
-          sequence' = \case
-            Nothing -> nothing
-            Just x -> Just <$> x
-      sequence' <$> T.timeout microsec (done action')
-  GetTime -> pureT =<< liftIO getZonedTime
+    ins <- getInspectorS
+    action' <- runS action
+    let result :: IO (Maybe (Maybe _)) = T.timeout microsec (inspect ins <$> action')
+    liftS $ join <$> result
+  GetTime -> liftS getZonedTime
 
 threadDelayInteger :: Integer -> IO ()
 threadDelayInteger t

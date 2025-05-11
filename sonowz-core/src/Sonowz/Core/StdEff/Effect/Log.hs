@@ -40,18 +40,19 @@ import System.Console.ANSI
 -- StdLog Effect --
 
 data StdLog m a where
-  LogDebug :: HasCallStack => Text -> StdLog m ()
-  LogInfo :: HasCallStack => Text -> StdLog m ()
-  LogWarning :: HasCallStack => Text -> StdLog m ()
-  LogError :: HasCallStack => Text -> StdLog m ()
+  LogDebug :: (HasCallStack) => Text -> StdLog m ()
+  LogInfo :: (HasCallStack) => Text -> StdLog m ()
+  LogWarning :: (HasCallStack) => Text -> StdLog m ()
+  LogError :: (HasCallStack) => Text -> StdLog m ()
   LogException :: (HasCallStack, Exception e) => e -> StdLog m ()
 
 makeSem ''StdLog
 
-runStdLogIO :: Member (Embed IO) r => Sem (StdLog : r) a -> Sem r a
+runStdLogIO :: (Member (Final IO) r) => Sem (StdLog : r) a -> Sem r a
 runStdLogIO =
-  interpret $
-    timeToIO <$> \case
+  interpret
+    $ timeToIO
+    <$> \case
       LogDebug text -> withFrozenCallStack $ log Debug text
       LogInfo text -> withFrozenCallStack $ log Info text
       LogWarning text -> withFrozenCallStack $ log Warning text
@@ -66,27 +67,27 @@ ignoreStdLog = interpret $ \case
   LogError _ -> pass
   LogException _ -> pass
 
-log :: (Members '[Time, Embed IO] r, HasCallStack) => Severity -> Text -> Sem r ()
+log :: (Members '[Time, Final IO] r, HasCallStack) => Severity -> Text -> Sem r ()
 log sev text = withFrozenCallStack $ makeStdMessage sev text >>= unLogAction stdLogAction
 
 -- IO Logging --
 
-logIO :: HasCallStack => Severity -> Text -> IO ()
+logIO :: (HasCallStack) => Severity -> Text -> IO ()
 logIO sev text = withFrozenCallStack $ makeStdMessageIO sev text >>= unLogAction stdLogActionIO
 
-logDebugIO :: HasCallStack => Text -> IO ()
+logDebugIO :: (HasCallStack) => Text -> IO ()
 logDebugIO = withFrozenCallStack $ logIO Debug
 
-logInfoIO :: HasCallStack => Text -> IO ()
+logInfoIO :: (HasCallStack) => Text -> IO ()
 logInfoIO = withFrozenCallStack $ logIO Info
 
-logWarningIO :: HasCallStack => Text -> IO ()
+logWarningIO :: (HasCallStack) => Text -> IO ()
 logWarningIO = withFrozenCallStack $ logIO Warning
 
-logErrorIO :: HasCallStack => Text -> IO ()
+logErrorIO :: (HasCallStack) => Text -> IO ()
 logErrorIO = withFrozenCallStack $ logIO Error
 
-logExceptionIO :: HasCallStack => Exception e => e -> IO ()
+logExceptionIO :: (HasCallStack) => (Exception e) => e -> IO ()
 logExceptionIO e = withFrozenCallStack $ logIO Error (show $ displayException e)
 
 -- LogAction Type --
@@ -100,15 +101,15 @@ setStdLogActionLevel :: Severity -> IO ()
 setStdLogActionLevel = writeIORef stdLogActionLevelRef
 
 -- This function has 'unsafePerformIO' inside..
-stdLogAction :: Member (Embed IO) r => LogAction (Sem r) StdMessage
+stdLogAction :: (Member (Final IO) r) => LogAction (Sem r) StdMessage
 stdLogAction = filterBySeverity logLevel stdMessageSeverity logAction
   where
     logLevel = unsafePerformIO $ readIORef stdLogActionLevelRef
-    logAction = fmtStdMessage >$< LogAction putTextLn
+    logAction = fmtStdMessage >$< LogAction (embedFinal <$> putTextLn)
 {-# NOINLINE stdLogAction #-}
 
 stdLogActionIO :: LogAction IO StdMessage
-stdLogActionIO = hoistLogAction runM stdLogAction
+stdLogActionIO = hoistLogAction runFinal stdLogAction
 
 -- Message Type --
 
@@ -121,15 +122,15 @@ data StdMessage = StdMessage
   }
 
 makeStdMessage ::
-  (Members '[Time, Embed IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
+  (Members '[Time, Final IO] r, HasCallStack) => Severity -> Text -> Sem r StdMessage
 makeStdMessage stdMessageSeverity stdMessageText = withFrozenCallStack $ do
   let stdMessageCallStack = callStack
-  stdMessageThreadId <- liftIO myThreadId
+  stdMessageThreadId <- embedFinal myThreadId
   stdMessageTime <- getTime
   return StdMessage {..}
 
-makeStdMessageIO :: HasCallStack => Severity -> Text -> IO StdMessage
-makeStdMessageIO sev text = withFrozenCallStack (makeStdMessage sev text & timeToIO & runM)
+makeStdMessageIO :: (HasCallStack) => Severity -> Text -> IO StdMessage
+makeStdMessageIO sev text = withFrozenCallStack (makeStdMessage sev text & timeToIO & runFinal)
 
 fmtStdMessage :: StdMessage -> Text
 fmtStdMessage StdMessage {..} =

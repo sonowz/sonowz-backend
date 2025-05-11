@@ -19,7 +19,7 @@
 # resolver: https://example.com/snapshots/2018-01-01.yaml
 
 # GHC version: 9.2.5
-resolver: lts-20.9
+resolver: lts-22.43
 
 # User packages to be built.
 # Various formats can be used as shown in the example below.
@@ -51,7 +51,8 @@ packages:
 # (e.g., acme-missiles-0.3)
 extra-deps:
   - emoji-0.1.0.2
-  - discord-haskell-1.15.3
+  - discord-haskell-1.16.1
+  - smtp-mail-0.5.0.0
 
 
 # Override default flag values for local packages and extra-deps
@@ -77,3 +78,5 @@ extra-deps:
 #
 # Allow a newer minor version of GHC than the snapshot specifies
 # compiler-check: newer-minor
+
+notify-if-nix-on-path: false

@@ -12,7 +12,7 @@ module Sonowz.Raytrace.Websocket.Effect
 where
 
 import Network.WebSockets qualified as WS
-import Polysemy.Resource (onException, resourceToIO)
+import Polysemy.Resource (onException, resourceToIOFinal)
 import Sonowz.Raytrace.Imports
 
 newtype WSMessage = WSMessage Text deriving (Show) via Text
@@ -25,13 +25,13 @@ data Websocket m a where
 
 makeSem ''Websocket
 
-runWebsocketToIO :: (Member (Embed IO) r, Members StdEff r, HasCallStack) => WS.Connection -> Sem (Websocket : r) a -> Sem r a
+runWebsocketToIO :: (Member (Final IO) r, Members StdEff r, HasCallStack) => WS.Connection -> Sem (Websocket : r) a -> Sem r a
 runWebsocketToIO conn = interpret $ \case
-  GetWSMessage -> liftIO $ WSMessage <$> WS.receiveData conn
+  GetWSMessage -> embedFinal $ WSMessage <$> WS.receiveData conn
   PutWSMessage (WSMessage message) -> do
     logDebug $ "Websocket send data - " <> message
-    liftIO $ WS.sendTextData conn message
-  SendCloseSignal -> resourceToIO $ do
+    embedFinal $ WS.sendTextData conn message
+  SendCloseSignal -> resourceToIOFinal $ do
     logInfo "Websocket close request to client"
-    onException (liftIO $ WS.sendClose conn ("Closing connection" :: Text)) pass
-  ReceiveAny -> liftIO $ void $ WS.receive conn
+    onException (embedFinal $ WS.sendClose conn ("Closing connection" :: Text)) pass
+  ReceiveAny -> embedFinal $ void $ WS.receive conn

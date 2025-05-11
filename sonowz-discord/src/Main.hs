@@ -3,6 +3,7 @@ module Main where
 import Discord
 import Discord.Internal.Rest (Channel (ChannelDirectMessage), DiscordId (DiscordId), User (userId), UserId)
 import Discord.Requests
+import Discord.Types (Snowflake (..))
 import Polysemy.Embed (runEmbedded)
 import Sonowz.Core.Error.Effect (unsafeErrorToIO)
 import Sonowz.Discord.Imports
@@ -10,7 +11,7 @@ import Sonowz.Discord.REST.Effect (DiscordREST, restCall', runDiscordRESTIO)
 import Sonowz.Discord.Utils (getOrCreateChannel)
 
 sonowzId :: UserId
-sonowzId = DiscordId 0
+sonowzId = DiscordId (Snowflake 0)
 
 testHandler :: DiscordHandler ()
 testHandler =
@@ -20,7 +21,7 @@ testHandler =
     & runEmbedded @IO liftIO
     & runM
   where
-    action :: Members [Embed DiscordHandler, DiscordREST] r => Sem r ()
+    action :: (Members [Embed DiscordHandler, DiscordREST] r) => Sem r ()
     action = do
       chan <- getOrCreateChannel sonowzId
       restCall' (CreateMessage chan "hello world!")
@@ -39,8 +40,8 @@ main = do
   hSetBuffering stderr LineBuffering
 
   error <-
-    runDiscord $
-      def
+    runDiscord
+      $ def
         { discordToken = "",
           discordOnStart = testHandler
         }

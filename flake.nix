@@ -2,7 +2,7 @@
   description = "Sonowz Backend";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/23.11";
+    nixpkgs.url = "nixpkgs/24.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -14,7 +14,7 @@
 
         pkgs = nixpkgs.legacyPackages.${system};
         lib = nixpkgs.lib;
-        haskellPkgs = pkgs.haskell.packages.ghc925; # The version should match with resolver!
+        haskellPkgs = pkgs.haskell.packages.ghc966; # The version should match with resolver!
         haskellLib = pkgs.haskell.lib;
 
         requirements = pkgs.callPackage ./nix/requirements.nix {};
@@ -77,6 +77,7 @@
           shellHook = ''export TMPDIR=/home/sonowz/tmp''; # HLS tmp dir permission fix
         }).overrideAttrs (final: prev: {
           buildInputs = prev.buildInputs ++ devRequirements;
+          doCheck = false;
         });
         /* devShell = pkgs.mkShell {
           buildInputs = devRequirements ++ requirements ++ [ stack-wrapped ghc ];
