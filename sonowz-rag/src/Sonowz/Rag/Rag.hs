@@ -7,8 +7,8 @@ import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.HTTP.Effect (HTTP)
 import Sonowz.Rag.Document.Types (RawDocument (..), document, title)
+import Sonowz.Rag.Embedding.DB.Queries qualified as Queries
 import Sonowz.Rag.Embedding.OpenAI (createOpenAIEmbedding3)
-import Sonowz.Rag.Embedding.Queries qualified as Queries
 import Sonowz.Rag.Env (Env)
 import Sonowz.Rag.Imports
 import Sonowz.Rag.Rag.Types (RagResultDocument (RagResultDocument))

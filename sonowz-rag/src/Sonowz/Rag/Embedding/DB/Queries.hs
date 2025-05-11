@@ -1,4 +1,4 @@
-module Sonowz.Rag.Embedding.Queries
+module Sonowz.Rag.Embedding.DB.Queries
   ( openAI3EmbeddingTableName,
     insertEmbedding,
     selectDocumentsWithoutEmbedding,
@@ -50,12 +50,13 @@ selectDocumentsWithoutEmbedding conn tableName =
 selectTopNDocuments :: Connection -> Text -> Int -> Vector Float -> IO [RawDocument]
 selectTopNDocuments conn tableName n embedding =
   let sql =
-        fromString . toString $
-          "SELECT doc.*"
-            <> " FROM "
-            <> tableName
-            <> " e"
-            <> " JOIN rag_raw_document doc ON e.document_uid = doc.uid"
-            <> " ORDER BY e.embedding <=> ? ASC"
-            <> " LIMIT ?"
+        fromString
+          . toString
+          $ "SELECT doc.*"
+          <> " FROM "
+          <> tableName
+          <> " e"
+          <> " JOIN rag_raw_document doc ON e.document_uid = doc.uid"
+          <> " ORDER BY e.embedding <=> ? ASC"
+          <> " LIMIT ?"
    in query conn sql (show embedding :: Text, n) -- Embedding vector should be quoted as text
