@@ -20,7 +20,7 @@ import Data.Text as T
 import Data.Time.Clock (secondsToNominalDiffTime)
 import Data.Time.LocalTime (LocalTime, addLocalTime, zonedTimeToLocalTime)
 import Sonowz.Core.Imports
-import Sonowz.Core.Time.Effect (Time, getTime, timeToIO)
+import Sonowz.Core.Time.Effect (Time, getTime, timeToIOFinal)
 import System.Random (randomIO)
 
 type SessionKey = Text -- Base64-encoded key
@@ -41,7 +41,7 @@ makeSem ''Session
 runSessionToIO :: (Member (Final IO) r) => Sem (Session v : r) a -> Sem r a
 runSessionToIO action = do
   storeRef <- embedFinal (newIORef mempty)
-  timeToIO . runReader storeRef . runSessionAsReaderIORef . raiseUnder2 $ action
+  timeToIOFinal . runReader storeRef . runSessionAsReaderIORef . raiseUnder2 $ action
 
 type ReaderIORefEffects v = '[Final IO, Time, Reader (SessionRef v)]
 

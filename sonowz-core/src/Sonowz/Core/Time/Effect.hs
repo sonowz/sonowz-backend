@@ -5,7 +5,7 @@ module Sonowz.Core.Time.Effect
     threadDelay,
     timeout,
     getTime,
-    timeToIO,
+    timeToIOFinal,
   )
 where
 
@@ -23,8 +23,8 @@ data Time m a where
 
 makeSem ''Time
 
-timeToIO :: (Member (Final IO) r) => Sem (Time : r) a -> Sem r a
-timeToIO = interpretFinal $ \case
+timeToIOFinal :: (Member (Final IO) r) => Sem (Time : r) a -> Sem r a
+timeToIOFinal = interpretFinal $ \case
   ThreadDelay microsec -> liftS (threadDelayInteger microsec)
   Timeout microsec action -> do
     ins <- getInspectorS

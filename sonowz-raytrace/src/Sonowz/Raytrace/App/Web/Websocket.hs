@@ -17,7 +17,7 @@ import Sonowz.Core.MessageQueueThread.Effect
     doStreamLoop,
     runMQueueStream,
   )
-import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIO, timeout)
+import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIOFinal, timeout)
 import Sonowz.Raytrace.DB.Types
   ( DaemonMessage,
     DaemonOp (..),
@@ -54,7 +54,7 @@ websocketHandler dbPool wsConn =
     & runWebsocketToIO wsConn
     & runMQueueDBDaemon
     & runReader dbPool
-    & timeToIO
+    & timeToIOFinal
     & runErrorAsLogging @WSException
     & embedToFinal
     & asyncToIOFinal
@@ -92,13 +92,13 @@ forkWaitProgressThreads servantId' = do
 getRunnerConfig :: (Members '[Websocket, Time, Error WSException] r) => Sem r Config
 getRunnerConfig = receiveText >>= makeRunnerConfig . encodeUtf8
   where
-    receiveText :: Members '[Websocket, Time, Error WSException] r => Sem r Text
+    receiveText :: (Members '[Websocket, Time, Error WSException] r) => Sem r Text
     receiveText =
       timeout (3 * 10 ^ 6) getWSMessage >>= \case
         Just (WSMessage text) -> return text
         Nothing -> throw (WSException "Failed to receive config from client")
 
-    makeRunnerConfig :: Member (Error WSException) r => LByteString -> Sem r Config
+    makeRunnerConfig :: (Member (Error WSException) r) => LByteString -> Sem r Config
     makeRunnerConfig json = case jsonToConfig json of
       DecodeFail errormsg ->
         throw $ WSException $ "Failed to parse config: " <> errormsg
@@ -127,12 +127,12 @@ type RaytraceProgressEffects =
   ]
     <> StdEff
 
-raytraceProgressThread :: Members RaytraceProgressEffects r => Sem r ()
+raytraceProgressThread :: (Members RaytraceProgressEffects r) => Sem r ()
 raytraceProgressThread =
   doStreamLoop & runMQueueStream raytraceProgressThread' & runMQueueWebsocket
   where
     raytraceProgressThread' ::
-      Members RaytraceProgressEffects r => StreamHandler r ServantMessage WSMessage
+      (Members RaytraceProgressEffects r) => StreamHandler r ServantMessage WSMessage
     raytraceProgressThread' Message {..} =
       ask >>= \servantId' -> return (handle servantId' operation)
 

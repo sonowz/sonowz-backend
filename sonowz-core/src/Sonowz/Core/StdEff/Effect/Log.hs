@@ -26,7 +26,7 @@ import Data.Time.LocalTime (ZonedTime)
 import GHC.IO (unsafePerformIO)
 import GHC.Stack (SrcLoc (..))
 import Sonowz.Core.Imports
-import Sonowz.Core.Time.Effect (Time, getTime, timeToIO)
+import Sonowz.Core.Time.Effect (Time, getTime, timeToIOFinal)
 import System.Console.ANSI
   ( Color (..),
     ColorIntensity (Vivid),
@@ -51,7 +51,7 @@ makeSem ''StdLog
 runStdLogIO :: (Member (Final IO) r) => Sem (StdLog : r) a -> Sem r a
 runStdLogIO =
   interpret
-    $ timeToIO
+    $ timeToIOFinal
     <$> \case
       LogDebug text -> withFrozenCallStack $ log Debug text
       LogInfo text -> withFrozenCallStack $ log Info text
@@ -130,7 +130,7 @@ makeStdMessage stdMessageSeverity stdMessageText = withFrozenCallStack $ do
   return StdMessage {..}
 
 makeStdMessageIO :: (HasCallStack) => Severity -> Text -> IO StdMessage
-makeStdMessageIO sev text = withFrozenCallStack (makeStdMessage sev text & timeToIO & runFinal)
+makeStdMessageIO sev text = withFrozenCallStack (makeStdMessage sev text & timeToIOFinal & runFinal)
 
 fmtStdMessage :: StdMessage -> Text
 fmtStdMessage StdMessage {..} =

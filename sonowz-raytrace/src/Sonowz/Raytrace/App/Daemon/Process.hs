@@ -17,7 +17,7 @@ import Sonowz.Core.MessageQueueThread.Effect
     doStreamLoop,
     runMQueueStream,
   )
-import Sonowz.Core.Time.Effect (Time, timeToIO)
+import Sonowz.Core.Time.Effect (Time, timeToIOFinal)
 import Sonowz.Raytrace.App.Daemon.RunnerScript qualified as Script
 import Sonowz.Raytrace.App.Daemon.Types (CurrentRunInfo (..), RunInfo (..), RunnerProcess (..))
 import Sonowz.Raytrace.DB.Types
@@ -34,7 +34,7 @@ import Sonowz.Raytrace.MessageQueue.Effect.DB (runMQueueDBDaemon, runMQueueDBSer
 import Sonowz.Raytrace.RaytraceConfig (Config (..))
 import System.Exit (ExitCode (ExitFailure, ExitSuccess))
 
-forkRaytraceDaemon :: HasCallStack => DBConnPool -> IO ()
+forkRaytraceDaemon :: (HasCallStack) => DBConnPool -> IO ()
 forkRaytraceDaemon pool = do
   runInfoQueue <- newTVarIO ([] :: [RunInfo])
   currentRunInfo <-
@@ -47,8 +47,8 @@ forkRaytraceDaemon pool = do
     & runAtomicStateTVar runInfoQueue
     & runAtomicStateTVar currentRunInfo
     & runReader pool
-    & timeToIO
     & embedToFinal
+    & timeToIOFinal
     & asyncToIOFinal
     & resourceToIOFinal
     & stdEffToIOFinal
@@ -57,8 +57,9 @@ forkRaytraceDaemon pool = do
     doFork ::
       (Member P.Async r, Members RunnerEffects r, Members RunnerControlEffects r, HasCallStack) =>
       Sem r ()
-    doFork = void $
-      P.async $ do
+    doFork = void
+      $ P.async
+      $ do
         logDebug "Forking 'runnerControlThread'.."
         tRunnerControl <- P.async runnerControlThread
         logDebug "Forking 'runnerThread'.."
@@ -78,10 +79,10 @@ type RunnerEffects =
   ]
     <> DBEffects
 
-runnerThread :: Members RunnerEffects r => Sem r ()
+runnerThread :: (Members RunnerEffects r) => Sem r ()
 runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid
   where
-    handle :: Members RunnerEffects r => StreamHandler r RunInfo Void
+    handle :: (Members RunnerEffects r) => StreamHandler r RunInfo Void
     handle runInfo@(RunInfo servantId' _) = do
       writeRaytraceStart servantId'
       writeQueueStatus
@@ -92,7 +93,7 @@ runnerThread = doStreamLoop & runMQueueStream handle & runMQueueVoid
       return HContinue
 
     setCurrentRunInfo ::
-      Member (AtomicState CurrentRunInfo) r => RunInfo -> RunnerProcess -> Sem r ()
+      (Member (AtomicState CurrentRunInfo) r) => RunInfo -> RunnerProcess -> Sem r ()
     setCurrentRunInfo = curry (atomicPut . CurrentRunInfo)
 
     writeRaytraceStart :: (Members DBEffects r, HasCallStack) => ServantId -> Sem r ()
@@ -132,10 +133,10 @@ type RunnerControlEffects =
   ]
     <> DBEffects
 
-runnerControlThread :: Members RunnerControlEffects r => Sem r ()
+runnerControlThread :: (Members RunnerControlEffects r) => Sem r ()
 runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread'
   where
-    runnerControlThread' :: Members RunnerControlEffects r => StreamHandler r DaemonMessage RunInfo
+    runnerControlThread' :: (Members RunnerControlEffects r) => StreamHandler r DaemonMessage RunInfo
     runnerControlThread' Message {..} = handle servantId operation
 
     handle ::
@@ -152,7 +153,7 @@ runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread'
       stopRunnerIfDequeued servantId'
       return HContinue
 
-    removeFromQueue :: Member (AtomicState [RunInfo]) r => ServantId -> Sem r Bool
+    removeFromQueue :: (Member (AtomicState [RunInfo]) r) => ServantId -> Sem r Bool
     removeFromQueue servantId' = removeMQueueState (\(RunInfo sid _) -> sid == servantId')
 
     stopRunnerIfDequeued ::
@@ -170,7 +171,7 @@ runnerControlThread = doStreamLoop & runMQueueStream runnerControlThread'
 jobHeader :: ServantId -> Text
 jobHeader (ServantId servantId') = "Job #" <> show servantId' <> " "
 
-sendToServant :: Members DBEffects r => ServantId -> ServantOp -> Sem r ()
+sendToServant :: (Members DBEffects r) => ServantId -> ServantOp -> Sem r ()
 sendToServant servantId operation = do
   let message :: ServantMessage = emptyMessage {servantId = servantId, operation = operation}
   enqueue message & runMQueueDBServant & runReader servantId

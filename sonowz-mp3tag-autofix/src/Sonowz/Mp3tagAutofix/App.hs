@@ -8,7 +8,7 @@ import Data.List ((\\))
 import Sonowz.Core.Error.Effect (runErrorAsLogging)
 import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
-import Sonowz.Core.Time.Effect (Time, timeToIO)
+import Sonowz.Core.Time.Effect (Time, timeToIOFinal)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Logic (makeArtistFixes, makeArtistPool, runSearches)
 import Sonowz.Mp3tagAutofix.AudioTag.Types (Artist, AudioTag (..), Encoding (EncodingUtf8), unArtist)
 import Sonowz.Mp3tagAutofix.AudioTagIO.Effect
@@ -37,11 +37,11 @@ runMainFn env =
     & runReader env
     & runHTTPIO
     & runAudioTagIOIO
-    & timeToIO
     & runErrorAsLogging @HttpException
     & runErrorAsLogging @HTagLibException
     & runErrorAsLogging @ParseException
     & embedToFinal
+    & timeToIOFinal
     & stdEffToIOFinal
     & runFinal @IO
 

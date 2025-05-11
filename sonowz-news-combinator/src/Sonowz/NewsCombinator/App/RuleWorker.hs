@@ -8,7 +8,7 @@ import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Error.Effect (foreverCatch, runErrorAsLogging, unsafeErrorToIO)
 import Sonowz.Core.HTTP.Effect (HTTP, runHTTPIO)
-import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIO)
+import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIOFinal)
 import Sonowz.NewsCombinator.Env (Env (..))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.News.Notification (createNotification)
@@ -17,14 +17,14 @@ import Sonowz.NewsCombinator.Rule.DB.Queries (getNewsScrapRules, updateNewsScrap
 import Sonowz.NewsCombinator.Rule.Executor (evalNewsScrapRule)
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
 
-runRuleWorker :: HasCallStack => Env -> IO Void
+runRuleWorker :: (HasCallStack) => Env -> IO Void
 runRuleWorker env =
   foreverCatch sleep (worker >> sleep)
     & runHTTPIO
     & unsafeErrorToIO @HttpException
     & runReader (envPgConnection env)
-    & timeToIO
     & embedToFinal
+    & timeToIOFinal
     & resourceToIOFinal
     & stdEffToIOFinal
     & runFinal @IO
@@ -33,7 +33,7 @@ runRuleWorker env =
 
 type WorkerEffects = Final IO : Time : HTTP : DBEffects
 
-worker :: HasCallStack => Members WorkerEffects r => Sem r ()
+worker :: (HasCallStack) => (Members WorkerEffects r) => Sem r ()
 worker = do
   rules <- filter isEnabled <$> withDBConn (liftIO . getNewsScrapRules)
   mapM_

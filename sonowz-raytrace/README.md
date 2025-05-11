@@ -27,4 +27,4 @@ https://sonowz.me/raytrace
 ## Bugs
 - Websocket sends ProcessStarted to client after ProcessFinished
     - Split Daemon and Web process as separate binary
-    - Using `timeToIOFinal` might fix the bug
+    - Using `timeToIOFinalFinal` might fix the bug

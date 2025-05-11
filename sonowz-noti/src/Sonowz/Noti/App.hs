@@ -10,7 +10,7 @@ import Sonowz.Core.MessageQueueThread.Effect
     doStreamLoop,
     runMQueueStream,
   )
-import Sonowz.Core.Time.Effect (threadDelay, timeToIO)
+import Sonowz.Core.Time.Effect (threadDelay, timeToIOFinal)
 import Sonowz.Noti.Env (Env (..))
 import Sonowz.Noti.Imports
 import Sonowz.Noti.MessageQueue.DB (runMQueueDBNoti)
@@ -18,7 +18,7 @@ import Sonowz.Noti.Notification.DB.Queries (deleteNotificationByUid)
 import Sonowz.Noti.Notification.Handler.Email (EmailConfig, generateEmailNotification)
 import Sonowz.Noti.Notification.Types (Notification (..), NotificationType (..))
 
-runApp :: HasCallStack => Env -> IO Void
+runApp :: (HasCallStack) => Env -> IO Void
 runApp Env {..} =
   (doStreamLoop >> threadDelay (60 * 10 ^ 6))
     & foreverCatch (threadDelay (60 * 10 ^ 6))
@@ -27,8 +27,8 @@ runApp Env {..} =
     & runMQueueVoid
     & runReader envEmailConfig
     & runReader envPgConnection
-    & timeToIO
     & embedToFinal
+    & timeToIOFinal
     & resourceToIOFinal
     & stdEffToIOFinal
     & runFinal @IO
