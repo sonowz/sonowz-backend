@@ -46,13 +46,13 @@ kvsFields =
 
 -- Public Interfaces --
 
-getKeyValue :: HasCallStack => Connection -> Text -> Text -> IO (Maybe Text)
+getKeyValue :: (HasCallStack) => Connection -> Text -> Text -> IO (Maybe Text)
 getKeyValue conn oauthId key = withTransaction conn (value <<$>> selectResult)
   where
     selectResult :: IO (Maybe KVSDto)
     selectResult = listToMaybe <$> runSelect conn (qSelectKeyValue kvsTable oauthId key)
 
-setKeyValue :: HasCallStack => Connection -> Text -> Text -> Text -> IO ()
+setKeyValue :: (HasCallStack) => Connection -> Text -> Text -> Text -> IO ()
 setKeyValue conn oauthId key value = withTransaction conn $ do
   selectResult >>= \case
     0 -> void $ maybeToExceptionIO "'setKeyValue' failed: insert" =<< insertResult
@@ -62,17 +62,17 @@ setKeyValue conn oauthId key value = withTransaction conn $ do
     selectResult :: IO Int64
     selectResult =
       Unsafe.head <<$>> runSelect conn $ countRows (qSelectKeyValue kvsTable oauthId key)
-    insertResult = listToMaybe <$> runInsert_ conn (qInsertKeyValue kvsTable writeFields)
-    updateResult = listToMaybe <$> runUpdate_ conn (qUpdateKeyValue kvsTable oauthId key value)
+    insertResult = listToMaybe <$> runInsert conn (qInsertKeyValue kvsTable writeFields)
+    updateResult = listToMaybe <$> runUpdate conn (qUpdateKeyValue kvsTable oauthId key value)
     writeFields = makeWriteDto oauthId key value
 
-deleteKey :: HasCallStack => Connection -> Text -> Text -> IO ()
+deleteKey :: (HasCallStack) => Connection -> Text -> Text -> IO ()
 deleteKey conn oauthId key =
-  withTransaction conn $
-    (\n -> if n /= 1 then E.throw $ DatabaseException "'deleteKey' failed" else pass)
-      =<< deleteResult
+  withTransaction conn
+    $ (\n -> if n /= 1 then E.throw $ DatabaseException "'deleteKey' failed" else pass)
+    =<< deleteResult
   where
-    deleteResult = runDelete_ conn (qDeleteKeyValue kvsTable oauthId key)
+    deleteResult = runDelete conn (qDeleteKeyValue kvsTable oauthId key)
 
 -- Private Functions --
 
@@ -102,7 +102,7 @@ qInsertKeyValue table kv =
     { iTable = table,
       iRows = [toFields kv],
       iReturning = rReturning id,
-      iOnConflict = Just DoNothing
+      iOnConflict = Just doNothing
     }
 
 qUpdateKeyValue :: KVSTable -> Text -> Text -> Text -> Update [KVSDto]

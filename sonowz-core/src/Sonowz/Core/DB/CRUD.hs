@@ -106,7 +106,7 @@ create ::
   Connection ->
   wdto ->
   IO (Maybe dto)
-create table conn item = withTransaction conn $ oneListToMaybe <$> runInsert_ conn query
+create table conn item = withTransaction conn $ oneListToMaybe <$> runInsert conn query
   where
     query =
       Insert
@@ -135,7 +135,7 @@ update table conn uid item = withTransaction conn $ do
   (targetCount :: Int64) <-
     unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table uid
   guard (targetCount == 1) -- Raises exception when update target is not one row
-  oneListToMaybe <$> runUpdate_ conn query
+  oneListToMaybe <$> runUpdate conn query
   where
     query =
       Update
@@ -156,7 +156,7 @@ delete table conn uid = withTransaction conn $ do
   (targetCount :: Int64) <-
     unsafeHead <<$>> runSelect conn $ countRows $ qSelectByUid table uid
   guard (targetCount == 1) -- Raises exception when delete target is not one row
-  (== 1) <$> runDelete_ conn query
+  (== 1) <$> runDelete conn query
   where
     query =
       Delete {dTable = table, dWhere = \row -> entityIdField row .== entityToFields (Proxy @r) uid, dReturning = rCount}

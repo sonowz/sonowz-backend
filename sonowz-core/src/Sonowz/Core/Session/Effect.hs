@@ -31,7 +31,7 @@ type SessionStore v = H.HashMap SessionKey (LocalTime, v)
 
 type SessionRef v = IORef (SessionStore v)
 
-data Session (v :: *) m a where
+data Session (v :: Type) m a where
   GetSession :: SessionKey -> Session v m (Maybe v)
   SetSession :: SessionKey -> ExpirySec -> v -> Session v m ()
   NewSession :: ExpirySec -> v -> Session v m SessionKey

@@ -57,19 +57,19 @@ emptyAggUser =
 
 -- Public Interfaces --
 
-selectOrInsertOAuthUser :: HasCallStack => Connection -> OAuthUser -> IO UserInfo
+selectOrInsertOAuthUser :: (HasCallStack) => Connection -> OAuthUser -> IO UserInfo
 selectOrInsertOAuthUser conn (oauthToWriteDto -> writeFields) = withTransaction conn $ do
   maybeUserDto <- (<|>) <$> selectResult <*> insertResult
   let maybeUser = fromDto <$> maybeUserDto
   maybeToExceptionIO "Insert/Select userInfo failed" maybeUser
   where
     selectResult = listToMaybe <$> runSelect conn (qSelectUserByOAuth userTable writeFields)
-    insertResult = listToMaybe <$> runInsert_ conn (qInsertUser userTable writeFields)
+    insertResult = listToMaybe <$> runInsert conn (qInsertUser userTable writeFields)
 
-selectUser :: HasCallStack => Connection -> Uid -> IO (Maybe UserInfo)
+selectUser :: (HasCallStack) => Connection -> Uid -> IO (Maybe UserInfo)
 selectUser = crudRead crudSet
 
-selectTotalUserCount :: HasCallStack => Connection -> IO Int
+selectTotalUserCount :: (HasCallStack) => Connection -> IO Int
 selectTotalUserCount conn = toInt <<$>> headOrError =<< runSelect conn (qSelectUserCount userTable)
   where
     headOrError = maybeToExceptionIO "Counting failed" . viaNonEmpty head
@@ -94,7 +94,7 @@ qInsertUser table user =
     { iTable = table,
       iRows = [toFields user],
       iReturning = rReturning id,
-      iOnConflict = Just DoNothing
+      iOnConflict = Just doNothing
     }
 
 -- Private Functions --

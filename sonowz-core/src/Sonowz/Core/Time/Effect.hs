@@ -12,7 +12,7 @@ where
 import Control.Concurrent qualified as T
 import Data.Time.LocalTime (ZonedTime, getZonedTime)
 import Polysemy.Final (getInspectorS, interpretFinal)
-import Polysemy.Internal.Strategy (liftS, pureS, runS)
+import Polysemy.Internal.Strategy (liftS, runS)
 import Sonowz.Core.Imports
 import System.Timeout qualified as T
 

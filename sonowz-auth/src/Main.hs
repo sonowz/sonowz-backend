@@ -3,15 +3,14 @@ module Main where
 -- This module and runtime is used for OAuth test purpose
 -- This module is not used in production
 
-import qualified Database.PostgreSQL.Simple as PGS
+import Database.PostgreSQL.Simple qualified as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
-import qualified Network.Wai.Handler.Warp as Warp
 import Options.Applicative
 import Servant (Proxy (..), (:<|>) (..))
 import Servant.Server (Handler, hoistServerWithContext, serveWithContext)
-import qualified Sonowz.Auth.App.Test as Test
-import qualified Sonowz.Auth.App.Web as Web
+import Sonowz.Auth.App.Test qualified as Test
+import Sonowz.Auth.App.Web qualified as Web
 import Sonowz.Auth.Imports hiding (Proxy)
 import Sonowz.Auth.OAuth (GoogleAppInfo (..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)

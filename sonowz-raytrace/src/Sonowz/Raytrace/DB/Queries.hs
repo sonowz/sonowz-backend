@@ -72,13 +72,14 @@ emptyAggMessageQueue =
 
 -- Public Interfaces --
 
-enqueueDaemon :: HasCallStack => Connection -> ServantId -> DaemonOp -> IO Bool
+enqueueDaemon :: (HasCallStack) => Connection -> ServantId -> DaemonOp -> IO Bool
 enqueueDaemon conn servantId' message =
-  logCheckBool . insertIsSuccess
-    =<< runInsert_ conn (insertMessage daemonMessageQueue servantId' message)
+  logCheckBool
+    . insertIsSuccess
+    =<< runInsert conn (insertMessage daemonMessageQueue servantId' message)
 
 -- This function sets 'servantId' same as 'qid'
-enqueueDaemonNew :: HasCallStack => Connection -> DaemonOp -> IO (Maybe ServantId)
+enqueueDaemonNew :: (HasCallStack) => Connection -> DaemonOp -> IO (Maybe ServantId)
 enqueueDaemonNew conn message = withTransaction conn $ do
   maxQid <- qidOrZero <$> selectResult conn
   let newServantId = ServantId (coerce maxQid)
@@ -87,16 +88,18 @@ enqueueDaemonNew conn message = withTransaction conn $ do
   where
     selectResult conn = Qid <<$>> runSelect conn (selectMaxSeq daemonMessageSeq) :: IO [Qid]
     insertResult conn sid msg =
-      insertIsSuccess <$> runInsert_ conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
+      insertIsSuccess <$> runInsert conn (insertMessage daemonMessageQueue sid msg) :: IO Bool
 
-enqueueServant :: HasCallStack => Connection -> ServantId -> ServantOp -> IO Bool
+enqueueServant :: (HasCallStack) => Connection -> ServantId -> ServantOp -> IO Bool
 enqueueServant conn servantId' message =
-  logCheckBool . insertIsSuccess
-    =<< runInsert_ conn (insertMessage servantMessageQueue servantId' message)
+  logCheckBool
+    . insertIsSuccess
+    =<< runInsert conn (insertMessage servantMessageQueue servantId' message)
 
-dequeueDaemon :: HasCallStack => Connection -> IO (Maybe DaemonMessage)
-dequeueDaemon conn = withTransaction conn $
-  withEffects $ do
+dequeueDaemon :: (HasCallStack) => Connection -> IO (Maybe DaemonMessage)
+dequeueDaemon conn = withTransaction conn
+  $ withEffects
+  $ do
     -- Returns Nothing if casting fails
     [targetQid] <- liftIO $ selectResult conn
     dequeued <- liftIO $ deleteResult conn targetQid
@@ -104,20 +107,21 @@ dequeueDaemon conn = withTransaction conn $
     return msg
   where
     selectResult conn = Qid <<$>> runSelect conn (selectMinQid daemonMessageQueue) :: IO [Qid]
-    deleteResult conn qid = runDelete_ conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
+    deleteResult conn qid = runDelete conn (popMessage daemonMessageQueue qid) :: IO [DaemonMessage]
     withEffects :: Sem [Fail, Embed IO] a -> IO (Maybe a)
     withEffects = fmap rightToMaybe . runM . runFail
 
-dequeueServant :: HasCallStack => Connection -> ServantId -> IO (Maybe ServantMessage)
-dequeueServant conn sid = withTransaction conn $
-  runMaybeT $ do
+dequeueServant :: (HasCallStack) => Connection -> ServantId -> IO (Maybe ServantMessage)
+dequeueServant conn sid = withTransaction conn
+  $ runMaybeT
+  $ do
     targetQid <- MaybeT $ listToMaybe <$> selectResult conn
     MaybeT $ deleteResult conn targetQid >>= logCheckMaybe . listToMaybe
   where
     selectResult conn =
       Qid <<$>> runSelect conn (selectServantMinQid servantMessageQueue `putArg` sid) :: IO [Qid]
     deleteResult conn qid =
-      runDelete_ conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
+      runDelete conn (popMessage servantMessageQueue qid) :: IO [ServantMessage]
 
 -- Queries --
 
@@ -150,20 +154,20 @@ selectServantMinQid table = proc servantIdEq -> do
   returnA -< qid row
 
 popMessage ::
-  DefaultFromField SqlText op => MessageTable op -> Qid -> Delete [Message' op]
+  (DefaultFromField SqlText op) => MessageTable op -> Qid -> Delete [Message' op]
 popMessage dTable qidEq = Delete {..}
   where
     dWhere (qid -> rowQid) = rowQid .== toFields qidEq
     dReturning = rReturning id
 
 insertMessage ::
-  Default ToFields op (Column SqlText) => MessageTable op -> ServantId -> op -> Insert Int64
+  (Default ToFields op (Column SqlText)) => MessageTable op -> ServantId -> op -> Insert Int64
 insertMessage table servantId' operation' =
   Insert
     { iTable = table,
       iRows = [message],
       iReturning = rCount,
-      iOnConflict = Just DoNothing
+      iOnConflict = Just doNothing
     }
   where
     message =
@@ -188,13 +192,13 @@ qidOrZero = fromMaybe 0 . listToMaybe
 insertIsSuccess :: Int64 -> Bool
 insertIsSuccess result = result > 0
 
-logWarnDB :: HasCallStack => IO ()
+logWarnDB :: (HasCallStack) => IO ()
 logWarnDB = withFrozenCallStack $ logWarningIO "Query result might be wrong!"
 
-logCheckBool :: HasCallStack => Bool -> IO Bool
+logCheckBool :: (HasCallStack) => Bool -> IO Bool
 logCheckBool False = withFrozenCallStack $ logWarnDB >> return False
 logCheckBool True = withFrozenCallStack $ return True
 
-logCheckMaybe :: HasCallStack => Maybe a -> IO (Maybe a)
+logCheckMaybe :: (HasCallStack) => Maybe a -> IO (Maybe a)
 logCheckMaybe Nothing = withFrozenCallStack $ logWarnDB >> return Nothing
 logCheckMaybe x = withFrozenCallStack $ return x

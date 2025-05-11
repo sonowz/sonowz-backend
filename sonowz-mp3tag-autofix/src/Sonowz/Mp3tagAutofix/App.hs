@@ -25,7 +25,9 @@ import Sonowz.Mp3tagAutofix.Imports
 import System.Directory (doesDirectoryExist, listDirectory)
 import System.FilePath ((</>))
 
-newtype MainException = MainException String deriving (Show, Exception)
+newtype MainException = MainException String
+  deriving newtype (Show)
+  deriving anyclass (Exception)
 
 -- TODO: override 'Polysemy.Error' interpreters to have catch functions
 
@@ -64,9 +66,9 @@ mainFn = do
   !audioTags <- catMaybes <$> mapM readAudioTagWrapped targetFiles
   logInfo $ "Extracted " <> show (length audioTags) <> " ID3 tags."
 
-  logInfo $
-    "Set encoding of tags to UTF-8 in the files? "
-      <> "This might result in some broken encoding in files! (yes or no):"
+  logInfo
+    $ "Set encoding of tags to UTF-8 in the files? "
+    <> "This might result in some broken encoding in files! (yes or no):"
   whenM getYesOrNo (applyEncodingFixes audioTags)
 
   let artistPool = makeArtistPool audioTags
@@ -74,9 +76,9 @@ mainFn = do
   logInfo $ "Run search for " <> ac <> " unique artist names... (ETA: " <> ac <> " seconds)"
   !artistPool' <- runSearches artistPool
   let dropped = length artistPool - length artistPool'
-  logInfo $
-    "Search done. "
-      <> (if dropped == 0 then mempty else show dropped <> " artists were dropped.")
+  logInfo
+    $ "Search done. "
+    <> (if dropped == 0 then mempty else show dropped <> " artists were dropped.")
 
   let fixes = makeArtistFixes artistPool'
   !fixes <- if nonInteractive env then return fixes else interactiveFilterFix fixes unArtist
@@ -85,7 +87,7 @@ mainFn = do
   whenM getYesOrNo (applyArtistFixes audioTags fixes)
   logInfo "All done."
   where
-    getYesOrNo :: Members (Reader Env : Embed IO : StdEff) r => Sem r Bool
+    getYesOrNo :: (Members (Reader Env : Embed IO : StdEff) r) => Sem r Bool
     getYesOrNo = do
       env <- ask
       if nonInteractive env
@@ -140,7 +142,7 @@ applyEncodingFixes audioTags = do
     changed
   logInfo "All tags were updated."
 
-getTargetFileList :: Members (Embed IO : StdEff) r => FilePath -> Sem r [FilePath]
+getTargetFileList :: (Members (Embed IO : StdEff) r) => FilePath -> Sem r [FilePath]
 getTargetFileList dir = do
   unlessM
     (liftIO (doesDirectoryExist dir))

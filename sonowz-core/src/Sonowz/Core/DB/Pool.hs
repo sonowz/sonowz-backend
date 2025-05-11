@@ -8,7 +8,7 @@ module Sonowz.Core.DB.Pool
 where
 
 import Control.Exception.Safe qualified as E
-import Data.Pool (LocalPool, Pool (..), createPool, destroyResource, putResource, takeResource)
+import Data.Pool (LocalPool, Pool, defaultPoolConfig, destroyResource, newPool, putResource, takeResource)
 import Database.PostgreSQL.Simple (ConnectInfo, Connection, close, connect, query_)
 import Polysemy.Resource (Resource, bracket)
 import Sonowz.Core.Imports
@@ -24,7 +24,7 @@ maxDBConn = 10
 createConnPool :: (MonadIO m, HasCallStack) => ConnectInfo -> m DBConnPool
 createConnPool connInfo = liftIO $ do
   logDebugIO $ "DB connection pool was created. (Max connection: " <> show maxDBConn <> ")"
-  DBConnPool <$> createPool (connect connInfo) close 1 10 maxDBConn
+  DBConnPool <$> newPool (defaultPoolConfig (connect connInfo) close 10.0 maxDBConn)
 
 withDBConnIO :: DBConnPool -> (Connection -> IO a) -> IO a
 withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction
@@ -33,7 +33,7 @@ withDBConnIO (DBConnPool pool) action = E.bracket takeAction putAction doAction
     putAction = liftIO . uncurry (flip putResource)
     doAction = action . fst
 
-withDBConn :: Members DBEffects r => (Connection -> Sem r a) -> Sem r a
+withDBConn :: (Members DBEffects r) => (Connection -> Sem r a) -> Sem r a
 withDBConn action = do
   DBConnPool pool <- ask
   let !takeAction = liftIO (getWorkingConnection pool)
@@ -42,7 +42,7 @@ withDBConn action = do
   bracket takeAction putAction doAction
 
 -- Check connection with "SELECT 1", and try to reconnect
-getWorkingConnection :: HasCallStack => Pool Connection -> IO (Connection, LocalPool Connection)
+getWorkingConnection :: (HasCallStack) => Pool Connection -> IO (Connection, LocalPool Connection)
 getWorkingConnection pool = do
   (conn, localpool) <- takeResource pool
   E.tryAny (checkPing conn) >>= \case

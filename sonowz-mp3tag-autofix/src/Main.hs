@@ -1,6 +1,5 @@
 module Main where
 
-import Colog.Core.Severity (Severity (..))
 import Options.Applicative
 import Sonowz.Mp3tagAutofix.App (runMainFn)
 import Sonowz.Mp3tagAutofix.Env (Env (..))
