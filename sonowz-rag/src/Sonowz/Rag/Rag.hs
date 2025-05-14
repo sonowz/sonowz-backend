@@ -6,7 +6,7 @@ where
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Exception.Types (ParseException)
 import Sonowz.Core.HTTP.Effect (HTTP)
-import Sonowz.Rag.Document.Types (RawDocument (..), document, title)
+import Sonowz.Rag.Document.DB.Types (RawDocument, RawDocument' (..))
 import Sonowz.Rag.Embedding.DB.Queries qualified as Queries
 import Sonowz.Rag.Embedding.OpenAI (createOpenAIEmbedding3)
 import Sonowz.Rag.Env (Env)
@@ -28,4 +28,4 @@ doRagSearch query = do
   pure $ toRagResult <$> searchedDocuments
 
 toRagResult :: RawDocument -> RagResultDocument
-toRagResult RawDocument {..} = RagResultDocument title document
+toRagResult RawDocument' {..} = RagResultDocument title document

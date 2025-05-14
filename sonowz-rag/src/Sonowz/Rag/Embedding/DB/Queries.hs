@@ -9,20 +9,12 @@ where
 import Data.Vector (Vector)
 import Database.PostgreSQL.Simple
 import Sonowz.Core.DB.Field (Uid)
-import Sonowz.Rag.Document.Types (RawDocument)
+import Sonowz.Rag.Document.DB.Types (RawDocument)
 import Sonowz.Rag.Imports
 
-{-
-CREATE TABLE public.rag_raw_document (
-    uid serial PRIMARY KEY NOT NULL,
-    document_id character varying(255) NOT NULL UNIQUE,
-    source text NOT NULL,
-    title text NOT NULL,
-    document text NOT NULL,
-    created_time timestamp with time zone NOT NULL DEFAULT now(),
-    updated_time timestamp with time zone NOT NULL DEFAULT now()
-);
+instance FromRow RawDocument
 
+{-
 CREATE TABLE public.rag_embedding_openai_3 (
     uid serial PRIMARY KEY NOT NULL,
     document_uid integer NOT NULL,

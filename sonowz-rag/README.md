@@ -3,7 +3,6 @@
 RAG service intended for MCP endpoint
 
 ## TODO
-- Add endpoint for uploading documents
 - Centralize RAG search in this repo
   - Use `langchain-hs` and `hs-mcp` library
   - Add endpoint for RAG which returns list of items with each source included

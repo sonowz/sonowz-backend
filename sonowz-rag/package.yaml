@@ -33,11 +33,13 @@ dependencies:
   - deepseq
   - http-client
   - http-types
+  - opaleye
   - optics
   - optparse-applicative
   - polysemy
   - polysemy-plugin
   - postgresql-simple
+  - product-profunctors
   - relude
   - safe-exceptions
   - servant
