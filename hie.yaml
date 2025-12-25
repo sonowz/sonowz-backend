@@ -29,3 +29,6 @@ cradle:
 
     - path: "./sonowz-web/src"
       component: "sonowz-web:exe:sonowz-web"
+
+    - path: "./sonowz-mcp-servers/src"
+      component: "sonowz-mcp-servers:exe:sonowz-mcp-servers"
