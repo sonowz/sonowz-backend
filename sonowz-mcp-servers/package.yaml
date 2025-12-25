@@ -30,6 +30,7 @@ dependencies:
   - bytestring
   - containers
   - deepseq
+  - mcp-server
   - optparse-applicative
   - polysemy
   - polysemy-plugin

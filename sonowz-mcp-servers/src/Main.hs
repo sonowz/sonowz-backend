@@ -2,8 +2,7 @@ module Main where
 
 import Network.Wai.Handler.Warp (Port)
 import Options.Applicative
-import Sonowz.Core.DB.Pool (createConnPool)
-import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
+import Sonowz.Core.Options.Applicative.Common (pWarpPort)
 import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.McpServers.Imports
 
@@ -13,7 +12,15 @@ pConfig :: Parser Config
 pConfig = Config <$> pWarpPort
 
 opts :: ParserInfo Config
-opts = info (helper <*> pConfig) (fullDesc <> progDesc "Sonowz RAG API server")
+opts = info (helper <*> pConfig) (fullDesc <> progDesc "Sonowz MCP Servers")
+
+mcpServerInfo :: McpServerInfo
+mcpServerInfo =
+  McpServerInfo
+    { serverName = "Sonowz MCP Servers",
+      serverVersion = "1.0.0",
+      serverInstructions = "Set of tools"
+    }
 
 main :: IO ()
 main = do
@@ -21,4 +28,5 @@ main = do
   hSetBuffering stderr LineBuffering
 
   (Config warpPort) <- execParser opts
-  pass
+
+  runMcpServerStdio mcpServerInfo (McpServerHandlers Nothing Nothing Nothing)
