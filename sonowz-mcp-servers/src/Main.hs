@@ -1,5 +1,10 @@
 module Main where
 
+import MCP.Server
+  ( McpServerHandlers (McpServerHandlers),
+    McpServerInfo (..),
+    runMcpServerStdio,
+  )
 import Network.Wai.Handler.Warp (Port)
 import Options.Applicative
 import Sonowz.Core.Options.Applicative.Common (pWarpPort)
