@@ -1,9 +1,11 @@
 module Main where
 
 import MCP.Server
-  ( McpServerHandlers (McpServerHandlers),
+  ( HttpConfig (..),
+    McpServerHandlers (McpServerHandlers),
     McpServerInfo (..),
-    runMcpServerStdio,
+    runMcpServerHttp,
+    runMcpServerHttpWithConfig,
   )
 import Network.Wai.Handler.Warp (Port)
 import Options.Applicative
@@ -34,4 +36,12 @@ main = do
 
   (Config warpPort) <- execParser opts
 
-  runMcpServerStdio mcpServerInfo (McpServerHandlers Nothing Nothing Nothing)
+  runMcpServerHttpWithConfig customConfig mcpServerInfo (McpServerHandlers Nothing Nothing Nothing)
+  where
+    customConfig =
+      HttpConfig
+        { httpPort = 3000,
+          httpHost = "0.0.0.0",
+          httpEndpoint = "/mcp",
+          httpVerbose = True -- Enable detailed logging
+        }
