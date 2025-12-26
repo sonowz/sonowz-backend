@@ -2,7 +2,7 @@
   description = "Sonowz Backend";
 
   inputs = {
-    nixpkgs.url = "nixpkgs/24.11";
+    nixpkgs.url = "nixpkgs/25.11";
     flake-utils.url = "github:numtide/flake-utils";
   };
 
@@ -14,7 +14,7 @@
 
         pkgs = nixpkgs.legacyPackages.${system};
         lib = nixpkgs.lib;
-        haskellPkgs = pkgs.haskell.packages.ghc966; # The version should match with resolver!
+        haskellPkgs = pkgs.haskell.packages.ghc9102; # The version should match with resolver!
         haskellLib = pkgs.haskell.lib;
 
         requirements = pkgs.callPackage ./nix/requirements.nix {};
@@ -33,7 +33,18 @@
         stack-wrapped = pkgs.symlinkJoin {
           name = "stack";
           version = pkgs.stack.version;
-          paths = [ pkgs.stack ];
+          # https://github.com/NixOS/nixpkgs/issues/467614
+          # TODO: revert to `paths = [ pkgs.stack ];`
+          paths = [
+            (pkgs.haskell.lib.justStaticExecutables (
+              pkgs.haskellPackages.stack.overrideScope (self: super: {
+                rio = self.callCabal2nix "rio" (pkgs.fetchzip {
+                  url = "https://hackage.haskell.org/package/rio-0.1.24.0/rio-0.1.24.0.tar.gz";
+                  sha256 = "0dc00wy26x8xpmrai3xyamhd1m4h70hp2j35srkfh7x98inzmzgj";
+                }) {};
+              })
+            ))
+          ];
           buildInputs = [ pkgs.makeWrapper ];
           postBuild = ''
             wrapProgram $out/bin/stack \

@@ -16,7 +16,7 @@ where
 import Crypto.Hash (Digest, SHA256, hash)
 import Data.Fixed (Fixed (MkFixed))
 import Data.HashMap.Strict as H
-import Data.Text as T
+import Data.Text qualified as T
 import Data.Time.Clock (secondsToNominalDiffTime)
 import Data.Time.LocalTime (LocalTime, addLocalTime, zonedTimeToLocalTime)
 import Sonowz.Core.Imports
