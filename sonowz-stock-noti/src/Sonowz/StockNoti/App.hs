@@ -33,10 +33,10 @@ runApp env =
     sleep :: (Member Time r) => Sem r ()
     sleep = threadDelay (fromIntegral (envWorkerIntervalSeconds env) * 10 ^ 6)
 
-type MainLoopEffects = Final IO : StockDataSource : DBEffects
+type MainLoopEffects = Final IO : StockDataSource : Time : DBEffects
 
 mainLoop :: (HasCallStack, Members MainLoopEffects r) => [StockSymbol] -> Sem r ()
-mainLoop stocks = forM_ stocks $ \stock -> catchAnyException pass $ do
+mainLoop stocks = forM_ stocks $ \stock -> do
   logInfo $ "Checking " <> show stock <> "..."
   stockTimeSeries <- fetchDayStockPrices stock
   let smaPeriodShort = 5
@@ -53,3 +53,4 @@ mainLoop stocks = forM_ stocks $ \stock -> catchAnyException pass $ do
     Just xs ->
       let lastDate = utctDay (last xs)
        in void $ createNotification stock NotiGoldenCross lastDate
+  threadDelay (10 * 10 ^ 6) -- Sleep 10 seconds between stocks to avoid hitting API rate limits

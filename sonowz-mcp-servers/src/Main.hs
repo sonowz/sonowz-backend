@@ -6,12 +6,14 @@ import MCP.Server
     McpServerInfo (..),
     runMcpServerHttp,
     runMcpServerHttpWithConfig,
+    runMcpServerStdio,
   )
 import Network.Wai.Handler.Warp (Port)
 import Options.Applicative
 import Sonowz.Core.Options.Applicative.Common (pWarpPort)
 import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.McpServers.Imports
+import Sonowz.McpServers.Utilities.Server (utilitiesHandlers)
 
 data Config = Config Port
 
@@ -36,12 +38,12 @@ main = do
 
   (Config warpPort) <- execParser opts
 
-  runMcpServerHttpWithConfig customConfig mcpServerInfo (McpServerHandlers Nothing Nothing Nothing)
-  where
-    customConfig =
-      HttpConfig
-        { httpPort = 3000,
-          httpHost = "0.0.0.0",
-          httpEndpoint = "/mcp",
-          httpVerbose = True -- Enable detailed logging
-        }
+  let customConfig =
+        HttpConfig
+          { httpPort = warpPort,
+            httpHost = "0.0.0.0",
+            httpEndpoint = "/mcp",
+            httpVerbose = True -- Enable detailed logging
+          }
+
+  runMcpServerHttpWithConfig customConfig mcpServerInfo utilitiesHandlers
