@@ -7,7 +7,7 @@ import Data.Time (UTCTime (utctDay))
 import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects)
 import Sonowz.Core.Error.Effect (catchAnyException, foreverCatch, runErrorAsLogging)
-import Sonowz.Core.Exception.Types (ParseException)
+import Sonowz.Core.Exception.Types (ParseException (ParseException))
 import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIOFinal)
 import Sonowz.StockNoti.Env (Env (..))
 import Sonowz.StockNoti.Imports
@@ -19,7 +19,7 @@ import Sonowz.StockNoti.Stock.Types (StockSymbol)
 
 runApp :: (HasCallStack) => Env -> IO Void
 runApp env =
-  (mainLoop (envStockSymbols env) >> sleep)
+  (sleep >> mainLoop (envStockSymbols env))
     & runStockDataSourceAlphaVantage
     & runReader (envPgConnection env)
     & runErrorAsLogging @ParseException
@@ -37,6 +37,7 @@ type MainLoopEffects = Final IO : StockDataSource : Time : DBEffects
 
 mainLoop :: (HasCallStack, Members MainLoopEffects r) => [StockSymbol] -> Sem r ()
 mainLoop stocks = forM_ stocks $ \stock -> do
+  threadDelay (10 * 10 ^ 6) -- Sleep 10 seconds between stocks to avoid hitting API rate limits
   logInfo $ "Checking " <> show stock <> "..."
   stockTimeSeries <- fetchDayStockPrices stock
   let smaPeriodShort = 5
@@ -53,4 +54,3 @@ mainLoop stocks = forM_ stocks $ \stock -> do
     Just xs ->
       let lastDate = utctDay (last xs)
        in void $ createNotification stock NotiGoldenCross lastDate
-  threadDelay (10 * 10 ^ 6) -- Sleep 10 seconds between stocks to avoid hitting API rate limits

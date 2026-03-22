@@ -17,3 +17,4 @@ All packages are maintained using one same GHC version, specified in `stack.yaml
 - Use `NamedRoutes` when `servant` version 19.x lands
 - Update to GHC 9.10
   - Adapt to [exception backtrace](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0330-exception-backtraces.rst)
+- Remove sonowz-mcp-servers
