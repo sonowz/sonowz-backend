@@ -16,6 +16,8 @@ pWarpPort =
       reader auto,
       long "port",
       short 'p',
+      option,
+      metavar "PORT",
       value 80
     ]
     & checkEither (\port -> if 0 < port && port < 90000 then Right port else Left "Invalid port number!")
@@ -29,7 +31,9 @@ pPGSConnectInfo = do
         reader str,
         long "pghost",
         short 'h',
+        option,
         env "PGHOST",
+        metavar "PGHOST",
         value (PGS.connectHost def)
       ]
   connectPort <-
@@ -38,7 +42,9 @@ pPGSConnectInfo = do
         reader auto,
         long "pgport",
         short 'P',
+        option,
         env "PGPORT",
+        metavar "PGPORT",
         value (PGS.connectPort def)
       ]
   connectUser <-
@@ -47,7 +53,9 @@ pPGSConnectInfo = do
         reader str,
         long "pguser",
         short 'u',
+        option,
         env "PGUSER",
+        metavar "PGUSER",
         value (PGS.connectUser def)
       ]
   connectPassword <-
@@ -56,7 +64,9 @@ pPGSConnectInfo = do
         reader str,
         long "pgpasswd",
         short 'w',
-        env "PGPASSWD"
+        option,
+        env "PGPASSWD",
+        metavar "PGPASSWD"
       ]
   connectDatabase <-
     setting
@@ -64,7 +74,9 @@ pPGSConnectInfo = do
         reader str,
         long "pgdatabase",
         short 'd',
+        option,
         env "PGDATABASE",
+        metavar "PGDATABASE",
         value (PGS.connectDatabase def)
       ]
   return PGS.ConnectInfo {..}

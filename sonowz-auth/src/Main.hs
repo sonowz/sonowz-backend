@@ -24,8 +24,8 @@ data Config = Config Port PGS.ConnectInfo GoogleAppInfo
 
 pGoogleAppInfo :: Parser GoogleAppInfo
 pGoogleAppInfo = do
-  appId <- setting [help "Google App ID", reader str, long "gappid", env "GOOGLE_APP_ID"]
-  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret", env "GOOGLE_APP_SECRET"]
+  appId <- setting [help "Google App ID", reader str, long "gappid", option, env "GOOGLE_APP_ID", metavar "GOOGLE_APP_ID"]
+  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret", option, env "GOOGLE_APP_SECRET", metavar "GOOGLE_APP_SECRET"]
   return GoogleAppInfo {..}
 
 pConfig :: Parser Config

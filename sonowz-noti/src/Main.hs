@@ -21,20 +21,26 @@ pEmailConfig = do
         [ help "Email address for notifications",
           reader str,
           long "email",
-          env "NOTI_EMAIL_ADDRESS"
+          option,
+          env "NOTI_EMAIL_ADDRESS",
+          metavar "NOTI_EMAIL_ADDRESS"
         ]
   emailConfigPassword <-
     setting
       [ help "Email password",
         reader str,
         long "emailpasswd",
-        env "NOTI_EMAIL_PASSWORD"
+        option,
+        env "NOTI_EMAIL_PASSWORD",
+        metavar "NOTI_EMAIL_PASSWORD"
       ]
   emailConfigHostname <-
     setting
       [ help "Email SMTP hostname",
         reader str,
         long "emailhostname",
+        option,
+        metavar "EMAIL_HOSTNAME",
         value "smtp.gmail.com"
       ]
   emailConfigPort <-
@@ -42,6 +48,8 @@ pEmailConfig = do
       [ help "Email SMTP port",
         reader auto,
         long "emailport",
+        option,
+        metavar "EMAIL_PORT",
         value 587
       ]
   return EmailConfig {..}

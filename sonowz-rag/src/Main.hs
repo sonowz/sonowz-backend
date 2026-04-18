@@ -21,7 +21,9 @@ pOpenAIKey =
     [ help "OpenAI API key",
       reader str,
       long "openai",
-      env "OPENAI_API_KEY"
+      option,
+      env "OPENAI_API_KEY",
+      metavar "OPENAI_API_KEY"
     ]
 
 pConfig :: Parser Config

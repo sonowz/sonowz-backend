@@ -21,12 +21,12 @@ type RootURI = Text
 
 pGoogleAppInfo :: Parser GoogleAppInfo
 pGoogleAppInfo = do
-  appId <- setting [help "Google App ID", reader str, long "gappid", env "GOOGLE_APP_ID"]
-  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret", env "GOOGLE_APP_SECRET"]
+  appId <- setting [help "Google App ID", reader str, long "gappid", option, env "GOOGLE_APP_ID", metavar "GOOGLE_APP_ID"]
+  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret", option, env "GOOGLE_APP_SECRET", metavar "GOOGLE_APP_SECRET"]
   return GoogleAppInfo {..}
 
 pRootURI :: Parser RootURI
-pRootURI = setting [help "Root URI", reader str, long "root", value "/api/"]
+pRootURI = setting [help "Root URI", reader str, long "root", option, metavar "ROOT_URI", value "/api/"]
 
 pConfig :: Parser Config
 pConfig = Config <$> pWarpPort <*> pPGSConnectInfo <*> pGoogleAppInfo <*> pRootURI

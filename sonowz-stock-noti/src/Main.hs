@@ -19,6 +19,7 @@ pWorkerInterval =
       reader auto,
       long "worker-interval",
       short 't',
+      option,
       metavar "SECONDS",
       value 7200
     ]
