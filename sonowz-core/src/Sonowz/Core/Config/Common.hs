@@ -29,6 +29,7 @@ pPGSConnectInfo = do
         reader str,
         long "pghost",
         short 'h',
+        env "PGHOST",
         value (PGS.connectHost def)
       ]
   connectPort <-
@@ -37,6 +38,7 @@ pPGSConnectInfo = do
         reader auto,
         long "pgport",
         short 'P',
+        env "PGPORT",
         value (PGS.connectPort def)
       ]
   connectUser <-
@@ -45,6 +47,7 @@ pPGSConnectInfo = do
         reader str,
         long "pguser",
         short 'u',
+        env "PGUSER",
         value (PGS.connectUser def)
       ]
   connectPassword <-
@@ -52,7 +55,8 @@ pPGSConnectInfo = do
       [ help "PostgreSQL password",
         reader str,
         long "pgpasswd",
-        short 'w'
+        short 'w',
+        env "PGPASSWD"
       ]
   connectDatabase <-
     setting
@@ -60,6 +64,7 @@ pPGSConnectInfo = do
         reader str,
         long "pgdatabase",
         short 'd',
+        env "PGDATABASE",
         value (PGS.connectDatabase def)
       ]
   return PGS.ConnectInfo {..}

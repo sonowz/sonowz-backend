@@ -21,8 +21,8 @@ type RootURI = Text
 
 pGoogleAppInfo :: Parser GoogleAppInfo
 pGoogleAppInfo = do
-  appId <- setting [help "Google App ID", reader str, long "gappid"]
-  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret"]
+  appId <- setting [help "Google App ID", reader str, long "gappid", env "GOOGLE_APP_ID"]
+  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret", env "GOOGLE_APP_SECRET"]
   return GoogleAppInfo {..}
 
 pRootURI :: Parser RootURI

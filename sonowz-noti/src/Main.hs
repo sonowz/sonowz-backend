@@ -20,13 +20,15 @@ pEmailConfig = do
       <$> setting
         [ help "Email address for notifications",
           reader str,
-          long "email"
+          long "email",
+          env "NOTI_EMAIL_ADDRESS"
         ]
   emailConfigPassword <-
     setting
       [ help "Email password",
         reader str,
-        long "emailpasswd"
+        long "emailpasswd",
+        env "NOTI_EMAIL_PASSWORD"
       ]
   emailConfigHostname <-
     setting
