@@ -47,6 +47,7 @@ main = do
 
   (Config stockSymbols pgConnectInfo workerInterval) <-
     runParser (makeVersion []) "Stock notification service" pConfig
+
   dbPool <- createConnPool pgConnectInfo
   let env = Env dbPool workerInterval stockSymbols
 
