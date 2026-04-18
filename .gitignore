@@ -25,8 +25,26 @@ cabal.project.local~
 *.sqlite3*
 
 bin/
-result
 test.sh
 appConfig*
+
+# Nix
+result
+result-*
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# IDE
+.direnv/
 .vscode/
-**/result
+.idea/
+*.swp
+*.swo
+.agents/*
+!.agents/skills/
