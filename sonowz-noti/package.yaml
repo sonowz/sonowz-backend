@@ -29,7 +29,7 @@ dependencies:
   - containers
   - mime-mail
   - opaleye
-  - optparse-applicative
+  - opt-env-conf
   - product-profunctors
   - profunctors
   - polysemy

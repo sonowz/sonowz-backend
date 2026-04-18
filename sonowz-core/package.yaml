@@ -37,7 +37,7 @@ dependencies:
   - http-client-tls
   - http-types
   - opaleye
-  - optparse-applicative
+  - opt-env-conf
   - polysemy
   - polysemy-plugin
   - postgresql-simple

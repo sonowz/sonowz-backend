@@ -30,7 +30,7 @@ dependencies:
   - containers
   - http-client
   - opaleye
-  - optparse-applicative
+  - opt-env-conf
   - polysemy
   - polysemy-plugin
   - postgresql-simple

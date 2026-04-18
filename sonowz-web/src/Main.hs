@@ -1,14 +1,15 @@
 module Main where
 
+import Data.Version (makeVersion)
 import Database.PostgreSQL.Simple qualified as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
-import Options.Applicative
+import OptEnvConf
 import Servant.Server (Handler, hoistServerWithContext, serveWithContext)
 import Sonowz.Auth.OAuth (GoogleAppInfo (..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
+import Sonowz.Core.Config.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.DB.Pool (createConnPool)
-import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 import Sonowz.Web.App qualified as Web
@@ -20,25 +21,23 @@ type RootURI = Text
 
 pGoogleAppInfo :: Parser GoogleAppInfo
 pGoogleAppInfo = do
-  appId <- strOption (long "gappid")
-  appSecret <- strOption (long "gappsecret")
+  appId <- setting [help "Google App ID", reader str, long "gappid"]
+  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret"]
   return GoogleAppInfo {..}
 
 pRootURI :: Parser RootURI
-pRootURI = strOption (long "root" <> value "/api/" <> showDefault)
+pRootURI = setting [help "Root URI", reader str, long "root", value "/api/"]
 
 pConfig :: Parser Config
 pConfig = Config <$> pWarpPort <*> pPGSConnectInfo <*> pGoogleAppInfo <*> pRootURI
-
-opts :: ParserInfo Config
-opts = info (helper <*> pConfig) (fullDesc <> progDesc "Sonowz web API server")
 
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  (Config warpPort pgConnectInfo gAppInfo apiRoot) <- execParser opts
+  (Config warpPort pgConnectInfo gAppInfo apiRoot) <-
+    runParser (makeVersion []) "Sonowz web API server" pConfig
   dbPool <- createConnPool pgConnectInfo
   tlsManager <- newTlsManager
   let webappEnv = defaultWebAppEnv {eWebAPIRoot = apiRoot, eWebPort = warpPort}

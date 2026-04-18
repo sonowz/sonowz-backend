@@ -1,28 +1,44 @@
 module Main where
 
-import Options.Applicative
+import Data.Version (makeVersion)
+import OptEnvConf
 import Sonowz.Mp3tagAutofix.App (runMainFn)
 import Sonowz.Mp3tagAutofix.Env (Env (..))
 import Sonowz.Mp3tagAutofix.Imports
 
 pEnv :: Parser Env
 pEnv = do
-  targetDir <- strArgument (metavar "dir")
+  targetDir <-
+    setting
+      [ help "Target directory",
+        reader str,
+        argument,
+        metavar "dir"
+      ]
   let niHelpMsg =
         "Run as noninteractive mode. WARNING: this will automatically update tags in the file!"
-  nonInteractive <- switch (long "noninteractive" <> help niHelpMsg)
+  nonInteractive <-
+    setting
+      [ help niHelpMsg,
+        switch True,
+        long "noninteractive",
+        value False
+      ]
   let debugHelpMsg = "Print debug logs"
-  debug <- switch (long "debug" <> help debugHelpMsg)
+  debug <-
+    setting
+      [ help debugHelpMsg,
+        switch True,
+        long "debug",
+        value False
+      ]
   return Env {..}
-
-opts :: ParserInfo Env
-opts = info (helper <*> pEnv) (fullDesc <> progDesc "Mp3 tag autofix")
 
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  env <- execParser opts
+  env <- runParser (makeVersion []) "Mp3 tag autofix" pEnv
   setStdLogActionLevel (if debug env then Debug else Info)
   runMainFn env

@@ -34,7 +34,7 @@ dependencies:
   - exceptions
 # - filepath
   - opaleye
-  - optparse-applicative
+  - opt-env-conf
   - polysemy
   - polysemy-plugin
   - postgresql-simple

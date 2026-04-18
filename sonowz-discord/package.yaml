@@ -32,7 +32,7 @@ dependencies:
   - deepseq
   - discord-haskell
   - http-client-tls
-  - optparse-applicative
+  - opt-env-conf
   - polysemy
   - polysemy-plugin
   - relude

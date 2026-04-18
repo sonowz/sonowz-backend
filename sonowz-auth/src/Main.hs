@@ -3,10 +3,11 @@ module Main where
 -- This module and runtime is used for OAuth test purpose
 -- This module is not used in production
 
+import Data.Version (makeVersion)
 import Database.PostgreSQL.Simple qualified as PGS
 import Network.HTTP.Client.TLS (newTlsManager)
 import Network.Wai.Handler.Warp (Port)
-import Options.Applicative
+import OptEnvConf
 import Servant (Proxy (..), (:<|>) (..))
 import Servant.Server (Handler, hoistServerWithContext, serveWithContext)
 import Sonowz.Auth.App.Test qualified as Test
@@ -14,8 +15,8 @@ import Sonowz.Auth.App.Web qualified as Web
 import Sonowz.Auth.Imports hiding (Proxy)
 import Sonowz.Auth.OAuth (GoogleAppInfo (..))
 import Sonowz.Auth.Web.OAuth.Types (OAuthContext, generateOAuthEnv, makeOAuthContext)
+import Sonowz.Core.Config.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.DB.Pool (createConnPool)
-import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.Web.Warp (runAppWithAccessLog)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 
@@ -23,25 +24,20 @@ data Config = Config Port PGS.ConnectInfo GoogleAppInfo
 
 pGoogleAppInfo :: Parser GoogleAppInfo
 pGoogleAppInfo = do
-  appId <- strOption (long "gappid")
-  appSecret <- strOption (long "gappsecret")
+  appId <- setting [help "Google App ID", reader str, long "gappid"]
+  appSecret <- setting [help "Google App Secret", reader str, long "gappsecret"]
   return GoogleAppInfo {..}
 
 pConfig :: Parser Config
 pConfig = Config <$> pWarpPort <*> pPGSConnectInfo <*> pGoogleAppInfo
-
-opts :: ParserInfo Config
-opts =
-  info
-    (helper <*> pConfig)
-    (fullDesc <> progDesc "Authentication backend server (for development use!)")
 
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  (Config warpPort pgConnectInfo gAppInfo) <- execParser opts
+  (Config warpPort pgConnectInfo gAppInfo) <-
+    runParser (makeVersion []) "Authentication backend server (for development use!)" pConfig
   dbPool <- createConnPool pgConnectInfo
   tlsManager <- newTlsManager
   let webappEnv = defaultWebAppEnv {eWebAPIRoot = "/api/", eWebPort = warpPort}

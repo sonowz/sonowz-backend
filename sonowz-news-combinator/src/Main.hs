@@ -1,11 +1,12 @@
 module Main where
 
 import Control.Concurrent (forkIO)
+import Data.Version (makeVersion)
 import Database.PostgreSQL.Simple qualified as PGS
-import Options.Applicative
+import OptEnvConf
+import Sonowz.Core.Config.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.DB.Pool (createConnPool)
 import Sonowz.Core.Imports
-import Sonowz.Core.Options.Applicative.Common (pPGSConnectInfo)
 import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
 import Sonowz.NewsCombinator.App.RuleWorker (runRuleWorker)
 import Sonowz.NewsCombinator.App.Web (runServer)
@@ -14,29 +15,29 @@ import Sonowz.NewsCombinator.Env (Env (..))
 data Config = Config WebAppEnv PGS.ConnectInfo Int
 
 pWorkerInterval :: Parser Int
-pWorkerInterval = option auto (long "worker-interval" <> short 't' <> metavar "SECONDS" <> value 3600 <> help helpMsg)
-  where
-    helpMsg = "Time interval between worker runs (in seconds)"
+pWorkerInterval =
+  setting
+    [ help "Time interval between worker runs (in seconds)",
+      reader auto,
+      long "worker-interval",
+      short 't',
+      metavar "SECONDS",
+      value 3600
+    ]
 
 pWebEnv :: Parser WebAppEnv
-pWebEnv = do
-  port <- option (auto >>= checkPort) (long "port" <> short 'p' <> value 80)
-  return $ defaultWebAppEnv {eWebPort = port}
-  where
-    checkPort port = if 0 < port && port < 90000 then return port else empty
+pWebEnv = (\port -> defaultWebAppEnv {eWebPort = port}) <$> pWarpPort
 
 pConfig :: Parser Config
 pConfig = Config <$> pWebEnv <*> pPGSConnectInfo <*> pWorkerInterval
-
-opts :: ParserInfo Config
-opts = info (helper <*> pConfig) (fullDesc <> progDesc "News notification service")
 
 main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  (Config webEnv pgConnectInfo workerInterval) <- execParser opts
+  (Config webEnv pgConnectInfo workerInterval) <-
+    runParser (makeVersion []) "News notification service" pConfig
   dbPool <- createConnPool pgConnectInfo
   let env = Env dbPool workerInterval
 

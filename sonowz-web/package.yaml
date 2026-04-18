@@ -32,7 +32,7 @@ dependencies:
   - deepseq
   - http-client-tls
   - opaleye
-  - optparse-applicative
+  - opt-env-conf
   - polysemy
   - polysemy-plugin
   - postgresql-simple

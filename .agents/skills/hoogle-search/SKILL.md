@@ -32,7 +32,8 @@ stack hoogle -- "--count=20 [a] -> Int -> a"
 ```
 
 ## Caveats
-- **Invalid Flags:** Do NOT use `stack hoogle --generate`. In current versions of Stack, this option may be invalid. `stack` typically manages the Hoogle database automatically or via `--rebuild`.
+- **Rebuilding Database:** If you have recently added new packages or some package is missing from database, you may need to rebuild the Hoogle database with `stack hoogle --rebuild`. But this takes a long time, so instead of running it yourself, ask the user to rebuild it.
+- **Invalid Flags:** Do NOT use `stack hoogle --generate`. In current versions of Stack, this option is deprecated. `stack` typically manages the Hoogle database automatically or via `--rebuild`.
 - **Search Scope:** The search is strictly limited to the packages defined in the project's `stack.yaml` and the libraries in the current resolver (e.g., LTS 24.11).
 - **Preference over context7:** For Haskell projects using Stack, `stack hoogle` is preferred over `context7` because it understands the exact versions of dependencies and local module exports used in the repository.
 
