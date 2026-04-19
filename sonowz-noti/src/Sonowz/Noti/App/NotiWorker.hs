@@ -1,4 +1,4 @@
-module Sonowz.Noti.App where
+module Sonowz.Noti.App.NotiWorker where
 
 import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
@@ -18,8 +18,8 @@ import Sonowz.Noti.Notification.DB.Queries (deleteNotificationByUid)
 import Sonowz.Noti.Notification.Handler.Email (EmailConfig, generateEmailNotification)
 import Sonowz.Noti.Notification.Types (Notification (..), NotificationType (..))
 
-runApp :: (HasCallStack) => Env -> IO Void
-runApp Env {..} =
+runNotiWorker :: (HasCallStack) => Env -> IO Void
+runNotiWorker Env {..} =
   (doStreamLoop >> threadDelay (60 * 10 ^ 6))
     & foreverCatch (threadDelay (60 * 10 ^ 6))
     & runMQueueStream notificationHandler

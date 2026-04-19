@@ -1,17 +1,20 @@
 module Main where
 
+import Control.Concurrent (forkIO)
 import Data.Version (makeVersion)
 import Database.PostgreSQL.Simple qualified as PGS
 import Network.Mail.Mime (Address (..))
 import OptEnvConf
-import Sonowz.Core.Config.Common (pPGSConnectInfo)
+import Sonowz.Core.Config.Common (pPGSConnectInfo, pWarpPort)
 import Sonowz.Core.DB.Pool (createConnPool)
-import Sonowz.Noti.App (runApp)
+import Sonowz.Core.Web.WebAppEnv (WebAppEnv (..), defaultWebAppEnv)
+import Sonowz.Noti.App.NotiWorker (runNotiWorker)
+import Sonowz.Noti.App.Web (runServer)
 import Sonowz.Noti.Env (Env (..))
 import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.Handler.Email (EmailConfig (..))
 
-data Config = Config EmailConfig PGS.ConnectInfo
+data Config = Config EmailConfig PGS.ConnectInfo WebAppEnv
 
 pEmailConfig :: Parser EmailConfig
 pEmailConfig = do
@@ -54,16 +57,20 @@ pEmailConfig = do
       ]
   return EmailConfig {..}
 
-pConfig :: Parser Config
-pConfig = Config <$> pEmailConfig <*> pPGSConnectInfo
+pWebEnv :: Parser WebAppEnv
+pWebEnv = (\port -> defaultWebAppEnv {eWebPort = port}) <$> pWarpPort
 
-main :: IO Void
+pConfig :: Parser Config
+pConfig = Config <$> pEmailConfig <*> pPGSConnectInfo <*> pWebEnv
+
+main :: IO ()
 main = do
   hSetBuffering stdout LineBuffering -- For debugging
   hSetBuffering stderr LineBuffering
 
-  (Config emailConfig pgConnectInfo) <-
+  (Config emailConfig pgConnectInfo webEnv) <-
     runParser (makeVersion []) "Notification generator" pConfig
   dbPool <- createConnPool pgConnectInfo
   let env = Env emailConfig dbPool
-  runApp env
+  void $ forkIO $ void $ runNotiWorker env
+  runServer webEnv env

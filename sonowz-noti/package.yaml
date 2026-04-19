@@ -24,6 +24,7 @@ ghc-options:
 #  - -fforce-recomp
 
 dependencies:
+  - aeson
   - base
   - bytestring
   - containers
@@ -38,11 +39,13 @@ dependencies:
   - relude
   - resource-pool
   - safe-exceptions
+  - servant-server
   - smtp-mail
   - sonowz-core
   - text
   - time
   - vector
+  - warp
 
 default-extensions:
   - ApplicativeDo           # New syntax #
