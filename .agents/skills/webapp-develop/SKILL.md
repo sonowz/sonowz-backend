@@ -25,6 +25,7 @@ This skill guides the implementation of Servant-based web interfaces within the 
 3.  **Handler Implementation**:
     *   Implement handlers using `Sem r` effects.
     *   Use `ServerT <API_Type> (Sem r)` for type-safe handlers.
+    *   **Crucial**: Use `webLiftIO` (from `Sonowz.Core.StdEff.Effect`) instead of `liftIO` when executing `IO` actions within handlers. This ensures `IO` exceptions are caught and returned as `500 Internal Server Error`.
 
 4.  **Natural Transformation (nt)**:
     *   Implement `runWithEffects` to convert `Sem` to Servant `Handler`.
@@ -39,6 +40,7 @@ This skill guides the implementation of Servant-based web interfaces within the 
 ## Caveats
 
 *   **Concurrency**: Prefer `forkIO` for long-running background workers to keep the web server running in the main thread, as seen in `sonowz-news-combinator`.
+*   **Exception Handling**: Never use `liftIO` directly in handlers if the action can throw exceptions. Always prefer `webLiftIO` to prevent unhandled exceptions from crashing the handler thread and to provide feedback to the client.
 *   **Imports**: Always import the `Resource` type from `Polysemy.Resource` when defining the `nt` type signature, or GHC will fail to resolve the type.
 *   **Dependencies**: Explicitly check `package.yaml` for `warp` and `servant-server`; they may be missing in packages that were previously worker-only.
 *   **Effect Stack**: The `stdEffToWebHandler` expects a specific effect stack. Ensure `embedToFinal` is called before it if the stack includes `Embed IO`.
