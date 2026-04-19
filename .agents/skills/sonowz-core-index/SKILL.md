@@ -49,6 +49,9 @@ Every module in a package should import its own package-specific prelude (e.g., 
 - **Opaleye Arrows**: Remember to add `{-# LANGUAGE Arrows #-}` when writing non-trivial DB queries.
 - **Record Fields**: `DuplicateRecordFields` is enabled. Access fields via standard accessor functions, as `OverloadedRecordDot` is not used.
 - **Exception Safety**: Prefer `catchAnyException` or `foreverCatch` for top-level loops to ensure system resilience.
+- **DBEffects Type Alias**: `DBEffects` is a type alias for a list of effects (`Reader DBConnPool : Resource : Embed IO : StdEff`). When using it in `Members`:
+    - **CORRECT**: `Members (Error ServerError : DBEffects) r`
+    - **INCORRECT**: `Members '[Error ServerError, DBEffects] r` (This causes a kind mismatch error).
 
 ## References (File Paths)
 - `sonowz-core/src/Sonowz/Core/Imports.hs`: Core re-exports
