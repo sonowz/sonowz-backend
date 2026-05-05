@@ -39,7 +39,7 @@ mainLoop env = do
   let stocks = envStockSymbols env
   -- catch 'fetchDayStockPrices' errors
   forM_ stocks $ \stock -> runErrorAsLogging @ParseException $ do
-    threadDelay (10 * 10 ^ 6) -- Sleep 10 seconds between stocks to avoid hitting API rate limits
+    threadDelay (60 * 10 ^ 6) -- Sleep 1 minute between stocks to avoid hitting API rate limits
     logInfo $ "Checking " <> show stock <> "..."
     stockTimeSeries <- fetchDayStockPrices stock
     let smaPeriodShort = 5

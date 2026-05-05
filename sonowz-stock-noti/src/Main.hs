@@ -21,7 +21,7 @@ pWorkerInterval =
       short 't',
       option,
       metavar "SECONDS",
-      value 7200
+      value 21600 -- Default to 6 hours
     ]
 
 pCrossSymbols :: Parser [StockSymbol]
