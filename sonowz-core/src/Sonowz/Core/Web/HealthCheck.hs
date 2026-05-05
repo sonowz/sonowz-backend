@@ -6,7 +6,7 @@ module Sonowz.Core.Web.HealthCheck
   )
 where
 
-import Data.Aeson (ToJSON)
+import Data.Aeson (ToJSON, encode)
 import Servant
 import Sonowz.Core.Imports
 
@@ -19,5 +19,9 @@ type HealthCheckAPI = "health" :> Get '[JSON] HealthStatus
 healthCheckHandlerSimple :: ServerT HealthCheckAPI (Sem r)
 healthCheckHandlerSimple = pure $ HealthStatus "UP"
 
-healthCheckHandlerWithCheck :: Sem r Bool -> ServerT HealthCheckAPI (Sem r)
-healthCheckHandlerWithCheck = fmap (HealthStatus . \result -> if result then "UP" else "DOWN")
+healthCheckHandlerWithCheck :: (Member (Error ServerError) r) => Sem r Bool -> ServerT HealthCheckAPI (Sem r)
+healthCheckHandlerWithCheck check = do
+  result <- check
+  if result
+    then pure (HealthStatus "UP")
+    else throw err503 {errBody = encode (HealthStatus "DOWN"), errHeaders = [("Content-Type", "application/json")]}
