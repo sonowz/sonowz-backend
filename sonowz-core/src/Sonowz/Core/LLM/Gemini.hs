@@ -1,25 +1,29 @@
+{-# LANGUAGE OverloadedRecordDot #-}
+
 module Sonowz.Core.LLM.Gemini
   ( defaultContentRequest,
     withGoogleSearchTool,
     withResponseSchema,
     googleSearchTool,
+    parseResponse,
   )
 where
 
 import Data.Aeson (toJSON)
 import Data.Aeson.Types (emptyObject)
 import Data.OpenApi (ToSchema, toSchema)
+import Data.Text qualified as T
 import Sonowz.Core.Imports
 import Sonowz.Core.LLM.Gemini.Types
 
-defaultContentRequest :: Text -> Text -> GenerateContentRequest
+defaultContentRequest :: Maybe Text -> Text -> GenerateContentRequest
 defaultContentRequest systemPrompt userPrompt =
   GenerateContentRequest
     { contents = [textContent userPrompt],
       tools = Nothing,
       toolConfig = Nothing,
       safetySettings = Just defaultSafetySettings,
-      systemInstruction = Just (textContent systemPrompt),
+      systemInstruction = fmap textContent systemPrompt,
       generationConfig = Just defaultGenerationConfig,
       cachedContent = Nothing,
       serviceTier = Nothing,
@@ -109,3 +113,13 @@ withResponseSchema proxy req =
       (generationConfig req ?: defaultGenerationConfig)
         { responseFormat = Just formatConfig
         }
+
+parseCandidate :: Candidate -> Either Text Text
+parseCandidate Candidate {content = Just Content {parts = parts}} =
+  let texts = mapMaybe (\p -> p.text) parts
+   in if null texts then Left "No text found in candidate" else Right (T.concat texts)
+parseCandidate _ = Left "Invalid candidate format"
+
+parseResponse :: GenerateContentResponse -> Either Text Text
+parseResponse GenerateContentResponse {candidates = Just (c : _)} = parseCandidate c
+parseResponse _ = Left "No candidates in response"

@@ -1,11 +1,7 @@
-{-# LANGUAGE LambdaCase #-}
-
 module Sonowz.Core.LLM.Gemini.Types
   ( -- * Main Request & Response
     GenerateContentRequest (..),
-    mkGenerateContentRequest,
     GenerateContentResponse (..),
-    responseFirstText,
 
     -- * Content & Parts
     Content (..),
@@ -13,14 +9,9 @@ module Sonowz.Core.LLM.Gemini.Types
     FunctionCall (..),
     FunctionResponse (..),
     FileData (..),
-    textPart,
-    userContent,
-    modelContent,
-    systemContent,
 
     -- * Response Candidates & Helpers
     Candidate (..),
-    candidateText,
     PromptFeedback (..),
     BlockReason (..),
     UsageMetadata (..),
@@ -75,7 +66,6 @@ import Data.Aeson
     Value,
     withText,
   )
-import Data.Text qualified as T
 import Sonowz.Core.Imports
 
 -- | Request body for 'models.generateContent' and 'models.streamGenerateContent'
@@ -742,65 +732,3 @@ data TranslationConfig = TranslationConfig
   }
   deriving (Eq, Show, Generic)
   deriving anyclass (ToJSON, FromJSON)
-
--- | Helper to create a basic 'GenerateContentRequest'
-mkGenerateContentRequest :: [Content] -> GenerateContentRequest
-mkGenerateContentRequest contents =
-  GenerateContentRequest
-    { contents = contents,
-      tools = Nothing,
-      toolConfig = Nothing,
-      safetySettings = Nothing,
-      systemInstruction = Nothing,
-      generationConfig = Nothing,
-      cachedContent = Nothing,
-      serviceTier = Nothing,
-      store = Nothing
-    }
-
--- | Helper to construct a text 'Part'
-textPart :: Text -> Part
-textPart txt =
-  Part
-    { text = Just txt,
-      functionCall = Nothing,
-      functionResponse = Nothing,
-      fileData = Nothing,
-      thought = Nothing
-    }
-
--- | Helper to construct user 'Content'
-userContent :: [Part] -> Content
-userContent parts =
-  Content
-    { role = Just "user",
-      parts = parts
-    }
-
--- | Helper to construct model 'Content'
-modelContent :: [Part] -> Content
-modelContent parts =
-  Content
-    { role = Just "model",
-      parts = parts
-    }
-
--- | Helper to construct system 'Content'
-systemContent :: Text -> Content
-systemContent txt =
-  Content
-    { role = Nothing,
-      parts = [textPart txt]
-    }
-
--- | Extract combined text from a candidate's content parts
-candidateText :: Candidate -> Maybe Text
-candidateText Candidate {content = Just Content {parts = parts}} =
-  let texts = mapMaybe (\Part {text = t} -> t) parts
-   in if null texts then Nothing else Just (T.concat texts)
-candidateText _ = Nothing
-
--- | Extract text from the first candidate in a response
-responseFirstText :: GenerateContentResponse -> Maybe Text
-responseFirstText GenerateContentResponse {candidates = Just (c : _)} = candidateText c
-responseFirstText _ = Nothing
