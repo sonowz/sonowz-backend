@@ -1,35 +1,35 @@
 module Sonowz.NewsCombinator.Rule.Types
-  ( NewsScrapRule (..),
+  ( ConfidenceLevel (..),
+    NewsScrapRule (..),
     oneTimeRule,
     permanentRule,
   )
 where
 
 import Data.Aeson (FromJSON, ToJSON)
-import Data.Time (NominalDiffTime, nominalDay)
 import Sonowz.Core.DB.Field (Uid)
 import Sonowz.NewsCombinator.Imports
 
+data ConfidenceLevel = Rumor | Official
+  deriving (Show, Read, Eq, Generic)
+  deriving anyclass (ToJSON, FromJSON)
+
 data NewsScrapRule = NewsScrapRule
   { uid :: Maybe Uid,
-    keyword :: Text,
-    successCount :: Int,
-    successPeriod :: NominalDiffTime,
+    description :: Text,
+    confidenceLevel :: ConfidenceLevel,
     isEnabled :: Bool,
     isOneTimeRule :: Bool
   }
   deriving (Show, Generic)
+  deriving anyclass (ToJSON, FromJSON)
 
-instance ToJSON NewsScrapRule
-
-instance FromJSON NewsScrapRule
-
-oneTimeRule :: Text -> Int -> NewsScrapRule
-oneTimeRule keyword successCount = NewsScrapRule {..}
+oneTimeRule :: Text -> ConfidenceLevel -> NewsScrapRule
+oneTimeRule description confidenceLevel = NewsScrapRule {..}
   where
-    (uid, successPeriod, isEnabled, isOneTimeRule) = (Nothing, nominalDay, True, True)
+    (uid, isEnabled, isOneTimeRule) = (Nothing, True, True)
 
-permanentRule :: Text -> Int -> NewsScrapRule
-permanentRule keyword successCount = NewsScrapRule {..}
+permanentRule :: Text -> ConfidenceLevel -> NewsScrapRule
+permanentRule description confidenceLevel = NewsScrapRule {..}
   where
-    (uid, successPeriod, isEnabled, isOneTimeRule) = (Nothing, nominalDay, True, False)
+    (uid, isEnabled, isOneTimeRule) = (Nothing, True, False)

@@ -22,9 +22,8 @@ import Sonowz.NewsCombinator.Rule.Types qualified as Rule (NewsScrapRule (uid))
 {-
 CREATE TABLE public.news_scrap_rule (
     uid serial PRIMARY KEY NOT NULL,
-    keyword text NOT NULL,
-    success_count integer NOT NULL,
-    success_period double precision NOT NULL,
+    description text NOT NULL,
+    confidence_level text NOT NULL,
     is_enabled boolean NOT NULL,
     is_one_time_rule boolean NOT NULL,
     created_time timestamp with time zone DEFAULT now() NOT NULL,
@@ -39,9 +38,8 @@ newsScrapRuleTable = table "news_scrap_rule" (pNewsScrapRule fields)
     fields =
       NewsScrapRule'
         { uid = tableField "uid",
-          keyword = tableField "keyword",
-          successCount = tableField "success_count",
-          successPeriod = tableField "success_period",
+          description = tableField "description",
+          confidenceLevel = tableField "confidence_level",
           isEnabled = tableField "is_enabled",
           isOneTimeRule = tableField "is_one_time_rule",
           createdTime = tableField "created_time",
@@ -71,15 +69,14 @@ updateNewsScrapRule conn rule =
 
 fromDto :: NewsScrapRuleDto -> NewsScrapRule
 fromDto NewsScrapRule' {..} =
-  NewsScrapRule (Just uid) keyword successCount successPeriod isEnabled isOneTimeRule
+  NewsScrapRule (Just uid) description confidenceLevel isEnabled isOneTimeRule
 
 toWriteDto :: NewsScrapRule -> NewsScrapRuleWriteDto
 toWriteDto NewsScrapRule {..} =
   NewsScrapRule'
     { uid = Nothing,
-      keyword = keyword,
-      successCount = successCount,
-      successPeriod = successPeriod,
+      description = description,
+      confidenceLevel = confidenceLevel,
       isEnabled = isEnabled,
       isOneTimeRule = isOneTimeRule,
       createdTime = Nothing,
