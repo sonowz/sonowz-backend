@@ -37,6 +37,7 @@ dependencies:
   - http-client-tls
   - http-types
   - opaleye
+  - openapi3
   - opt-env-conf
   - polysemy
   - polysemy-plugin
