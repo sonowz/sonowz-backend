@@ -15,7 +15,7 @@ import Data.Aeson (FromJSON, ToJSON, eitherDecode, encode)
 import Data.OpenApi (ToSchema)
 import Data.Text qualified as T
 import Network.HTTP.Client (Request (..), RequestBody (RequestBodyLBS), parseRequest)
-import Sonowz.Core.HTTP.Effect (HTTP, fetchWithRequest)
+import Sonowz.Core.Http.Effect (Http, fetchWithRequest)
 import Sonowz.Core.Imports
 import Sonowz.Core.Llm.Gemini (defaultContentRequest, parseResponse, withGoogleSearchTool, withResponseSchema)
 import Sonowz.Core.Llm.Gemini.Types (GenerateContentRequest)
@@ -50,7 +50,7 @@ llmRequestToGeminiRequest LlmRequest {userPrompt, systemPrompt, enableSearch} =
    in if enableSearch then withGoogleSearchTool req else req
 
 runHttpGemini ::
-  (Members '[HTTP, Reader LlmEnv, Error LlmException] r) =>
+  (Members '[Http, Reader LlmEnv, Error LlmException] r) =>
   Sem (Llm : r) a ->
   Sem r a
 runHttpGemini = interpret $ \case

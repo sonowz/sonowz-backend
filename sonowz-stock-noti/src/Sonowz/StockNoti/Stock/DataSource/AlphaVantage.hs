@@ -15,7 +15,7 @@ import Data.Time (UTCTime (..), secondsToDiffTime)
 import Data.Time.Calendar (Day)
 import Relude.Extra (un)
 import Sonowz.Core.Exception.Types (NotImplementedException (..), ParseException (..))
-import Sonowz.Core.HTTP.Effect (HTTP, HttpException, fetchURL, runHTTPIO)
+import Sonowz.Core.Http.Effect (Http, HttpException, fetchURL, runHttpIO)
 import Sonowz.StockNoti.Imports
 import Sonowz.StockNoti.Stock.DataSource.Effect (StockDataSource (..))
 import Sonowz.StockNoti.Stock.Types (StockPrice (..), StockSymbol (..), StockTimeSeries (..))
@@ -25,7 +25,7 @@ import URI.ByteString.QQ (uri)
 runStockDataSourceAlphaVantage :: Members (Embed IO : Error ParseException : StdEff) r => Sem (StockDataSource : r) a -> Sem r a
 runStockDataSourceAlphaVantage =
   mapError @HttpException (ParseException . toText . displayException)
-    . runHTTPIO
+    . runHttpIO
     . reinterpret2
       ( \case
           FetchYearStockPrices _ -> liftIO $ E.throw (NotImplemented "year API does not exist")
@@ -35,7 +35,7 @@ runStockDataSourceAlphaVantage =
           FetchHourStockPrices _ -> liftIO $ E.throw (NotImplemented "hour is not implemented yet")
       )
 
-fetchTimeSeries :: (Members (HTTP : Error ParseException : StdEff) r, HasCallStack) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
+fetchTimeSeries :: (Members (Http : Error ParseException : StdEff) r, HasCallStack) => Text -> StockSymbol -> Sem r (StockTimeSeries tu)
 fetchTimeSeries apiTimeUnit symbol = do
   logDebug $ "Started fetching stock time series from AlphaVantage (" <> show symbol <> ")"
   decoded <- eitherDecode . encodeUtf8 <$> fetchURL url

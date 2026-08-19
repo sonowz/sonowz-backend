@@ -12,7 +12,7 @@ import Relude.Extra.Newtype (un)
 import Relude.Extra.Tuple (fmapToFst)
 import Relude.Unsafe qualified as Unsafe
 import Sonowz.Core.Exception.Types (ParseException (..))
-import Sonowz.Core.HTTP.Effect (HTTP, fetchURL)
+import Sonowz.Core.Http.Effect (Http, fetchURL)
 import Sonowz.Core.Time.Effect (Time, threadDelay)
 import Sonowz.Mp3tagAutofix.AudioTag.Autofix.Parser
   ( parseSearchResultArtist,
@@ -48,7 +48,7 @@ makeArtistPool = groupByArtist . fmapToFst artist
 
 runSearches ::
   forall r.
-  (Members '[Time, HTTP, Error ParseException, StdLog] r, HasCallStack) =>
+  (Members '[Time, Http, Error ParseException, StdLog] r, HasCallStack) =>
   ArtistPool ->
   Sem r ArtistPoolWithSearchResult
 -- 'traverse': Map

@@ -1,11 +1,11 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Sonowz.Core.HTTP.Effect
-  ( HTTP,
+module Sonowz.Core.Http.Effect
+  ( Http,
     HttpException,
     fetchURL,
     fetchWithRequest,
-    runHTTPIO,
+    runHttpIO,
     urlToRequest,
   )
 where
@@ -16,16 +16,16 @@ import Network.HTTP.Client.TLS (newTlsManager)
 import Sonowz.Core.Imports
 import URI.ByteString (URI, serializeURIRef')
 
-data HTTP m a where
+data Http m a where
   -- Returns HTML body
-  FetchURL :: URI -> HTTP m Text
-  FetchWithRequest :: Request -> HTTP m Text
+  FetchURL :: URI -> Http m Text
+  FetchWithRequest :: Request -> Http m Text
 
-makeSem ''HTTP
+makeSem ''Http
 
 -- This might raise IO exceptions, though chances are low
-runHTTPIO :: Members '[Embed IO, Error HttpException] r => Sem (HTTP : r) a -> Sem r a
-runHTTPIO = interpret $ \case
+runHttpIO :: Members '[Embed IO, Error HttpException] r => Sem (Http : r) a -> Sem r a
+runHttpIO = interpret $ \case
   FetchURL url -> fromException $ do
     manager <- newTlsManager
     request <- urlToRequest url

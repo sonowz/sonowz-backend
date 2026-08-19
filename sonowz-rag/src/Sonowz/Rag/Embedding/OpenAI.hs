@@ -13,14 +13,14 @@ import Network.HTTP.Client (Request (..), RequestBody (RequestBodyLBS))
 import Network.HTTP.Types (hAuthorization, hContentType)
 import Optics
 import Sonowz.Core.Exception.Types (ParseException (..))
-import Sonowz.Core.HTTP.Effect (HTTP, fetchWithRequest, urlToRequest)
+import Sonowz.Core.Http.Effect (Http, fetchWithRequest, urlToRequest)
 import Sonowz.Rag.Embedding.Types (OpenAIKey (getKey))
 import Sonowz.Rag.Env (Env (envOpenAIKey))
 import Sonowz.Rag.Imports
 import URI.ByteString.QQ (uri)
 
 createOpenAIEmbedding3 ::
-  ( Members '[Reader Env, HTTP, Error ParseException] r,
+  ( Members '[Reader Env, Http, Error ParseException] r,
     Members StdEff r,
     HasCallStack
   ) =>

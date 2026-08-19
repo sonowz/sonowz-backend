@@ -10,7 +10,7 @@ import Servant
 import Sonowz.Core.DB.Pool (DBEffects)
 import Sonowz.Core.Error.Effect (mapErrorAs500)
 import Sonowz.Core.Exception.Types (ParseException)
-import Sonowz.Core.HTTP.Effect (HTTP, HttpException, runHTTPIO)
+import Sonowz.Core.Http.Effect (Http, HttpException, runHttpIO)
 import Sonowz.Rag.Env (Env (..))
 import Sonowz.Rag.Imports
 import Sonowz.Rag.Web.Document (DocumentAPI, documentAPIHandler)
@@ -21,7 +21,7 @@ type RagServerAPI = DocumentAPI :<|> EmbeddingGenerationAPI :<|> RagAPI
 
 type RagHandlerEffects =
   [ Reader Env,
-    HTTP,
+    Http,
     Error ServerError,
     Error ParseException
   ]
@@ -35,7 +35,7 @@ runWithEffects env (action :: (Members RagHandlerEffects r) => Sem r a) =
   action
     & runReader env
     & runReader (envPgConnection env)
-    & runHTTPIO
+    & runHttpIO
     & mapErrorAs500 @HttpException
     & mapErrorAs500 @ParseException
     & embedToFinal @IO

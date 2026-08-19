@@ -9,7 +9,7 @@ where
 
 import Control.Exception.Safe qualified as E
 import Network.HTTP.Client (Manager)
-import Network.HTTP.Types qualified as HTTP
+import Network.HTTP.Types qualified as Http
 import Network.OAuth.OAuth2 (ExchangeToken (..))
 import Servant hiding (URI)
 import Servant.Auth.Server (acceptLogin)
@@ -83,7 +83,7 @@ loginWithOAuth ::
   FetchOAuthUser ->
   Text ->
   URI ->
-  Sem r [HTTP.Header]
+  Sem r [Http.Header]
 loginWithOAuth fetch exchangeToken redirectURL = do
   tlsManager <- ask
   -- Do HTTP request to auth server

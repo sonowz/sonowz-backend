@@ -7,7 +7,7 @@ where
 import Servant
 import Sonowz.Core.DB.Pool (DBEffects)
 import Sonowz.Core.Exception.Types (ParseException)
-import Sonowz.Core.HTTP.Effect (HTTP)
+import Sonowz.Core.Http.Effect (Http)
 import Sonowz.Rag.Embedding (generateMissingEmbeddings)
 import Sonowz.Rag.Env (Env)
 import Sonowz.Rag.Imports
@@ -16,7 +16,7 @@ type EmbeddingGenerationAPI = "embedding" :> "generate" :> Post '[JSON] NoConten
 
 type EmbeddingGenerationAPIEffects =
   Reader Env
-    : HTTP
+    : Http
     : Error ParseException
     : DBEffects
 

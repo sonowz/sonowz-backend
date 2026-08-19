@@ -7,7 +7,7 @@ import Network.HTTP.Client (HttpException)
 import Polysemy.Resource (resourceToIOFinal)
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Error.Effect (foreverCatch, runErrorAsLogging, unsafeErrorToIO)
-import Sonowz.Core.HTTP.Effect (runHTTPIO)
+import Sonowz.Core.Http.Effect (runHttpIO)
 import Sonowz.Core.Llm.Effect (Llm, LlmException, runHttpGemini)
 import Sonowz.Core.Time.Effect (Time, threadDelay, timeToIOFinal)
 import Sonowz.NewsCombinator.Env (Env (..))
@@ -21,7 +21,7 @@ runRuleWorker :: (HasCallStack) => Env -> IO Void
 runRuleWorker env =
   foreverCatch sleep (worker >> sleep)
     & runHttpGemini
-    & runHTTPIO
+    & runHttpIO
     & unsafeErrorToIO @LlmException
     & unsafeErrorToIO @HttpException
     & runReader (envLlmEnv env)

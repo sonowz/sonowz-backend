@@ -9,7 +9,7 @@ import Data.Aeson.Types (ToJSON)
 import Servant
 import Sonowz.Core.DB.Pool (DBEffects)
 import Sonowz.Core.Exception.Types (ParseException)
-import Sonowz.Core.HTTP.Effect (HTTP)
+import Sonowz.Core.Http.Effect (Http)
 import Sonowz.Rag.Env (Env)
 import Sonowz.Rag.Imports
 import Sonowz.Rag.Rag (doRagSearch)
@@ -31,7 +31,7 @@ newtype RagResponse = RagResponse
 
 type RagAPIEffects =
   Reader Env
-    : HTTP
+    : Http
     : Error ParseException
     : DBEffects
 

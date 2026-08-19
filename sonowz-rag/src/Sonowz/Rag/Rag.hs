@@ -5,7 +5,7 @@ where
 
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Exception.Types (ParseException)
-import Sonowz.Core.HTTP.Effect (HTTP)
+import Sonowz.Core.Http.Effect (Http)
 import Sonowz.Rag.Document.DB.Types (RawDocument, RawDocument' (..))
 import Sonowz.Rag.Embedding.DB.Queries qualified as Queries
 import Sonowz.Rag.Embedding.OpenAI (createOpenAIEmbedding3)
@@ -14,7 +14,7 @@ import Sonowz.Rag.Imports
 import Sonowz.Rag.Rag.Types (RagResultDocument (RagResultDocument))
 
 doRagSearch ::
-  ( Members '[Reader Env, HTTP, Error ParseException] r,
+  ( Members '[Reader Env, Http, Error ParseException] r,
     Members DBEffects r,
     HasCallStack
   ) =>

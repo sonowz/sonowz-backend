@@ -7,7 +7,7 @@ import Control.Monad (foldM)
 import Data.Text qualified as T
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Exception.Types (ParseException (..))
-import Sonowz.Core.HTTP.Effect (HTTP)
+import Sonowz.Core.Http.Effect (Http)
 import Sonowz.Rag.Document.DB.Types (RawDocument, document, title, uid)
 import Sonowz.Rag.Embedding.DB.Queries qualified as Queries
 import Sonowz.Rag.Embedding.OpenAI (createOpenAIEmbedding3)
@@ -15,7 +15,7 @@ import Sonowz.Rag.Env (Env)
 import Sonowz.Rag.Imports
 
 generateMissingEmbeddings ::
-  ( Members '[Reader Env, HTTP, Error ParseException] r,
+  ( Members '[Reader Env, Http, Error ParseException] r,
     Members DBEffects r,
     HasCallStack
   ) =>
