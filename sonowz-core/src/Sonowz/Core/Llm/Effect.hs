@@ -1,10 +1,10 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-module Sonowz.Core.LLM.Effect
+module Sonowz.Core.Llm.Effect
   ( LlmRequest (..),
     LlmEnv (..),
-    LLM,
-    LLMException,
+    Llm,
+    LlmException,
     generateTextWithLlm,
     generateStructuredDataWithLlm,
     runHttpGemini,
@@ -17,8 +17,8 @@ import Data.Text qualified as T
 import Network.HTTP.Client (Request (..), RequestBody (RequestBodyLBS), parseRequest)
 import Sonowz.Core.HTTP.Effect (HTTP, fetchWithRequest)
 import Sonowz.Core.Imports
-import Sonowz.Core.LLM.Gemini (defaultContentRequest, parseResponse, withGoogleSearchTool, withResponseSchema)
-import Sonowz.Core.LLM.Gemini.Types (GenerateContentRequest)
+import Sonowz.Core.Llm.Gemini (defaultContentRequest, parseResponse, withGoogleSearchTool, withResponseSchema)
+import Sonowz.Core.Llm.Gemini.Types (GenerateContentRequest)
 
 data LlmRequest = LlmRequest
   { userPrompt :: Text,
@@ -34,15 +34,15 @@ data LlmEnv = LlmEnv
   }
   deriving (Show)
 
-newtype LLMException = LLMException Text
+newtype LlmException = LlmException Text
   deriving (Show)
   deriving anyclass (Exception)
 
-data LLM m a where
-  GenerateTextWithLlm :: LlmRequest -> LLM m Text
-  GenerateStructuredDataWithLlm :: (FromJSON a, ToSchema a) => Proxy a -> LlmRequest -> LLM m a
+data Llm m a where
+  GenerateTextWithLlm :: LlmRequest -> Llm m Text
+  GenerateStructuredDataWithLlm :: (FromJSON a, ToSchema a) => Proxy a -> LlmRequest -> Llm m a
 
-makeSem ''LLM
+makeSem ''Llm
 
 llmRequestToGeminiRequest :: LlmRequest -> GenerateContentRequest
 llmRequestToGeminiRequest LlmRequest {userPrompt, systemPrompt, enableSearch} =
@@ -50,8 +50,8 @@ llmRequestToGeminiRequest LlmRequest {userPrompt, systemPrompt, enableSearch} =
    in if enableSearch then withGoogleSearchTool req else req
 
 runHttpGemini ::
-  (Members '[HTTP, Reader LlmEnv, Error LLMException] r) =>
-  Sem (LLM : r) a ->
+  (Members '[HTTP, Reader LlmEnv, Error LlmException] r) =>
+  Sem (Llm : r) a ->
   Sem r a
 runHttpGemini = interpret $ \case
   GenerateTextWithLlm llmRequest -> do
@@ -70,17 +70,17 @@ runHttpGemini = interpret $ \case
     jsonText <- mapParseException response $ parseResponse responseDto
     mapParseException response $ eitherDecode (encodeUtf8 jsonText)
   where
-    mapParseException :: (ToText a, Member (Error LLMException) r) => Text -> Either a b -> Sem r b
+    mapParseException :: (ToText a, Member (Error LlmException) r) => Text -> Either a b -> Sem r b
     mapParseException response = \case
-      Left errMsg -> throw $ LLMException $ "Failed to parse Gemini response: " <> toText errMsg <> " | Response text: " <> response
+      Left errMsg -> throw $ LlmException $ "Failed to parse Gemini response: " <> toText errMsg <> " | Response text: " <> response
       Right val -> pure val
 
-makeGeminiRequest :: Text -> Text -> GenerateContentRequest -> Either LLMException Request
+makeGeminiRequest :: Text -> Text -> GenerateContentRequest -> Either LlmException Request
 makeGeminiRequest apiKey model bodyDto = do
   let urlString = "https://generativelanguage.googleapis.com/v1beta/models/" <> model <> ":generateContent?key=" <> apiKey
-  baseReq <- first (const $ LLMException "Failed to parse Gemini API URL") (parseRequest (T.unpack urlString))
-  pure $
-    baseReq
+  baseReq <- first (const $ LlmException "Failed to parse Gemini API URL") (parseRequest (T.unpack urlString))
+  pure
+    $ baseReq
       { method = "POST",
         requestHeaders =
           [ ("Content-Type", "application/json")

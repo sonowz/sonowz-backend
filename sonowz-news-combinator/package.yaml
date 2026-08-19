@@ -30,6 +30,7 @@ dependencies:
   - containers
   - http-client
   - opaleye
+  - openapi3
   - opt-env-conf
   - polysemy
   - polysemy-plugin
@@ -42,7 +43,6 @@ dependencies:
   - servant-server
   - sonowz-core
   - sonowz-noti
-  - tagsoup
   - text
   - time
   - uri-bytestring

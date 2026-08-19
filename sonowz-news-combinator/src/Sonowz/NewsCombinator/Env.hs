@@ -4,9 +4,11 @@ module Sonowz.NewsCombinator.Env
 where
 
 import Sonowz.Core.DB.Pool (DBConnPool)
+import Sonowz.Core.Llm.Effect (LlmEnv (..))
 import Sonowz.NewsCombinator.Imports
 
 data Env = Env
   { envPgConnection :: DBConnPool,
-    envWorkerIntervalSeconds :: Int
+    envWorkerIntervalSeconds :: Int,
+    envLlmEnv :: LlmEnv
   }

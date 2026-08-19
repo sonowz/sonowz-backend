@@ -19,3 +19,4 @@ All packages are maintained using one same GHC version, specified in `stack.yaml
   - Adapt to [exception backtrace](https://github.com/ghc-proposals/ghc-proposals/blob/master/proposals/0330-exception-backtraces.rst)
 - Use envvar instead of program argument
 - Add healthcheck component
+- https://discourse.haskell.org/t/haskell-new-year-resolutions-for-2026/13478

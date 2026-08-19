@@ -7,7 +7,7 @@ import Control.Exception.Safe qualified as E
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.DB.Utils (DatabaseException (..))
 import Sonowz.NewsCombinator.Imports
-import Sonowz.NewsCombinator.News.Types (NewsItem (..))
+import Sonowz.NewsCombinator.News.Types (LlmEvaluationResult (..), NewsArticle (..))
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
 import Sonowz.Noti.Notification.DB.Queries (insertNotification)
 import Sonowz.Noti.Notification.Types
@@ -16,20 +16,25 @@ import Sonowz.Noti.Notification.Types
     NotificationType (Email),
   )
 
-createNotification :: Members DBEffects r => NewsScrapRule -> [NewsItem] -> Sem r Notification
-createNotification rule newsItems = withDBConn $ \conn -> do
-  maybeCreated <- liftIO $ insertNotification conn (makeNoti rule newsItems)
+createNotification :: (Members DBEffects r) => NewsScrapRule -> LlmEvaluationResult -> Sem r Notification
+createNotification rule evalResult = withDBConn $ \conn -> do
+  maybeCreated <- liftIO $ insertNotification conn (makeNoti rule evalResult)
   case maybeCreated of
     Just noti -> return noti
     Nothing -> liftIO $ E.throw (DatabaseException "Could not insert notification!")
 
-makeNoti :: NewsScrapRule -> [NewsItem] -> Notification
-makeNoti rule items = Notification Email title body Nothing
+makeNoti :: NewsScrapRule -> LlmEvaluationResult -> Notification
+makeNoti rule evalResult = Notification Email notiTitle body Nothing
   where
-    title =
+    notiTitle =
       if isOneTimeRule rule
-        then "[News Combinator] \"" <> keyword rule <> "\" appeared!"
-        else "[News Combinator] \"" <> keyword rule <> "\" news!"
-    body = HTMLBody "<ul>" <> fold (newsToBody <$> items) <> HTMLBody "</ul>"
-    newsToBody :: NewsItem -> NotificationBody
-    newsToBody news = HTMLBody $ "<li>" <> getTitle news <> " (" <> show (getDate news) <> ")</li>"
+        then "[News Combinator] Match found for: \"" <> description rule <> "\""
+        else "[News Combinator] News update: \"" <> description rule <> "\""
+    body =
+      HTMLBody ("<p>" <> summary evalResult <> "</p>")
+        <> if null (matchedArticles evalResult)
+          then HTMLBody ""
+          else HTMLBody "<ul>" <> foldMap articleToBody (matchedArticles evalResult) <> HTMLBody "</ul>"
+    articleToBody :: NewsArticle -> NotificationBody
+    articleToBody NewsArticle {..} =
+      HTMLBody $ "<li><a href=\"" <> link <> "\">" <> title <> "</a> (" <> show publishedAt <> ")</li>"

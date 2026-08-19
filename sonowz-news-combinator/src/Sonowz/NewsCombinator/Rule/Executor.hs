@@ -3,45 +3,41 @@ module Sonowz.NewsCombinator.Rule.Executor
   )
 where
 
-import Data.Time (UTCTime, addUTCTime, zonedTimeToUTC)
-import Sonowz.Core.Exception.Types (ParseException (ParseException))
-import Sonowz.Core.HTTP.Effect (HTTP, fetchURL)
-import Sonowz.Core.Time.Effect (Time, getTime)
+import Sonowz.Core.Llm.Effect (Llm, LlmRequest (..), generateStructuredDataWithLlm)
 import Sonowz.NewsCombinator.Imports
-import Sonowz.NewsCombinator.News.Parser (parseNewsItems)
-import Sonowz.NewsCombinator.News.Types (NewsItem (..), googleNewsRSSUrl)
-import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
+import Sonowz.NewsCombinator.News.Types (LlmEvaluationResult (..))
+import Sonowz.NewsCombinator.Rule.Types (ConfidenceLevel (..), NewsScrapRule (..))
 
--- Scrap news, then decide whether success or not
--- If success, rule could be modified
 evalNewsScrapRule ::
-  (Members '[Time, HTTP, Error ParseException] r, Members StdEff r) =>
+  (Members (Llm : StdEff) r) =>
   NewsScrapRule ->
-  Sem r (Maybe [NewsItem], NewsScrapRule)
+  Sem r (Maybe LlmEvaluationResult, NewsScrapRule)
 evalNewsScrapRule rule = do
-  assertRuleEnabled
-  let requestURL = googleNewsRSSUrl (keyword rule)
-  body <- fetchURL requestURL
-  parsedItems <- fromEither $ parseNewsItems body
-  (now :: UTCTime) <- zonedTimeToUTC <$> getTime
-  case checkNewsRule parsedItems rule now of
-    Just newsItems -> return (Just newsItems, whenSuccess rule)
-    Nothing -> return (Nothing, whenFail rule)
-  where
-    assertRuleEnabled =
-      if not (isEnabled rule)
-        then
-          let e = ParseException "Rule is disabled!"
-           in logException e >> throw e
-        else pass
-    whenSuccess rule
-      | isOneTimeRule rule = rule {isEnabled = False}
-      | otherwise = rule
-    whenFail = id
+  let request =
+        LlmRequest
+          { userPrompt = description rule,
+            systemPrompt = Just $ buildSystemPrompt (confidenceLevel rule),
+            enableSearch = True
+          }
 
-checkNewsRule :: [NewsItem] -> NewsScrapRule -> UTCTime -> Maybe [NewsItem]
-checkNewsRule items rule now = do
-  let recentItems = filter (\item -> getDate item > baseTime) items
-      baseTime = addUTCTime (-(successPeriod rule)) now
-  guard (length recentItems >= successCount rule)
-  return recentItems
+  evalResult <- generateStructuredDataWithLlm (Proxy @LlmEvaluationResult) request
+  if isMatch evalResult
+    then return (Just evalResult, updateRule rule)
+    else return (Nothing, rule)
+  where
+    updateRule r
+      | isOneTimeRule r = r {isEnabled = False}
+      | otherwise = r
+
+buildSystemPrompt :: ConfidenceLevel -> Text
+buildSystemPrompt confidence =
+  "You are a news monitoring agent. Your task is to perform web search and check if there is recent news matching the user's request.\n"
+    <> "Confidence requirement level: "
+    <> show confidence
+    <> ".\n"
+    <> "- Official: Only consider news from official announcements, verified sources, or reliable press.\n"
+    <> "- Rumor: Consider news including rumors, leaks, speculation, or unconfirmed reports as well as official news.\n"
+    <> "Evaluate whether there is matching news. "
+    <> "Set `isMatch` to true if matching news exists at or above the confidence level, write a concise `summary` of the findings, "
+    <> "and list the `matchedArticles` with title, URL link, and publication date."
+    <> "If publication date is not available, put today's date."

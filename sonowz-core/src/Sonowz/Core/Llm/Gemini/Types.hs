@@ -1,4 +1,4 @@
-module Sonowz.Core.LLM.Gemini.Types
+module Sonowz.Core.Llm.Gemini.Types
   ( -- * Main Request & Response
     GenerateContentRequest (..),
     GenerateContentResponse (..),

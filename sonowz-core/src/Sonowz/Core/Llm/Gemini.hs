@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedRecordDot #-}
 
-module Sonowz.Core.LLM.Gemini
+module Sonowz.Core.Llm.Gemini
   ( defaultContentRequest,
     withGoogleSearchTool,
     withResponseSchema,
@@ -14,7 +14,7 @@ import Data.Aeson.Types (emptyObject)
 import Data.OpenApi (ToSchema, toSchema)
 import Data.Text qualified as T
 import Sonowz.Core.Imports
-import Sonowz.Core.LLM.Gemini.Types
+import Sonowz.Core.Llm.Gemini.Types
 
 defaultContentRequest :: Maybe Text -> Text -> GenerateContentRequest
 defaultContentRequest systemPrompt userPrompt =

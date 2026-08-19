@@ -1,10 +1,11 @@
 module Sonowz.NewsCombinator.News.Types
   ( NewsArticle (..),
-    LLMEvaluationResult (..),
+    LlmEvaluationResult (..),
   )
 where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Data.OpenApi (ToSchema)
 import Data.Time (UTCTime)
 import Sonowz.NewsCombinator.Imports
 
@@ -14,12 +15,12 @@ data NewsArticle = NewsArticle
     publishedAt :: UTCTime
   }
   deriving (Show, Generic)
-  deriving anyclass (ToJSON, FromJSON)
+  deriving anyclass (ToJSON, FromJSON, ToSchema)
 
-data LLMEvaluationResult = LLMEvaluationResult
+data LlmEvaluationResult = LlmEvaluationResult
   { isMatch :: Bool,
     summary :: Text,
     matchedArticles :: [NewsArticle]
   }
   deriving (Show, Generic)
-  deriving anyclass (ToJSON, FromJSON)
+  deriving anyclass (ToJSON, FromJSON, ToSchema)
