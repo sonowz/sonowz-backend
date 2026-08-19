@@ -24,7 +24,7 @@ pWorkerInterval =
       short 't',
       option,
       metavar "SECONDS",
-      value 3600
+      value 2592000 -- 30 days
     ]
 
 pWebEnv :: Parser WebAppEnv
