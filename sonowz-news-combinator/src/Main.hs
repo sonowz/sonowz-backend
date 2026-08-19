@@ -36,13 +36,15 @@ pLlmEnv = do
     setting
       [ help "Gemini API key for LLM news monitoring",
         reader str,
-        env "GEMINI_API_KEY"
+        env "GEMINI_API_KEY",
+        metavar "GEMINI_API_KEY"
       ]
   modelName <-
     setting
       [ help "Gemini model name",
         reader str,
-        env "GEMINI_MODEL"
+        env "GEMINI_MODEL",
+        metavar "GEMINI_MODEL"
       ]
   return LlmEnv {..}
 
