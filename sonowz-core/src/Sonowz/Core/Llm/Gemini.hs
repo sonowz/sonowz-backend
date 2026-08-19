@@ -9,9 +9,13 @@ module Sonowz.Core.Llm.Gemini
   )
 where
 
-import Data.Aeson (toJSON)
+import Data.Aeson (Value (..), toJSON)
+import Data.Aeson.Key qualified as Key
+import Data.Aeson.KeyMap qualified as KeyMap
 import Data.Aeson.Types (emptyObject)
-import Data.OpenApi (ToSchema, toSchema)
+import Data.HashMap.Strict.InsOrd qualified as InsOrd
+import Data.OpenApi (NamedSchema (..), ToSchema, declareNamedSchema)
+import Data.OpenApi.Declare (runDeclare)
 import Data.Text qualified as T
 import Sonowz.Core.Imports
 import Sonowz.Core.Llm.Gemini.Types
@@ -107,12 +111,35 @@ withResponseSchema proxy req =
     textFormat =
       TextResponseFormat
         { mimeType = Just ApplicationJson,
-          schema = Just $ toJSON (toSchema proxy)
+          schema = Just (inlineSchema proxy)
         }
     newGenerationConfig =
       (generationConfig req ?: defaultGenerationConfig)
         { responseFormat = Just formatConfig
         }
+
+-- Gemini API requires response schemas to be fully inlined without any '$ref' pointers.
+inlineSchema :: forall a. (ToSchema a) => Proxy a -> Value
+inlineSchema proxy = dereferenceValue defsMap rootVal
+  where
+    (defs, namedSchema) = runDeclare (declareNamedSchema proxy) mempty
+    defsMap = KeyMap.fromList [(Key.fromText k, toJSON v) | (k, v) <- InsOrd.toList defs]
+    rootVal = toJSON (_namedSchemaSchema namedSchema)
+
+dereferenceValue :: KeyMap.KeyMap Value -> Value -> Value
+dereferenceValue defsMap = go
+  where
+    go (Object kvs)
+      | Just (String ref) <- KeyMap.lookup "$ref" kvs =
+          let refName = case T.splitOn "/" ref of
+                          [] -> ref
+                          xs -> viaNonEmpty last xs ?: ref
+          in case KeyMap.lookup (Key.fromText refName) defsMap of
+               Just resolved -> go resolved
+               Nothing -> Object (KeyMap.map go kvs)
+      | otherwise = Object (KeyMap.map go kvs)
+    go (Array arr) = Array (fmap go arr)
+    go other = other
 
 parseCandidate :: Candidate -> Either Text Text
 parseCandidate Candidate {content = Just Content {parts = parts}} =
