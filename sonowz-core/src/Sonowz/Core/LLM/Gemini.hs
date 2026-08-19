@@ -46,10 +46,10 @@ defaultContentRequest systemPrompt userPrompt =
         }
 
 defaultSafetySettings :: [SafetySetting]
-defaultSafetySettings = toNone <$> allCategories
+defaultSafetySettings = toNone <$> validCategories
   where
     toNone category = SafetySetting category BlockNone
-    allCategories = [minBound .. maxBound] :: [SafetyCategory]
+    validCategories = filter (/= HarmCategoryUnspecified) [minBound .. maxBound]
 
 defaultGenerationConfig :: GenerationConfig
 defaultGenerationConfig =
