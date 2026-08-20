@@ -10,10 +10,10 @@ import Sonowz.Noti.Imports
 import Sonowz.Noti.Notification.Types
 
 data EmailConfig = EmailConfig
-  { emailConfigEmail :: Address,
-    emailConfigPassword :: Text,
-    emailConfigHostname :: Text,
-    emailConfigPort :: Int
+  { email :: Address,
+    password :: Text,
+    hostname :: Text,
+    port :: Int
   }
 
 generateEmailNotification ::
@@ -25,20 +25,19 @@ generateEmailNotification noti = do
   config@EmailConfig {..} <- ask
   liftIO $
     sendMailWithLoginSTARTTLS'
-      (toString emailConfigHostname)
-      (fromIntegral emailConfigPort)
-      (toString $ addressEmail emailConfigEmail)
-      (toString emailConfigPassword)
+      (toString hostname)
+      (fromIntegral port)
+      (toString $ addressEmail email)
+      (toString password)
       (makeMail config noti)
 
 makeMail :: EmailConfig -> Notification -> Mail
-makeMail EmailConfig {..} Notification {..} = simpleMail from to cc bcc title [body]
+makeMail EmailConfig {..} Notification {..} = simpleMail from to cc bcc title [bodyPart]
   where
-    from = emailConfigEmail
-    to = [emailConfigEmail]
+    from = email
+    to = [email]
     cc = []
     bcc = []
-    title = notificationTitle
-    body = case notificationBody of
+    bodyPart = case body of
       HTMLBody html -> htmlPart $ fromStrict html
       TextBody text -> plainPart $ fromStrict text

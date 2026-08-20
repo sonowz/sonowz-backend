@@ -43,7 +43,7 @@ notificationFields =
 -- Public Interfaces --
 
 insertNotification :: HasCallStack => Connection -> Notification -> IO (Maybe Notification)
-insertNotification = crudCreate crudSet
+insertNotification = crudSet.crudCreate
 
 selectOneNotification :: HasCallStack => Connection -> IO (Maybe Notification)
 selectOneNotification conn = withTransaction conn $ listToMaybe <$> (fromDto <<$>> selectResult)
@@ -51,7 +51,7 @@ selectOneNotification conn = withTransaction conn $ listToMaybe <$> (fromDto <<$
     selectResult = runSelect conn (qSelectMinNotification notificationTable)
 
 deleteNotificationByUid :: HasCallStack => Connection -> Uid -> IO Bool
-deleteNotificationByUid = crudDelete crudSet
+deleteNotificationByUid = crudSet.crudDelete
 
 -- Private Functions --
 
@@ -66,12 +66,12 @@ toWriteDto Notification {..} =
   Notification'
     { uid = Nothing,
       _type = show notificationType,
-      title = notificationTitle,
-      body = show notificationBody,
+      title = title,
+      body = show body,
       createdTime = Nothing
     }
 
 -- Queries --
 
 qSelectMinNotification :: NotificationTable -> Select NotificationFieldR
-qSelectMinNotification table = limit 1 $ orderBy (asc uid) $ selectTable table
+qSelectMinNotification table = limit 1 $ orderBy (asc (.uid)) $ selectTable table

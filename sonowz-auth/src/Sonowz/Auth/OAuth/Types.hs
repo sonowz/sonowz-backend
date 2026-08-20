@@ -21,16 +21,16 @@ newtype OAuthException = OAuthException Text
   deriving anyclass (Exception)
 
 data FetchOAuthUser = FetchOAuthUser
-  { fetcherOAuthClientURL :: URI -> Text -> URI, -- (Redirect URL, State) as parameter
-    fetcherOAuthInfo :: OAuth2,
-    fetcherOAuthRegisterURL :: URI, -- Register URL in this 'sonowz-auth' service
-    fetcherGetOAuthUser :: Manager -> AccessToken -> IO (Either Text OAuthUser)
+  { oauthClientURL :: URI -> Text -> URI, -- (Redirect URL, State) as parameter
+    oauthInfo :: OAuth2,
+    oauthRegisterURL :: URI, -- Register URL in this 'sonowz-auth' service
+    getOAuthUser :: Manager -> AccessToken -> IO (Either Text OAuthUser)
   }
 
 data OAuthUser = OAuthUser
-  { oauthUserProvider :: Text,
-    oauthUserId :: Text, -- This must be unique within same provider
-    oauthUserRep :: Text -- This is representation of user
+  { provider :: Text,
+    userId :: Text, -- This must be unique within same provider
+    rep :: Text -- This is representation of user
   }
   deriving (Eq)
 

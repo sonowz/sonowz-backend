@@ -42,7 +42,7 @@ type UserFieldR =
     (Field SqlTimestamptz)
 
 instance Entity UserFieldR where
-  entityIdField = uid
+  entityIdField = (.uid)
   entityToFields _ = toFields
 
 type UserTable = Table UserFieldW UserFieldR

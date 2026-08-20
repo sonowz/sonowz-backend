@@ -16,9 +16,9 @@ data NotificationBody = HTMLBody Text | TextBody Text
 
 data Notification = Notification
   { notificationType :: NotificationType,
-    notificationTitle :: Text,
-    notificationBody :: NotificationBody,
-    notificationUid :: Maybe Uid -- Unique ID used in DB
+    title :: Text,
+    body :: NotificationBody,
+    uid :: Maybe Uid -- Unique ID used in DB
   }
 
 instance Semigroup NotificationBody where

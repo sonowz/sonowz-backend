@@ -67,7 +67,7 @@ selectOrInsertOAuthUser conn (oauthToWriteDto -> writeFields) = withTransaction 
     insertResult = listToMaybe <$> runInsert conn (qInsertUser userTable writeFields)
 
 selectUser :: (HasCallStack) => Connection -> Uid -> IO (Maybe UserInfo)
-selectUser = crudRead crudSet
+selectUser = crudSet.crudRead
 
 selectTotalUserCount :: (HasCallStack) => Connection -> IO Int
 selectTotalUserCount conn = toInt <<$>> headOrError =<< runSelect conn (qSelectUserCount userTable)
@@ -80,13 +80,13 @@ selectTotalUserCount conn = toInt <<$>> headOrError =<< runSelect conn (qSelectU
 qSelectUserByOAuth :: UserTable -> UserInfoWriteDto -> Select UserFieldR
 qSelectUserByOAuth table user = proc () -> do
   selected <- selectTable table -< ()
-  restrict -< toFields (oauthProvider user) .== oauthProvider selected
-  restrict -< toFields (oauthId user) .== oauthId selected
+  restrict -< toFields user.oauthProvider .== selected.oauthProvider
+  restrict -< toFields user.oauthId .== selected.oauthId
   returnA -< selected
 
 qSelectUserCount :: UserTable -> Select (Field SqlInt8)
 qSelectUserCount table =
-  uid <$> aggregate (pUser $ emptyAggUser {uid = count}) (selectTable table)
+  (.uid) <$> aggregate (pUser $ emptyAggUser {uid = count}) (selectTable table)
 
 qInsertUser :: UserTable -> UserInfoWriteDto -> Insert [UserInfoDto]
 qInsertUser table user =
@@ -119,8 +119,8 @@ oauthToWriteDto :: OAuthUser -> UserInfoWriteDto
 oauthToWriteDto OAuthUser {..} =
   User
     { uid = Nothing,
-      oauthProvider = oauthUserProvider,
-      oauthId = oauthUserId,
-      representation = oauthUserRep,
+      oauthProvider = provider,
+      oauthId = userId,
+      representation = rep,
       createdTime = Nothing
     }

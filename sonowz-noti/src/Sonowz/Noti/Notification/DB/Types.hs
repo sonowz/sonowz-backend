@@ -39,7 +39,7 @@ type NotificationFieldR =
     (Field SqlTimestamptz)
 
 instance Entity NotificationFieldR where
-  entityIdField = uid
+  entityIdField = (.uid)
   entityToFields _ = toFields
 
 type NotificationTable = Table NotificationFieldW NotificationFieldR

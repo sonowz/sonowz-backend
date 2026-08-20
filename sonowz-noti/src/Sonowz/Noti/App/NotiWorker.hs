@@ -25,8 +25,8 @@ runNotiWorker Env {..} =
     & runMQueueStream notificationHandler
     & runMQueueDBNoti
     & runMQueueVoid
-    & runReader envEmailConfig
-    & runReader envPgConnection
+    & runReader emailConfig
+    & runReader pgConnection
     & embedToFinal
     & timeToIOFinal
     & resourceToIOFinal
@@ -39,10 +39,10 @@ notificationHandler ::
   (Members HandlerEffects r, HasCallStack) => StreamHandler r Notification Void
 notificationHandler noti =
   HContinue
-    <$ ( case notificationType noti of
+    <$ ( case noti.notificationType of
            Email -> do
-             let Just uid = notificationUid noti
-             logInfo $ "Generate email: '" <> notificationTitle noti <> "'"
+             let Just uid = noti.uid
+             logInfo $ "Generate email: '" <> noti.title <> "'"
              generateEmailNotification noti
              withDBConn (\conn -> liftIO $ deleteNotificationByUid conn uid)
        )

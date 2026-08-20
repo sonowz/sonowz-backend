@@ -115,9 +115,12 @@ Use `pass` instead of `pure ()` (Relude convention, enforced by HLint).
 
 ### Naming Conventions
 
+- **Full Words vs. Abbreviations:** Prefer full, descriptive names over arbitrary abbreviations for functions, types, and variables (e.g., `request` over `req`, `requestHeaders` over `hdr`). Abbreviations are reserved for standard domain acronyms (e.g., `SMA`, `KVS`, `DTO`), established patterns (`Env`, `App`), or short local helper parameters (e.g., `k`, `v`). Use single-quote suffix (`'`) for intermediate or transformed values (e.g., `titleSearchBody'`).
 - **Modules:** `Sonowz.<PackageName>.<Domain>.<Subdomain>` hierarchy
 - **Types:** `PascalCase`. Suffix with role when applicable: `*Dto`, `*WriteDto`, `*Table`, `*Config`, `*Env`
 - **Functions:** `camelCase`
+  - Logic & operations: `calc*` (computation), `parse*` (parsing), `fetch*` (network/external retrieval), `create*` (construction/generation)
+  - Predicates: `is*` prefix for boolean checks (`isGoldenCross`, `isDeadCross`)
 - **Effect interpreters:** `run<EffectName><Strategy>` (e.g., `runHTTPIO`, `runMQueueDBNoti`)
 - **DB query functions:** descriptive verbs (`getKeyValue`, `insertNotification`, `selectOneNotification`)
 - **Opaleye query helpers:** `q` prefix (`qSelectByUid`, `qInsertKeyValue`)

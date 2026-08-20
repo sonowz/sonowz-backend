@@ -50,7 +50,7 @@ getOAuthRedirectURLHandler :: GetOAuthRedirectURLHandler
 getOAuthRedirectURLHandler FetchOAuthUser {..} referer = do
   WebAppEnv {..} <- ask
   let callbackURL = maybe (decodeUtf8 $ serializeURIRef' eWebDomain) show referer
-  let redirectURL = fetcherOAuthClientURL fetcherOAuthRegisterURL callbackURL
+  let redirectURL = oauthClientURL oauthRegisterURL callbackURL
   return redirectURL
 
 type LoginWithOAuthEffects =

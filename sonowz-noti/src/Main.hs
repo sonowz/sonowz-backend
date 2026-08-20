@@ -18,7 +18,7 @@ data Config = Config EmailConfig PGS.ConnectInfo WebAppEnv
 
 pEmailConfig :: Parser EmailConfig
 pEmailConfig = do
-  emailConfigEmail <-
+  email <-
     Address Nothing
       <$> setting
         [ help "Email address for notifications",
@@ -28,7 +28,7 @@ pEmailConfig = do
           env "NOTI_EMAIL_ADDRESS",
           metavar "NOTI_EMAIL_ADDRESS"
         ]
-  emailConfigPassword <-
+  password <-
     setting
       [ help "Email password",
         reader str,
@@ -37,7 +37,7 @@ pEmailConfig = do
         env "NOTI_EMAIL_PASSWORD",
         metavar "NOTI_EMAIL_PASSWORD"
       ]
-  emailConfigHostname <-
+  hostname <-
     setting
       [ help "Email SMTP hostname",
         reader str,
@@ -46,7 +46,7 @@ pEmailConfig = do
         metavar "EMAIL_HOSTNAME",
         value "smtp.gmail.com"
       ]
-  emailConfigPort <-
+  port <-
     setting
       [ help "Email SMTP port",
         reader auto,

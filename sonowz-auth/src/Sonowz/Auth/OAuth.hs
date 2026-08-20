@@ -15,9 +15,9 @@ import Sonowz.Auth.OAuth.Types
 -- This function throws 'OAuthException'
 fetchUserInfoFromExchangeToken :: Manager -> FetchOAuthUser -> ExchangeToken -> IO OAuthUser
 fetchUserInfoFromExchangeToken tlsManager FetchOAuthUser {..} exchangeToken = do
-  oauthResult <- throwOAuthError =<< runExceptT (fetchAccessToken tlsManager fetcherOAuthInfo exchangeToken)
+  oauthResult <- throwOAuthError =<< runExceptT (fetchAccessToken tlsManager oauthInfo exchangeToken)
   let accessToken' = accessToken oauthResult
-  throwGetUserError =<< fetcherGetOAuthUser tlsManager accessToken'
+  throwGetUserError =<< getOAuthUser tlsManager accessToken'
   where
     throwOAuthError = either (E.throw . OAuthException . show) return
     throwGetUserError = either (E.throw . OAuthException) return

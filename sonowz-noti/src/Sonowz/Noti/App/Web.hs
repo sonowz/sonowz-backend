@@ -22,7 +22,7 @@ api :: Proxy API
 api = Proxy
 
 runServer :: WebAppEnv -> Env -> IO ()
-runServer webEnv env = runAppWithAccessLog (eWebPort webEnv) app
+runServer webEnv env = runAppWithAccessLog (webEnv.eWebPort) app
   where
     app = serve api $ hoistServer api (runWithEffects env) server
 
@@ -35,7 +35,7 @@ runWithEffects :: forall a. Env -> Sem _ a -> Handler a
 runWithEffects env (action :: (Members ServerEffects r) => Sem r a) =
   action
     & runMQueueDBNoti
-    & runReader (envPgConnection env)
+    & runReader env.pgConnection
     & embedToFinal
     & resourceToIOFinal
     & stdEffToWebHandler

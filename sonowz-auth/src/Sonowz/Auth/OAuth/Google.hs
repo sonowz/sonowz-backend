@@ -53,10 +53,10 @@ urlGetUserInfo = [uri|https://www.googleapis.com/userinfo/v2/me|]
 fetchOAuthUserGoogle :: GoogleAppInfo -> URI -> FetchOAuthUser
 fetchOAuthUserGoogle appInfo registerURL =
   FetchOAuthUser
-    { fetcherOAuthInfo = oAuthInfoGoogle appInfo registerURL,
-      fetcherOAuthClientURL = oAuthClientURLGoogle appInfo,
-      fetcherGetOAuthUser = getUserInfoGoogle,
-      fetcherOAuthRegisterURL = registerURL
+    { oauthInfo = oAuthInfoGoogle appInfo registerURL,
+      oauthClientURL = oAuthClientURLGoogle appInfo,
+      getOAuthUser = getUserInfoGoogle,
+      oauthRegisterURL = registerURL
     }
 
 oAuthInfoGoogle :: GoogleAppInfo -> URI -> OAuth2
@@ -85,7 +85,7 @@ oAuthClientURLGoogle (GoogleAppInfo appId _) redirectURL state = url {uriQuery =
 
 googleUserToOAuthUser :: GoogleUserInfo -> OAuthUser
 googleUserToOAuthUser GoogleUserInfo {..} =
-  OAuthUser {oauthUserProvider = "Google", oauthUserId = id, oauthUserRep = email}
+  OAuthUser {provider = "Google", userId = id, rep = email}
 
 getUserInfoGoogle :: Manager -> AccessToken -> IO (Either Text OAuthUser)
 getUserInfoGoogle m at =

@@ -13,6 +13,7 @@ module Sonowz.Auth.Web.OAuth.Combinators
 where
 
 import Data.Aeson (FromJSON, ToJSON)
+import Relude.Extra.Newtype (un)
 import Servant
 import Servant.Auth.Server (Auth, AuthResult (..), Cookie, FromJWT, JWT, ToJWT)
 import Sonowz.Auth.Imports
@@ -27,28 +28,28 @@ type RequireAuth401 = Auth '[JWT, Cookie] (AuthUserInfo "401")
 type RequireAuthMaybe = Auth '[JWT, Cookie] (AuthUserInfo "maybe")
 
 -- Phantom type to distinguish between response types
-newtype AuthUserInfo a = AuthUserInfo {getUserInfo :: UserInfo} deriving (Show, FromJSON, ToJSON, FromJWT, ToJWT) via UserInfo
+newtype AuthUserInfo a = AuthUserInfo {userInfo :: UserInfo} deriving (Show, FromJSON, ToJSON, FromJWT, ToJWT) via UserInfo
 
 auth301 ::
-  Members '[Reader LoginRedirectURL, Error ServerError] r =>
+  (Members '[Reader LoginRedirectURL, Error ServerError] r) =>
   AuthResult (AuthUserInfo "301") ->
   Sem r UserInfo
 auth301 authResult = do
   loginRedirectURL <- coerce <$> ask
   authEither
-    (return . getUserInfo)
+    (return . un)
     (\a -> throw (err301 {errBody = "Authentication failed with: " <> show a, errHeaders = [("Location", serializeURIRef' loginRedirectURL)]}))
     authResult
 
-auth401 :: Member (Error ServerError) r => AuthResult (AuthUserInfo "401") -> Sem r UserInfo
-auth401 = authEither (return . getUserInfo) $
-  \a -> throw (err401 {errBody = "Authentication failed with: " <> show a})
+auth401 :: (Member (Error ServerError) r) => AuthResult (AuthUserInfo "401") -> Sem r UserInfo
+auth401 = authEither (return . un)
+  $ \a -> throw (err401 {errBody = "Authentication failed with: " <> show a})
 
 authMaybe :: AuthResult (AuthUserInfo "maybe") -> Sem r (Maybe UserInfo)
 authMaybe = return . authMaybe'
 
 authMaybe' :: AuthResult (AuthUserInfo "maybe") -> Maybe UserInfo
-authMaybe' = authEither (Just . getUserInfo) (const Nothing)
+authMaybe' = authEither (Just . un) (const Nothing)
 
 authEither :: (a -> c) -> (AuthResult a -> c) -> AuthResult a -> c
 authEither f _ (Authenticated val) = f val
