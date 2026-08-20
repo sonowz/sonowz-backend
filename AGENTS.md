@@ -78,7 +78,7 @@ Dependency graph: all packages depend on `sonowz-core`. Additionally:
 
 `-O2 -threaded -flate-specialise -fspecialise-aggressively -fplugin=Polysemy.Plugin -W -Wno-partial-type-signatures`
 
-### Custom Prelude
+### Custom Prelude and Relude Conventions
 
 `NoImplicitPrelude` is enabled globally. Every module must import its package prelude:
 ```haskell
@@ -87,15 +87,31 @@ import Sonowz.<Package>.Imports
 This re-exports `Relude` (with mtl items hidden) + `Polysemy` core modules + `StdEff`.
 Use `pass` instead of `pure ()` (Relude convention, enforced by HLint).
 
+- **Unsafe module imports:** `Relude.Unsafe` must **NEVER** be imported unqualified. Always import `Relude.Unsafe qualified as Unsafe` so that unsafe functions are explicitly qualified (e.g., `Unsafe.head`, `Unsafe.fromJust`, `Unsafe.last`).
+- **`Relude.Extra` usage:**
+  - Prefer `Relude.Extra.Newtype (un)` for unwrapping single-field newtypes.
+  - Use `Relude.Extra.Tuple` combinators (`fmapToFst`, `dup`, `toFst`, `toSnd`) for clean tuple transformation pipelines.
+
 ### Import Style
 
 - **Post-qualified imports** (modern syntax):
   ```haskell
   import Data.Text qualified as T
   import Control.Exception.Safe qualified as E
+  import Relude.Unsafe qualified as Unsafe
   ```
 - **Import ordering:** external libraries first, then `Sonowz.Core.*`, then package prelude, then local modules.
 - Prefer selective imports over blanket opens of large modules.
+
+### CLI Arguments & Configuration (OptEnvConf)
+
+- All executables standardise on `OptEnvConf` for command-line and environment variable parsing.
+- Secrets **must** be supplied as environment variables (`env`) rather than CLI program positional arguments.
+- CLI parsers use `p` prefix (`pEnv :: Parser Env`, `pConfig`, `pWarpPort`, `pPGSConnectInfo`).
+- Set standard log level in `Main.hs` immediately after parsing configuration:
+  ```haskell
+  setStdLogActionLevel (if debug env then Debug else Info)
+  ```
 
 ### Naming Conventions
 
@@ -161,6 +177,8 @@ deriving via Int instance DefaultFromField SqlInt4 Uid
   ```haskell
   type HandlerEffects = [Reader Env, HTTP, Error ServerError] <> DBEffects
   ```
+- **Stateful effect interpreters:** Manage local state inside effect handlers by combining `reinterpret` with state effects (e.g., `evalState (mempty :: Map FilePath AudioTag) . reinterpret (\case ...)`).
+- **Top-level application wiring:** Application entry points (`App.hs` / `runMainFn`) compose interpreters and handle unhandled domain errors via `runErrorAsLogging @SomeException`.
 
 ### Error Handling
 
