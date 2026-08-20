@@ -58,10 +58,10 @@ type MainEfffects =
 mainFn :: (Members MainEfffects r, HasCallStack) => Sem r ()
 mainFn = do
   env <- ask
-  targetFiles <- getTargetFileList (targetDir env)
-  if nonInteractive env then logWarning "This will automatically update tags in the file!" else pass
+  targetFiles <- getTargetFileList env.targetDir
+  if env.nonInteractive then logWarning "This will automatically update tags in the file!" else pass
 
-  logInfo $ "Found " <> show (length targetFiles) <> " files in " <> toText (targetDir env) <> "."
+  logInfo $ "Found " <> show (length targetFiles) <> " files in " <> toText env.targetDir <> "."
   logInfo "Extracting ID3 tags..."
   !audioTags <- catMaybes <$> mapM readAudioTagWrapped targetFiles
   logInfo $ "Extracted " <> show (length audioTags) <> " ID3 tags."
@@ -81,7 +81,7 @@ mainFn = do
     <> (if dropped == 0 then mempty else show dropped <> " artists were dropped.")
 
   let fixes = makeArtistFixes artistPool'
-  !fixes <- if nonInteractive env then return fixes else interactiveFilterFix fixes unArtist
+  !fixes <- if env.nonInteractive then return fixes else interactiveFilterFix fixes unArtist
 
   logInfo "Update tags in the files? (yes or no):"
   whenM getYesOrNo (applyArtistFixes audioTags fixes)
@@ -90,7 +90,7 @@ mainFn = do
     getYesOrNo :: (Members (Reader Env : Embed IO : StdEff) r) => Sem r Bool
     getYesOrNo = do
       env <- ask
-      if nonInteractive env
+      if env.nonInteractive
         then return True -- noninteractive mode always returns True
         else
           liftIO getLine >>= \case
@@ -114,17 +114,17 @@ writeAudioTagWrapped :: (Members AudioTagIOEffects r, HasCallStack) => AudioTag 
 writeAudioTagWrapped tag =
   catch
     (writeAudioTag tag)
-    (\_ -> logError $ "Write ID3 tag for " <> toText (filename tag) <> " failed.")
+    (\_ -> logError $ "Write ID3 tag for " <> toText tag.filename <> " failed.")
 
 applyArtistFixes ::
   (Members AudioTagIOEffects r, HasCallStack) => [AudioTag] -> Fix Artist -> Sem r ()
 applyArtistFixes audioTags fixes = do
-  let fixed = (\tag -> tag {artist = applyFix fixes (artist tag)}) <$> audioTags
+  let fixed = (\tag -> tag {artist = applyFix fixes tag.artist}) <$> audioTags
       changed = [fixed | (orig, fixed) <- zip audioTags fixed, orig /= fixed]
   logInfo $ show (length changed) <> " files will be written."
   mapM_
     ( \tag -> do
-        logDebug $ "Writing tag to " <> toText (filename tag) <> "..."
+        logDebug $ "Writing tag to " <> toText tag.filename <> "..."
         writeAudioTagWrapped tag
     )
     changed
@@ -132,11 +132,11 @@ applyArtistFixes audioTags fixes = do
 
 applyEncodingFixes :: (Members AudioTagIOEffects r, HasCallStack) => [AudioTag] -> Sem r ()
 applyEncodingFixes audioTags = do
-  let changed = [tag | tag <- audioTags, encoding tag /= EncodingUtf8]
+  let changed = [tag | tag <- audioTags, tag.encoding /= EncodingUtf8]
   logInfo $ show (length changed) <> " files will be written."
   mapM_
     ( \tag -> do
-        logDebug $ "Writing tag to " <> toText (filename tag) <> "..."
+        logDebug $ "Writing tag to " <> toText tag.filename <> "..."
         writeAudioTagWrapped tag
     )
     changed

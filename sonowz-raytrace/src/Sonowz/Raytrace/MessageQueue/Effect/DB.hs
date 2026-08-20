@@ -29,7 +29,7 @@ runMQueueDBServant ::
 runMQueueDBServant = interpret $ \case
   Enqueue msg ->
     boolToException "enqueueServantDB" $
-      withDBConn (\conn -> liftIO $ enqueueServant conn (servantId msg) (operation msg))
+      withDBConn (\conn -> liftIO $ enqueueServant conn msg.servantId msg.operation)
   Dequeue -> do
     servantId' <- ask @ServantId
     withDBConn (\conn -> liftIO $ dequeueServant conn servantId')
@@ -38,7 +38,7 @@ runMQueueDBDaemon :: Members DBEffects r => Sem (MessageQueue DaemonMessage : r)
 runMQueueDBDaemon = interpret $ \case
   Enqueue msg ->
     boolToException "enqueueDaemonDB" $
-      withDBConn (\conn -> liftIO $ enqueueDaemon conn (servantId msg) (operation msg))
+      withDBConn (\conn -> liftIO $ enqueueDaemon conn msg.servantId msg.operation)
   Dequeue -> withDBConn (liftIO . dequeueDaemon)
 
 enqueueDBDaemonNew :: Members DBEffects r => DaemonOp -> Sem r ServantId

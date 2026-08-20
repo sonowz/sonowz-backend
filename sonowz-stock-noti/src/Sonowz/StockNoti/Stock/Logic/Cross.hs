@@ -9,8 +9,8 @@ import Sonowz.StockNoti.Imports
 import Sonowz.StockNoti.Stock.Types (StockPrice (..), StockTimeSeries (..))
 
 data TimeSeries value = TimeSeries
-  { sTime :: UTCTime,
-    sValue :: value
+  { time :: UTCTime,
+    value :: value
   }
   deriving (Eq, Show)
 
@@ -29,17 +29,17 @@ type CrossFunction = (Double, Double) -> (Double, Double) -> Bool
 calcCross :: CrossFunction -> Int -> Int -> StockTimeSeries tu -> [UTCTime]
 calcCross isCross smaPeriodShort smaPeriodLong stockTimeSeries = calcCross' zippedSma
   where
-    closePrices = (\sp -> TimeSeries (time sp) (close sp)) <$> prices stockTimeSeries
+    closePrices = (\sp -> TimeSeries sp.time sp.close) <$> stockTimeSeries.prices
     smaShort = calcSMA smaPeriodShort closePrices
     smaLong = calcSMA smaPeriodLong closePrices
-    zippedSma = mapMaybe (\(TimeSeries t l) -> (\ts -> TimeSeries t (sValue ts, l)) <$> find (\ts -> sTime ts == t) smaShort) smaLong
+    zippedSma = mapMaybe (\(TimeSeries t l) -> (\ts -> TimeSeries t (ts.value, l)) <$> find (\ts -> ts.time == t) smaShort) smaLong
 
     calcCross' :: [TimeSeries (Double, Double)] -> [UTCTime]
     calcCross' [] = []
     calcCross' [_] = []
     calcCross' (x : y : xs) =
-      if isCross (sValue x) (sValue y)
-        then sTime y : calcCross' (y : xs)
+      if isCross x.value y.value
+        then y.time : calcCross' (y : xs)
         else calcCross' (y : xs)
 
 calcSMA :: Int -> [TimeSeries Double] -> [TimeSeries Double]
@@ -49,5 +49,5 @@ calcSMA period prices = snd $ mapAccumL accumFn initWindow prices'
     accumFn window value = (drop 1 newWindow, sma)
       where
         newWindow = window <> [value]
-        sma = TimeSeries (sTime value) (sum (sValue <$> newWindow) / fromIntegral period)
+        sma = TimeSeries value.time (sum ((.value) <$> newWindow) / fromIntegral period)
     (initWindow, prices') = splitAt (period - 1) prices

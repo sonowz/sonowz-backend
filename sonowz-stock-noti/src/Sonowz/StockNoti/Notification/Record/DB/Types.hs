@@ -13,7 +13,7 @@ import Sonowz.StockNoti.Imports
 data StockNotiRecord' c1 c2 c3 c4 = StockNotiRecord'
   { uid :: c1,
     stockSymbol :: c2,
-    notiType :: c3,
+    notificationType :: c3,
     timestamp :: c4
   }
 
@@ -36,7 +36,7 @@ type StockNotiRecordR =
     (Field SqlDate)
 
 instance Entity StockNotiRecordR where
-  entityIdField = uid
+  entityIdField = (.uid)
   entityToFields _ = toFields
 
 type StockNotiRecordTable = Table StockNotiRecordW StockNotiRecordR

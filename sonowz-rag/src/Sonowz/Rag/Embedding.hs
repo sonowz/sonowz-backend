@@ -8,7 +8,7 @@ import Data.Text qualified as T
 import Sonowz.Core.DB.Pool (DBEffects, withDBConn)
 import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Core.Http.Effect (Http)
-import Sonowz.Rag.Document.DB.Types (RawDocument, document, title, uid)
+import Sonowz.Rag.Document.DB.Types (RawDocument, RawDocument' (document, title, uid))
 import Sonowz.Rag.Embedding.DB.Queries qualified as Queries
 import Sonowz.Rag.Embedding.OpenAI (createOpenAIEmbedding3)
 import Sonowz.Rag.Env (Env)
@@ -25,12 +25,12 @@ generateMissingEmbeddings = do
   documentsMissingEmbeddings <- withDBConn (\conn -> liftIO $ Queries.selectDocumentsWithoutEmbedding conn Queries.openAI3EmbeddingTableName)
   logInfo $ "Generating embeddings for " <> show (length documentsMissingEmbeddings) <> " documents..."
   for_ documentsMissingEmbeddings $ \docEntity -> do
-    logInfo $ "Generating embedding for document " <> show (title docEntity) <> "..."
+    logInfo $ "Generating embedding for document " <> show docEntity.title <> "..."
     let chunks = prepareDocument docEntity
     when (length chunks > 1) (logDebug $ "Document was split into " <> show (length chunks) <> " chunks.")
     for_ chunks $ \chunk -> do
       embedding <- createOpenAIEmbedding3 chunk
-      created <- withDBConn (\conn -> liftIO $ Queries.insertEmbedding conn Queries.openAI3EmbeddingTableName (uid docEntity) embedding)
+      created <- withDBConn (\conn -> liftIO $ Queries.insertEmbedding conn Queries.openAI3EmbeddingTableName docEntity.uid embedding)
       unless created $ throw $ ParseException "Failed to insert embedding to DB"
   logInfo "Done generating embeddings."
 
@@ -49,7 +49,7 @@ prepareDocument doc = addTitle <$> chunks
     tryChunkOn :: Text -> Maybe [Text]
     tryChunkOn sep = chunks
       where
-        splits = T.splitOn sep (document doc) :: [Text]
+        splits = T.splitOn sep doc.document :: [Text]
         halfChunks = reverse <$> foldM (trySplitToHalfChunk sep) [] splits :: Maybe [Text]
         chunks = halfChunkToChunks <$> halfChunks :: Maybe [Text]
     trySplitToHalfChunk :: Text -> [Text] -> Text -> Maybe [Text]
@@ -64,6 +64,6 @@ prepareDocument doc = addTitle <$> chunks
     halfChunkToChunks :: [Text] -> [Text]
     halfChunkToChunks [chunk] = [chunk]
     halfChunkToChunks halfChunks = zipWith (<>) halfChunks (drop 1 halfChunks)
-    plainChunks = halfChunkToChunks (T.chunksOf halvedChunkMaxSize (document doc))
+    plainChunks = halfChunkToChunks (T.chunksOf halvedChunkMaxSize doc.document)
 
-    addTitle chunk = "Title: " <> title doc <> "\n\n" <> chunk
+    addTitle chunk = "Title: " <> doc.title <> "\n\n" <> chunk

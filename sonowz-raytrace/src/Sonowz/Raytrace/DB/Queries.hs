@@ -127,7 +127,7 @@ dequeueServant conn sid = withTransaction conn
 
 selectMinQid :: MessageTable op -> Select (Field SqlInt4)
 selectMinQid table =
-  qid <$> Agg.aggregate (pMessage $ emptyAggMessageQueue {qid = Agg.min}) (selectTable table)
+  (.qid) <$> Agg.aggregate (pMessage $ emptyAggMessageQueue {qid = Agg.min}) (selectTable table)
 
 -- You may not want to use this! Use 'selectMaxSeq' instead.
 {-
@@ -150,14 +150,14 @@ selectServantMinQid table = proc servantIdEq -> do
       (selectTable table)
       -<
         ()
-  restrict -< servantId row .== toFields servantIdEq
-  returnA -< qid row
+  restrict -< row.servantId .== toFields servantIdEq
+  returnA -< row.qid
 
 popMessage ::
   (DefaultFromField SqlText op) => MessageTable op -> Qid -> Delete [Message' op]
 popMessage dTable qidEq = Delete {..}
   where
-    dWhere (qid -> rowQid) = rowQid .== toFields qidEq
+    dWhere row = row.qid .== toFields qidEq
     dReturning = rReturning id
 
 insertMessage ::

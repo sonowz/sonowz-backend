@@ -40,5 +40,5 @@ main = do
   hSetBuffering stderr LineBuffering
 
   env <- runParser (makeVersion []) "Mp3 tag autofix" pEnv
-  setStdLogActionLevel (if debug env then Debug else Info)
+  setStdLogActionLevel (if env.debug then Debug else Info)
   runMainFn env

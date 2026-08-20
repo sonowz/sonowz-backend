@@ -51,7 +51,7 @@ type RawDocumentFieldR =
     (Field SqlTimestamptz)
 
 instance Entity RawDocumentFieldR where
-  entityIdField = uid
+  entityIdField = (.uid)
   entityToFields _ = toFields
 
 type RawDocumentTable = Table RawDocumentFieldW RawDocumentFieldR

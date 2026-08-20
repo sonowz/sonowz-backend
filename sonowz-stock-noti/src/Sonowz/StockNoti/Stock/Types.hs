@@ -30,4 +30,4 @@ data StockPrice (tu :: TimeUnit) = StockPrice
   deriving (Eq, Show)
 
 getTimeSeries :: (StockPrice tu -> Double) -> StockTimeSeries tu -> [Double]
-getTimeSeries field = fmap field . prices
+getTimeSeries field stockTimeSeries = fmap field stockTimeSeries.prices

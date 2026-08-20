@@ -14,8 +14,8 @@ import Network.HTTP.Types (hAuthorization, hContentType)
 import Optics
 import Sonowz.Core.Exception.Types (ParseException (..))
 import Sonowz.Core.Http.Effect (Http, fetchWithRequest, urlToRequest)
-import Sonowz.Rag.Embedding.Types (OpenAIKey (getKey))
-import Sonowz.Rag.Env (Env (envOpenAIKey))
+import Sonowz.Rag.Embedding.Types (OpenAIKey (key))
+import Sonowz.Rag.Env (Env (openAIKey))
 import Sonowz.Rag.Imports
 import URI.ByteString.QQ (uri)
 
@@ -28,8 +28,8 @@ createOpenAIEmbedding3 ::
   Sem r (Vector Float)
 createOpenAIEmbedding3 queryText = do
   when (T.length queryText > 10000) (logWarning "Query text is too long!")
-  openAIKey <- envOpenAIKey <$> ask
-  request <- fromEither $ openAIEmbeddingRequest (getKey openAIKey) "text-embedding-3-large" 3072 queryText
+  env <- ask
+  request <- fromEither $ openAIEmbeddingRequest env.openAIKey.key "text-embedding-3-large" 3072 queryText
   response <- fetchWithRequest request
   fromEither $ parseOpenAIEmbeddingResponse response
 
@@ -50,8 +50,8 @@ openAIEmbeddingRequest apiKey model vectorDimension document = do
           (hAuthorization, "Bearer " <> encodeUtf8 apiKey)
         ]
   request <- maybeToRight (ParseException "Failed to parse OpenAI embedding URL") (urlToRequest url)
-  return $
-    request
+  return
+    $ request
       { method = "POST",
         requestHeaders = requestHeaders,
         requestBody = requestBody,

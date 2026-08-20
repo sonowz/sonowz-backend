@@ -14,9 +14,9 @@ getOrCreateChannel targetUserId = do
   dmChannel <- case find isUserChannel dmChannels of
     Just existingChannel -> return existingChannel
     Nothing -> restCall' (CreateDM targetUserId)
-  return (channelId dmChannel)
+  return dmChannel.channelId
   where
     isUserChannel :: Channel -> Bool
     isUserChannel (ChannelDirectMessage _ userList _) =
-      any (\u -> userId u == targetUserId) userList
+      any (\user -> user.userId == targetUserId) userList
     isUserChannel _ = False

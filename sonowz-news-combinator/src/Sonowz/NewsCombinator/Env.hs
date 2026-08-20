@@ -8,7 +8,7 @@ import Sonowz.Core.Llm.Effect (LlmEnv (..))
 import Sonowz.NewsCombinator.Imports
 
 data Env = Env
-  { envPgConnection :: DBConnPool,
-    envWorkerIntervalSeconds :: Int,
-    envLlmEnv :: LlmEnv
+  { pgConnection :: DBConnPool,
+    workerIntervalSeconds :: Int,
+    llmEnv :: LlmEnv
   }

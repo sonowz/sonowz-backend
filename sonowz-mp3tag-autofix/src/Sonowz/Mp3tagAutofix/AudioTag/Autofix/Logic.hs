@@ -41,7 +41,7 @@ import Sonowz.Mp3tagAutofix.Fix.Types (Fix, mkFix)
 import Sonowz.Mp3tagAutofix.Imports
 
 makeArtistPool :: [AudioTag] -> ArtistPool
-makeArtistPool = groupByArtist . fmapToFst artist
+makeArtistPool = groupByArtist . fmapToFst (.artist)
   where
     groupByArtist :: [(Artist, AudioTag)] -> Map Artist (NonEmpty AudioTag)
     groupByArtist = foldr (\(k, v) -> M.insertWith (<>) k (one v)) mempty
@@ -56,8 +56,8 @@ runSearches = M.traverseMaybeWithKey action
   where
     action :: Artist -> NonEmpty AudioTag -> Sem r (Maybe (AudioTag, SearchResult))
     action k (tag :| tags) = do
-      let artistText = unArtist (artist tag)
-          titleText = unTitle (title tag)
+      let artistText = unArtist tag.artist
+          titleText = unTitle tag.title
           -- These characters seems to corrupt title search results
           removeSpecialChars :: Text -> Text
           removeSpecialChars = T.replace "," "" . T.replace "." " "
@@ -87,7 +87,7 @@ runSearches = M.traverseMaybeWithKey action
           case nonEmpty tags of
             Nothing -> do
               let fileInfo =
-                    artistText <> " - " <> titleText <> " (filename: " <> toText (filename tag) <> ")"
+                    artistText <> " - " <> titleText <> " (filename: " <> toText tag.filename <> ")"
               logError ("\"" <> fileInfo <> "\" will be skipped.")
               return Nothing
             Just tags' -> action k tags'
@@ -111,33 +111,33 @@ calcBestMatchArtist :: HasCallStack => AudioTag -> SearchResult -> Artist
 calcBestMatchArtist tag search = picked
   where
     -- 1. Song titles are ranked by using similarity score with original tag
-    songs = un $ songSection search
-    artists = un $ artistSection search :: [Artist]
-    tagTitle = unTitle $ title tag :: Text
-    tagArtist = artistList $ artist tag :: NonEmpty Artist
+    songs = un $ search.songSection
+    artists = un $ search.artistSection :: [Artist]
+    tagTitle = unTitle $ tag.title :: Text
+    tagArtist = artistList $ tag.artist :: NonEmpty Artist
     getSongTitle (Song _ t) = unTitle t :: Text
     songRanks :: [SongRank]
     songRanks = (\song -> SongRank (similarity tagTitle $ getSongTitle song) song) <$> songs
 
     -- 2. Reflect that the web search list is ordered by relevance
     magSongFn :: [SongRank -> SongRank]
-    magSongFn = [\sr -> sr {score = score sr * m} | m <- (\x -> 1 - 0.02 * x) <$> [0 ..]]
+    magSongFn = [\sr -> sr {score = sr.score * m} | m <- (\x -> 1 - 0.02 * x) <$> [0 ..]]
     songRanks' = zipWith ($) magSongFn songRanks
 
     -- 3. "Various Artists" artist is discouraged (score = 0.1)
     filterFn sr =
-      if getSongArtist (song sr) == [mkArtist "Various Artists"] then sr {score = 0.1} else sr
+      if getSongArtist sr.song == [mkArtist "Various Artists"] then sr {score = 0.1} else sr
     songRanks'' = filterFn <$> songRanks'
 
     -- 4. Song artists are ranked by using similarity score with original tag
     getSongArtist (Song a _) = a
-    plusFn sr = sr {score = score sr + artistSimilarity tagArtist (getSongArtist $ song sr)}
+    plusFn sr = sr {score = sr.score + artistSimilarity tagArtist (getSongArtist sr.song)}
     songRanks''' = plusFn <$> songRanks''
 
     -- 5. If a song's artist is in 'SearchResultArtist', double the score
-    doubleFn sr = if not (null artistIntersection) then sr {score = 2 * score sr} else sr
+    doubleFn sr = if not (null artistIntersection) then sr {score = 2 * sr.score} else sr
       where
-        artistIntersection = artists `L.intersect` toList (getSongArtist $ song sr)
+        artistIntersection = artists `L.intersect` toList (getSongArtist sr.song)
     songRanks'''' = doubleFn <$> songRanks'''
 
     -- 6. Sort by score, and narrow down to 2 candidates
@@ -146,21 +146,21 @@ calcBestMatchArtist tag search = picked
 
     -- 7. If the first is sufficiently higher than the second (> 0.3), pick it
     --    Otherwise, pick by similiarity of artist with original tag
-    returnArtist = joinArtistList . getSongArtist . song :: SongRank -> Artist
+    returnArtist = joinArtistList . getSongArtist . (.song) :: SongRank -> Artist
     picked = case candidates of
       [] -> error "No best match!"
       [s1] -> returnArtist s1
       (s1 : s2 : _) -> returnArtist $ compareTwo s1 s2
     compareTwo s1 s2
-      | score s1 > score s2 + 0.3 = s1
-      | score s2 > score s1 + 0.3 = s2
+      | s1.score > s2.score + 0.3 = s1
+      | s2.score > s1.score + 0.3 = s2
       | similarityResult == LT = s1
       | similarityResult == EQ = s1
       | similarityResult == GT = s2
       | otherwise = error "Unexpected code flow!"
       where
         similarityResult = (compare `on` getSimilarity) s1 s2
-        getSimilarity = artistSimilarity tagArtist . getSongArtist . song
+        getSimilarity = artistSimilarity tagArtist . getSongArtist . (.song)
 
 -- TODO: use max flow algorithm
 -- Domain: [0.0, inf) (mostly [0.0, 1.0])

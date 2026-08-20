@@ -27,14 +27,14 @@ makeNoti :: NewsScrapRule -> LlmEvaluationResult -> Notification
 makeNoti rule evalResult = Notification Email notiTitle body Nothing
   where
     notiTitle =
-      if isOneTimeRule rule
-        then "[News Combinator] Match found for: \"" <> description rule <> "\""
-        else "[News Combinator] News update: \"" <> description rule <> "\""
+      if rule.isOneTimeRule
+        then "[News Combinator] Match found for: \"" <> rule.description <> "\""
+        else "[News Combinator] News update: \"" <> rule.description <> "\""
     body =
-      HTMLBody ("<p>" <> summary evalResult <> "</p>")
-        <> if null (matchedArticles evalResult)
+      HTMLBody ("<p>" <> evalResult.summary <> "</p>")
+        <> if null evalResult.matchedArticles
           then HTMLBody ""
-          else HTMLBody "<ul>" <> foldMap articleToBody (matchedArticles evalResult) <> HTMLBody "</ul>"
+          else HTMLBody "<ul>" <> foldMap articleToBody evalResult.matchedArticles <> HTMLBody "</ul>"
     articleToBody :: NewsArticle -> NotificationBody
     articleToBody NewsArticle {..} =
       HTMLBody $ "<li><a href=\"" <> link <> "\">" <> title <> "</a> (" <> show publishedAt <> ")</li>"

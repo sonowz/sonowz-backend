@@ -36,4 +36,4 @@ type RagAPIEffects =
     : DBEffects
 
 ragAPIHandler :: forall r. Members RagAPIEffects r => ServerT RagAPI (Sem r)
-ragAPIHandler request = RagResponse <$> doRagSearch (query request)
+ragAPIHandler request = RagResponse <$> doRagSearch request.query

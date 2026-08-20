@@ -31,7 +31,7 @@ testHandler =
 isDM :: Channel -> Bool
 isDM (ChannelDirectMessage _ users _) = any isUser users
   where
-    isUser user = userId user == sonowzId
+    isUser user = user.userId == sonowzId
 isDM _ = False
 
 main :: IO ()

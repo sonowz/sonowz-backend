@@ -47,7 +47,7 @@ _readAudioTag path = do
 _writeAudioTag ::
   Members '[Embed IO, Error HTagLibException, InternalState] r => AudioTag -> Sem r ()
 _writeAudioTag audioTag = do
-  let path = filename audioTag
+  let path = audioTag.filename
   mbOriginalTag <- M.lookup path <$> get
   case mbOriginalTag of
     Nothing -> _readAudioTag path >> _writeAudioTag audioTag

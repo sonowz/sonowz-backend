@@ -12,14 +12,14 @@ import Relude
 
 -- Internal JSON decode format
 data RTConfig = RTConfig
-  { pixelWidth :: Int,
-    pixelHeight :: Int,
+  { width :: Int,
+    height :: Int,
     jittering :: Bool,
     areaLight :: Bool,
     antiAliasing :: Bool,
-    dofToggle :: Bool,
-    dofAperture :: Float,
-    dofFocus :: Int,
+    toggle :: Bool,
+    aperture :: Float,
+    focus :: Int,
     sceneNo :: Int
   }
   deriving (Eq, Show, Read)
@@ -41,14 +41,14 @@ jsonToConfig _json = case eitherDecode' _json of
 
 parseRTConfig :: Aeson.Object -> Aeson.Parser RTConfig
 parseRTConfig obj = do
-  pixelWidth <- parseItemRange "pixelWidth" 2 500 obj
-  pixelHeight <- parseItemRange "pixelHeight" 2 500 obj
+  width <- parseItemRange "pixelWidth" 2 500 obj
+  height <- parseItemRange "pixelHeight" 2 500 obj
   jittering <- parseItem "jittering" obj
   areaLight <- parseItem "areaLight" obj
   antiAliasing <- parseItem "antiAliasing" obj
-  dofToggle <- parseItem "dofToggle" obj
-  dofAperture <- parseItemRange "dofAperture" 1.0 50.0 obj
-  dofFocus <- parseItemRange "dofFocus" 1 600 obj
+  toggle <- parseItem "dofToggle" obj
+  aperture <- parseItemRange "dofAperture" 1.0 50.0 obj
+  focus <- parseItemRange "dofFocus" 1 600 obj
   sceneNo <- parseItemRange "sceneNo" 1 3 obj
   return RTConfig {..}
 
@@ -80,17 +80,17 @@ createConfig conf =
    in Config $
         mconcat
           [ "#pragma once\n",
-            def "PIXEL_WIDTH" (pixelWidth conf) True,
-            def "PIXEL_HEIGHT" (pixelHeight conf) True,
+            def "PIXEL_WIDTH" conf.width True,
+            def "PIXEL_HEIGHT" conf.height True,
             "\n//#define RT_DEBUG",
             "\n#define RT_MULTITHREAD 4",
             "\n//#define RT_WINDOWS",
-            def "RT_JITTERING" () (jittering conf),
-            def "RT_AREA_LIGHT" () (areaLight conf),
-            def "RT_ANTIALIASING" () (antiAliasing conf),
-            def "RT_DOF" () (dofToggle conf),
-            def "RT_DOF_APERTURE" (dofAperture conf) (dofToggle conf),
-            def "RT_DOF_FOCUS" (dofFocus conf) (dofToggle conf),
-            def "RT_SCENE_NO" (sceneNo conf) True,
+            def "RT_JITTERING" () conf.jittering,
+            def "RT_AREA_LIGHT" () conf.areaLight,
+            def "RT_ANTIALIASING" () conf.antiAliasing,
+            def "RT_DOF" () conf.toggle,
+            def "RT_DOF_APERTURE" conf.aperture conf.toggle,
+            def "RT_DOF_FOCUS" conf.focus conf.toggle,
+            def "RT_SCENE_NO" conf.sceneNo True,
             "\n"
           ]

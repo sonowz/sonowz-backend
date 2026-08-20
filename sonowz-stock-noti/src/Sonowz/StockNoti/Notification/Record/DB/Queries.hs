@@ -18,7 +18,6 @@ import Sonowz.Core.DB.Field (Uid)
 import Sonowz.Core.DB.Utils (DatabaseException (DatabaseException))
 import Sonowz.StockNoti.Imports
 import Sonowz.StockNoti.Notification.Record.DB.Types
-import Sonowz.StockNoti.Notification.Record.DB.Types qualified as Dto (StockNotiRecord' (..))
 import Sonowz.StockNoti.Notification.Types (StockNotiRecord (..), StockNotificationType)
 import Sonowz.StockNoti.Stock.Types (StockSymbol)
 
@@ -37,10 +36,10 @@ stockNotiRecordTable :: StockNotiRecordTable
 stockNotiRecordTable = table "stock_noti_record" (pStockNotiRecord fields)
   where
     fields =
-      StockNotiRecord'
+        StockNotiRecord'
         { uid = tableField "uid",
           stockSymbol = tableField "stock_symbol",
-          notiType = tableField "noti_type",
+          notificationType = tableField "noti_type",
           timestamp = tableField "timestamp"
         }
 
@@ -61,9 +60,9 @@ findStockNotiRecord conn stockSymbol notiType timestamp = do
 qSelectRecordByFields :: StockNotiRecordTable -> StockSymbol -> StockNotificationType -> Day -> Select StockNotiRecordR
 qSelectRecordByFields table _stockSymbol _notiType _timestamp = proc () -> do
   record <- selectTable table -< ()
-  restrict -< toFields (show @Text _stockSymbol) .== Dto.stockSymbol record
-  restrict -< toFields (show @Text _notiType) .== Dto.notiType record
-  restrict -< toFields _timestamp .== Dto.timestamp record
+  restrict -< toFields (show @Text _stockSymbol) .== record.stockSymbol
+  restrict -< toFields (show @Text _notiType) .== record.notificationType
+  restrict -< toFields _timestamp .== record.timestamp
   returnA -< record
 
 -- Private functions --

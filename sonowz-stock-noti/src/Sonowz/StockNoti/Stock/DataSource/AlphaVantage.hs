@@ -22,7 +22,7 @@ import Sonowz.StockNoti.Stock.Types (StockPrice (..), StockSymbol (..), StockTim
 import URI.ByteString
 import URI.ByteString.QQ (uri)
 
-runStockDataSourceAlphaVantage :: Members (Embed IO : Error ParseException : StdEff) r => Sem (StockDataSource : r) a -> Sem r a
+runStockDataSourceAlphaVantage :: (Members (Embed IO : Error ParseException : StdEff) r) => Sem (StockDataSource : r) a -> Sem r a
 runStockDataSourceAlphaVantage =
   mapError @HttpException (ParseException . toText . displayException)
     . runHttpIO
@@ -40,7 +40,7 @@ fetchTimeSeries apiTimeUnit symbol = do
   logDebug $ "Started fetching stock time series from AlphaVantage (" <> show symbol <> ")"
   decoded <- eitherDecode . encodeUtf8 <$> fetchURL url
   timeSeries <- mapToStockTimeSeries <$> handleEither decoded
-  logDebug $ "Fetched count: " <> (show . length . prices) timeSeries <> "."
+  logDebug $ "Fetched count: " <> (show . length) timeSeries.prices <> "."
   return timeSeries
   where
     url = [uri|https://www.alphavantage.co/query|] {uriQuery = queryParams}
@@ -132,8 +132,8 @@ instance FromJSON (UTCTime -> APIResponseTimeSeries) where
 mapToStockTimeSeries :: APIResponse -> StockTimeSeries tu
 mapToStockTimeSeries (APIResponse meta timeSeries) =
   StockTimeSeries
-    { symbol = stockSymbol meta,
-      name = un (stockSymbol meta),
+    { symbol = meta.stockSymbol,
+      name = un meta.stockSymbol,
       prices = mapToTimeSeries <$> timeSeries
     }
 

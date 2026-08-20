@@ -47,7 +47,7 @@ kvsFields =
 -- Public Interfaces --
 
 getKeyValue :: (HasCallStack) => Connection -> Text -> Text -> IO (Maybe Text)
-getKeyValue conn oauthId key = withTransaction conn (value <<$>> selectResult)
+getKeyValue conn oauthId key = withTransaction conn ((.value) <<$>> selectResult)
   where
     selectResult :: IO (Maybe KVSDto)
     selectResult = listToMaybe <$> runSelect conn (qSelectKeyValue kvsTable oauthId key)
@@ -92,8 +92,8 @@ makeWriteDto oauthId key value =
 qSelectKeyValue :: KVSTable -> Text -> Text -> Select KVSR
 qSelectKeyValue table _oauthId _key = proc () -> do
   selected <- selectTable table -< ()
-  restrict -< toFields _oauthId .== oauthId selected
-  restrict -< toFields _key .== key selected
+  restrict -< toFields _oauthId .== selected.oauthId
+  restrict -< toFields _key .== selected.key
   returnA -< selected
 
 qInsertKeyValue :: KVSTable -> KVSWriteDto -> Insert [KVSDto]
@@ -110,7 +110,7 @@ qUpdateKeyValue table _oauthId _key _value =
   Update
     { uTable = table,
       uUpdateWith = updateEasy (\row -> row {value = toFields _value}),
-      uWhere = \row -> toFields _oauthId .== oauthId row .&& toFields _key .== key row,
+      uWhere = \row -> toFields _oauthId .== row.oauthId .&& toFields _key .== row.key,
       uReturning = rReturning id
     }
 
@@ -118,6 +118,6 @@ qDeleteKeyValue :: KVSTable -> Text -> Text -> Delete Int64
 qDeleteKeyValue table _oauthId _key =
   Delete
     { dTable = table,
-      dWhere = \row -> toFields _oauthId .== oauthId row .&& toFields _key .== key row,
+      dWhere = \row -> toFields _oauthId .== row.oauthId .&& toFields _key .== row.key,
       dReturning = rCount
     }

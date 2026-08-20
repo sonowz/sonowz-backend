@@ -20,7 +20,7 @@ runApp :: (HasCallStack) => Env -> IO Void
 runApp env =
   mainLoop env
     & runStockDataSourceAlphaVantage
-    & runReader (envPgConnection env)
+    & runReader env.pgConnection
     & runErrorAsLogging @ParseException
     & foreverCatch (sleep env)
     & embedToFinal
@@ -30,13 +30,13 @@ runApp env =
     & runFinal @IO
 
 sleep :: (Member Time r) => Env -> Sem r ()
-sleep env = threadDelay (fromIntegral (envWorkerIntervalSeconds env) * 10 ^ 6)
+sleep env = threadDelay (fromIntegral env.workerIntervalSeconds * 10 ^ 6)
 
 type MainLoopEffects = [StockDataSource, Error ParseException, Time, StdLog] <> DBEffects
 
 mainLoop :: (HasCallStack, Members MainLoopEffects r) => Env -> Sem r ()
 mainLoop env = do
-  let stocks = envStockSymbols env
+  let stocks = env.stockSymbols
   -- catch 'fetchDayStockPrices' errors
   forM_ stocks $ \stock -> runErrorAsLogging @ParseException $ do
     threadDelay (60 * 10 ^ 6) -- Sleep 1 minute between stocks to avoid hitting API rate limits

@@ -52,16 +52,16 @@ type SetterFn = forall a. Eq a => (AudioTag -> a) -> (a -> TagSetter) -> TagSett
 
 audioTagSetter :: AudioTag -> AudioTag -> TagSetter
 audioTagSetter orig target =
-  setterFn title titleSetter
-    <> setterFn artist artistSetter
-    <> setterFn album albumSetter
-    <> setterFn comment commentSetter
-    <> setterFn genre genreSetter
-    <> setterFn year yearSetter
-    <> setterFn trackNumber trackNumberSetter
+  setterFn (.title) titleSetter
+    <> setterFn (.artist) artistSetter
+    <> setterFn (.album) albumSetter
+    <> setterFn (.comment) commentSetter
+    <> setterFn (.genre) genreSetter
+    <> setterFn (.year) yearSetter
+    <> setterFn (.trackNumber) trackNumberSetter
   where
     setterFn :: SetterFn
-    setterFn = if encoding target == EncodingUtf8 then setterIfChanged else setterAlways
+    setterFn = if target.encoding == EncodingUtf8 then setterIfChanged else setterAlways
     setterAlways :: SetterFn
     setterAlways field setter = setter (field target)
     setterIfChanged :: SetterFn

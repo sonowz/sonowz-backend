@@ -8,4 +8,4 @@ import Sonowz.Raytrace.Env (Env (..))
 import Sonowz.Raytrace.Imports
 
 forkDaemon :: Env -> IO ()
-forkDaemon Env {..} = forkRaytraceDaemon envPgConnection
+forkDaemon Env {..} = forkRaytraceDaemon pgConnection

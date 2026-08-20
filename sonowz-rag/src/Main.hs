@@ -37,7 +37,7 @@ main = do
   (Config warpPort pgConnectInfo openAIKey) <-
     runParser (makeVersion []) "Sonowz RAG API server" pConfig
   dbPool <- createConnPool pgConnectInfo
-  let env = Env {envPgConnection = dbPool, envOpenAIKey = OpenAIKey openAIKey}
+  let env = Env {pgConnection = dbPool, openAIKey = OpenAIKey openAIKey}
 
   let waiApp = serve api (hoistServer api nt server)
       api = Proxy :: Proxy RagServerAPI

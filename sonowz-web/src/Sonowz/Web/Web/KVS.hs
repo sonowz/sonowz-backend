@@ -35,14 +35,14 @@ type KVSAPIEffects = Error ServerError : DBEffects
 kvsAPIHandler :: forall r. Members KVSAPIEffects r => ServerT KVSAPI (Sem r)
 kvsAPIHandler auth key = handlerGet :<|> handlerPost :<|> handlerDelete
   where
-    getUserId = oauthId <$> auth401 auth :: Sem r Text
+    getUserId = (.oauthId) <$> auth401 auth :: Sem r Text
     handlerGet = do
       userId <- getUserId
       maybeValue <- withDBConn $ \conn -> webLiftIO (getKeyValue conn userId key)
       case maybeValue of
         Just value -> return (ValueBody value)
         Nothing -> throw err400
-    handlerPost (value -> valueText) = do
+    handlerPost ((.value) -> valueText) = do
       userId <- getUserId
       withDBConn $ \conn -> webLiftIO (setKeyValue conn userId key valueText)
       return $ Response $ "'" <> key <> "' successfully set."

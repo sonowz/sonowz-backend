@@ -5,4 +5,4 @@ where
 
 import Sonowz.Rag.Imports
 
-newtype OpenAIKey = OpenAIKey {getKey :: Text}
+newtype OpenAIKey = OpenAIKey {key :: Text}

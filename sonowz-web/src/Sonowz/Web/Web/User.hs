@@ -24,4 +24,4 @@ type UserAPIEffects = Error ServerError : DBEffects
 userAPIHandler :: forall r. Members UserAPIEffects r => ServerT UserAPI (Sem r)
 userAPIHandler auth = echoHandler
   where
-    echoHandler = UserResponse . representation <$> auth401 auth
+    echoHandler = UserResponse . (.representation) <$> auth401 auth

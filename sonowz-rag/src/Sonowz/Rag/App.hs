@@ -34,7 +34,7 @@ runWithEffects :: forall a. Env -> Sem _ a -> Handler a
 runWithEffects env (action :: (Members RagHandlerEffects r) => Sem r a) =
   action
     & runReader env
-    & runReader (envPgConnection env)
+    & runReader env.pgConnection
     & runHttpIO
     & mapErrorAs500 @HttpException
     & mapErrorAs500 @ParseException

@@ -56,8 +56,10 @@ default-extensions:
   - DuplicateRecordFields
   - FunctionalDependencies  # New syntax #
   - MonadComprehensions     # New syntax #
+  - NoFieldSelectors
   - NoImplicitPrelude
   - OverloadedLists
+  - OverloadedRecordDot
   - OverloadedStrings
   - ParallelListComp        # New syntax #
   - PartialTypeSignatures   # New syntax #

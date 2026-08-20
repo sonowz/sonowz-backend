@@ -49,7 +49,7 @@ type NewsScrapRuleR =
     (Field SqlTimestamptz)
 
 instance Entity NewsScrapRuleR where
-  entityIdField = uid
+  entityIdField = (.uid)
   entityToFields _ = toFields
 
 type NewsScrapRuleTable = Table NewsScrapRuleW NewsScrapRuleR

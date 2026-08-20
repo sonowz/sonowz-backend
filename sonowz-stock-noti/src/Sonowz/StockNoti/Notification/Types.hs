@@ -12,7 +12,7 @@ data StockNotificationType = NotiGoldenCross | NotiDeadCross deriving (Eq, Show,
 
 data StockNotiRecord = StockNotiRecord
   { stockSymbol :: StockSymbol,
-    notiType :: StockNotificationType,
+    notificationType :: StockNotificationType,
     timestamp :: Day
   }
   deriving (Show, Generic)

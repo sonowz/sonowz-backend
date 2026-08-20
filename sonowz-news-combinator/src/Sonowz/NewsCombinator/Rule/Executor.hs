@@ -15,18 +15,18 @@ evalNewsScrapRule ::
 evalNewsScrapRule rule = do
   let request =
         LlmRequest
-          { userPrompt = description rule,
-            systemPrompt = Just $ buildSystemPrompt (confidenceLevel rule),
+          { userPrompt = rule.description,
+            systemPrompt = Just $ buildSystemPrompt rule.confidenceLevel,
             enableSearch = True
           }
 
   evalResult <- generateStructuredDataWithLlm (Proxy @LlmEvaluationResult) request
-  if isMatch evalResult
+  if evalResult.isMatch
     then return (Just evalResult, updateRule rule)
     else return (Nothing, rule)
   where
     updateRule r
-      | isOneTimeRule r = r {isEnabled = False}
+      | r.isOneTimeRule = r {isEnabled = False}
       | otherwise = r
 
 buildSystemPrompt :: ConfidenceLevel -> Text

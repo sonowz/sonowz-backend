@@ -15,7 +15,6 @@ import Sonowz.Core.DB.Utils (DatabaseException (DatabaseException))
 import Sonowz.NewsCombinator.Imports
 import Sonowz.NewsCombinator.Rule.DB.Types
 import Sonowz.NewsCombinator.Rule.Types (NewsScrapRule (..))
-import Sonowz.NewsCombinator.Rule.Types qualified as Rule (NewsScrapRule (uid))
 
 -- Table declarations --
 
@@ -53,13 +52,13 @@ newsScrapRuleCRUD :: CRUDQueries Uid NewsScrapRule NewsScrapRule
 newsScrapRuleCRUD = dimap toWriteDto fromDto $ getCRUDQueries newsScrapRuleTable
 
 getNewsScrapRules :: Connection -> IO [NewsScrapRule]
-getNewsScrapRules = crudList newsScrapRuleCRUD
+getNewsScrapRules = newsScrapRuleCRUD.crudList
 
 updateNewsScrapRule :: Connection -> NewsScrapRule -> IO ()
 updateNewsScrapRule conn rule =
   toDBException =<< do
-    let Just _uid = Rule.uid rule
-    crudUpdate newsScrapRuleCRUD conn _uid rule
+    let Just _uid = rule.uid
+    newsScrapRuleCRUD.crudUpdate conn _uid rule
   where
     toDBException :: Maybe a -> IO ()
     toDBException (Just _) = pass

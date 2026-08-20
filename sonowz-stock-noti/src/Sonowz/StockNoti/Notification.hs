@@ -52,5 +52,5 @@ checkAndInsertNotiRecord conn stockSymbol notiType timestamp = do
     Just _ -> return True
     Nothing -> do
       let newRecord = StockNotiRecord' Nothing (show stockSymbol) (show notiType) timestamp :: StockNotiRecordWriteDto
-      liftIO $ crudCreate stockNotiRecordCRUD conn newRecord
+      liftIO $ stockNotiRecordCRUD.crudCreate conn newRecord
       return False

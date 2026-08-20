@@ -24,24 +24,24 @@ runRuleWorker env =
     & runHttpIO
     & unsafeErrorToIO @LlmException
     & unsafeErrorToIO @HttpException
-    & runReader (envLlmEnv env)
-    & runReader (envPgConnection env)
+    & runReader (env.llmEnv)
+    & runReader (env.pgConnection)
     & embedToFinal
     & timeToIOFinal
     & resourceToIOFinal
     & stdEffToIOFinal
     & runFinal @IO
   where
-    sleep = threadDelay (fromIntegral (envWorkerIntervalSeconds env) * 10 ^ 6)
+    sleep = threadDelay (fromIntegral env.workerIntervalSeconds * 10 ^ 6)
 
 type WorkerEffects = Llm : Error LlmException : Final IO : Time : DBEffects
 
 worker :: (HasCallStack) => (Members WorkerEffects r) => Sem r ()
 worker = do
-  rules <- filter isEnabled <$> withDBConn (liftIO . getNewsScrapRules)
+  rules <- filter (.isEnabled) <$> withDBConn (liftIO . getNewsScrapRules)
   mapM_
     ( \rule -> runErrorAsLogging @SomeException $ fromExceptionSem $ mapError @LlmException toException $ do
-        logDebug ("Evaluate \"" <> description rule <> "\"...")
+        logDebug ("Evaluate \"" <> rule.description <> "\"...")
         (evalResult, rule') <- evalNewsScrapRule rule
         case evalResult of
           Just res -> logDebug "Match found!" >> void (createNotification rule res)

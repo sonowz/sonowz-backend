@@ -24,7 +24,7 @@ doRagSearch query = do
   logDebug $ "Starting RAG search with query: " <> query
   embedding <- createOpenAIEmbedding3 query
   searchedDocuments <- withDBConn (\conn -> liftIO $ Queries.selectTopNDocuments conn Queries.openAI3EmbeddingTableName 5 embedding)
-  logDebug $ "RAG result: " <> show (title <$> searchedDocuments)
+  logDebug $ "RAG result: " <> show ((.title) <$> searchedDocuments)
   pure $ toRagResult <$> searchedDocuments
 
 toRagResult :: RawDocument -> RagResultDocument
