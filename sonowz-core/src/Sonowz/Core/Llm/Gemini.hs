@@ -114,7 +114,7 @@ withResponseSchema proxy req =
           schema = Just (inlineSchema proxy)
         }
     newGenerationConfig =
-      (generationConfig req ?: defaultGenerationConfig)
+      (req.generationConfig ?: defaultGenerationConfig)
         { responseFormat = Just formatConfig
         }
 

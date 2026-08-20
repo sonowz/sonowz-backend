@@ -53,11 +53,11 @@ crudHandlerFromDBQueries queries = crudHandlerFromHandlers crudHandler
   where
     crudHandler =
       CRUDHandlers
-        { list = withDBConn $ \conn -> webLiftIO (crudList queries conn),
-          read = \uid -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudRead queries conn uid),
-          create = \citem -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudCreate queries conn citem),
-          update = \uid citem -> withDBConn $ \conn -> webLiftIO (maybeExc =<< crudUpdate queries conn uid citem),
-          delete = \uid -> withDBConn $ \conn -> webLiftIO (boolExc =<< crudDelete queries conn uid)
+        { list = withDBConn $ \conn -> webLiftIO (queries.crudList conn),
+          read = \uid -> withDBConn $ \conn -> webLiftIO (maybeExc =<< queries.crudRead conn uid),
+          create = \citem -> withDBConn $ \conn -> webLiftIO (maybeExc =<< queries.crudCreate conn citem),
+          update = \uid citem -> withDBConn $ \conn -> webLiftIO (maybeExc =<< queries.crudUpdate conn uid citem),
+          delete = \uid -> withDBConn $ \conn -> webLiftIO (boolExc =<< queries.crudDelete conn uid)
         }
     maybeExc :: Maybe a -> IO a
     maybeExc (Just x) = return x

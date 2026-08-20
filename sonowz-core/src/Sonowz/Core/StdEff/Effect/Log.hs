@@ -102,7 +102,7 @@ setStdLogActionLevel = writeIORef stdLogActionLevelRef
 
 -- This function has 'unsafePerformIO' inside..
 stdLogAction :: (Member (Final IO) r) => LogAction (Sem r) StdMessage
-stdLogAction = filterBySeverity logLevel stdMessageSeverity logAction
+stdLogAction = filterBySeverity logLevel (.stdMessageSeverity) logAction
   where
     logLevel = unsafePerformIO $ readIORef stdLogActionLevelRef
     logAction = fmtStdMessage >$< LogAction (embedFinal <$> putTextLn)

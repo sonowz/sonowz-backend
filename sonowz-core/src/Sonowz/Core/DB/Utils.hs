@@ -63,9 +63,10 @@ updateAlternative :: (Default Updater r w, Default AlternativeUpdater w w) => w 
 updateAlternative writeFields origFields = writeFields <|> toWriteFields origFields
   where
     Updater toWriteFields = def
-    (<|>) = (curry . getUpdater) def
+    AlternativeUpdater altUpdater = def
+    (<|>) = curry altUpdater
 
-newtype AlternativeUpdater a b = AlternativeUpdater {getUpdater :: (a, a) -> b}
+newtype AlternativeUpdater a b = AlternativeUpdater {updater :: (a, a) -> b}
 
 instance Functor (AlternativeUpdater a) where
   fmap f (AlternativeUpdater g) = AlternativeUpdater (fmap f g)
